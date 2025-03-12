@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RG Point Finder</title>
+    <style>
+        * {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 5px;
+            padding: 5px;
+        }
+
+        canvas {
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+            padding: 0;
+        }
+
+        video {
+            display: none;
+            opacity: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>RG Point Finder</h1>
+    <p>Wähle eine Bilddatei aus oder nutze das Live-Video, um rote und grüne Punkte zu analysieren.</p>
+    <input type="file" id="imageInput" accept="image/*" />
+    <br /><br />
+    <button id="startVideo">Live-Video starten</button>
+    <br /><br />
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <video id="video" width="640" height="480" autoplay></video>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const imageInput = document.getElementById('imageInput');
+        const video = document.getElementById('video');
+        const startVideoBtn = document.getElementById('startVideo');
+        let streaming = false;
+
+        // Berechnet den euklidischen Abstand zwischen zwei Punkten.
+        function distance(p1, p2) {
+            return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+        }
+
+        // Gruppiert Punkte, die näher als der Schwellenwert beieinander liegen.
+        function clusterPoints(points, threshold) {
+            const clusters = [];
+            points.forEach(p => {
+                let added = false;
+                for (let cluster of clusters) {
+                    if (distance(p, cluster.centroid) < threshold) {
+                        cluster.points.push(p);
+                        // Aktualisiere den Schwerpunkt (Centroid) des Clusters
+                        let sumX = 0, sumY = 0;
+                        cluster.points.forEach(q => {
+                            sumX += q.x;
+                            sumY += q.y;
+                        });
+                        cluster.centroid = { x: sumX / cluster.points.length, y: sumY / cluster.points.length };
+                        added = true;
+                        break;
+                    }
+                }
+                if (!added) {
+                    clusters.push({ points: [p], centroid: { x: p.x, y: p.y } });
+                }
+            });
+            return clusters;
+        }
+
+        // Zeichnet einen kleinen Kreis an der gegebenen Position.
+        function drawPoint(color, x, y) {
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        // Verarbeitet das Bild-/Videoframe: Sammelt rote und grüne Pixel, clustert sie und zeichnet:
+        // - Den Originalframe als Hintergrund
+        // - Die Cluster-Schwerpunkte
+        // - Optional Linien zwischen nahegelegenen Clustern der gleichen Farbe
+        // - Und verbindet jeden roten Cluster mit dem nächstgelegenen grünen Cluster mit einer blauen Linie.
+        function processFrame(imageData) {
+            const data = imageData.data;
+            let redPoints = [];
+            let greenPoints = [];
+
+            // Alle Pixel durchlaufen und rote bzw. grüne Pixel sammeln.
+            for (let y = 0; y < imageData.height; y++) {
+                for (let x = 0; x < imageData.width; x++) {
+                    const index = (y * imageData.width + x) * 4;
+                    const r = data[index];
+                    const g = data[index + 1];
+                    const b = data[index + 2];
+
+                    if (r > 150 && g < 100 && b < 100) {
+                        redPoints.push({ x, y });
+                    } else if (g > 150 && r < 100 && b < 100) {
+                        greenPoints.push({ x, y });
+                    }
+                }
+            }
+
+            // Clusterbildung (Schwellenwert: 30 Pixel)
+            const redClusters = clusterPoints(redPoints, 30);
+            const greenClusters = clusterPoints(greenPoints, 30);
+
+            // Zeichne die Schwerpunkte der roten Cluster
+            redClusters.forEach(cluster => {
+                drawPoint("red", cluster.centroid.x, cluster.centroid.y);
+            });
+            // Zeichne Linien zwischen roten Clustern, die nahe beieinander liegen (optional, z. B. Schwelle 100 Pixel)
+            for (let i = 0; i < redClusters.length; i++) {
+                for (let j = i + 1; j < redClusters.length; j++) {
+                    if (distance(redClusters[i].centroid, redClusters[j].centroid) < 100) {
+                        ctx.beginPath();
+                        ctx.moveTo(redClusters[i].centroid.x, redClusters[i].centroid.y);
+                        ctx.lineTo(redClusters[j].centroid.x, redClusters[j].centroid.y);
+                        ctx.strokeStyle = 'red';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Zeichne die Schwerpunkte der grünen Cluster
+            greenClusters.forEach(cluster => {
+                drawPoint("green", cluster.centroid.x, cluster.centroid.y);
+            });
+            // Zeichne Linien zwischen grünen Clustern, die nahe beieinander liegen (optional)
+            for (let i = 0; i < greenClusters.length; i++) {
+                for (let j = i + 1; j < greenClusters.length; j++) {
+                    if (distance(greenClusters[i].centroid, greenClusters[j].centroid) < 100) {
+                        ctx.beginPath();
+                        ctx.moveTo(greenClusters[i].centroid.x, greenClusters[i].centroid.y);
+                        ctx.lineTo(greenClusters[j].centroid.x, greenClusters[j].centroid.y);
+                        ctx.strokeStyle = 'green';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Verbinde jeden roten Cluster mit dem nächstgelegenen grünen Cluster mit einer blauen Linie.
+            redClusters.forEach(red => {
+                let closestGreen = null;
+                let minDist = Infinity;
+                greenClusters.forEach(green => {
+                    const d = distance(red.centroid, green.centroid);
+                    if (d < minDist) {
+                        minDist = d;
+                        closestGreen = green;
+                    }
+                });
+                if (closestGreen) {
+                    ctx.beginPath();
+                    ctx.moveTo(red.centroid.x, red.centroid.y);
+                    ctx.lineTo(closestGreen.centroid.x, closestGreen.centroid.y);
+                    ctx.strokeStyle = 'blue';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+            });
+        }
+
+        // Bilddatei auswählen, anzeigen und verarbeiten.
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const img = new Image();
+                    img.onload = function () {
+                        // Canvas an Bildgröße anpassen und das Bild als Hintergrund zeichnen
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        processFrame(imageData);
+                    }
+                    img.src = event.target.result;
+                }
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Live-Video starten und kontinuierlich verarbeiten.
+        startVideoBtn.addEventListener('click', () => {
+            if (!streaming) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then((stream) => {
+                        video.srcObject = stream;
+                        video.play();
+                        video.style.display = 'block';
+                        streaming = true;
+                        requestAnimationFrame(updateVideoFrame);
+                    })
+                    .catch((err) => {
+                        console.error("Fehler beim Zugriff auf die Kamera: " + err);
+                    });
+            }
+        });
+
+        // Aktualisiert den Videoframe: Zeichnet den aktuellen Frame als Hintergrund und legt die Overlay-Zeichnungen darauf.
+        function updateVideoFrame() {
+            if (streaming) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                processFrame(frame);
+                requestAnimationFrame(updateVideoFrame);
+            }
+        }
+    </script>
+</body>
+
+</html>
