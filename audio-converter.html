@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MP3 to 8-bit Raw Converter</title>
+</head>
+<body>
+<h2>MP3 → 8-bit Raw Audio Converter</h2>
+
+<input type="file" id="mp3Input" accept=".mp3"/>
+<br><br>
+<button id="convertBtn">Convert and Download</button>
+
+<script>
+async function convertMp3To8Bit(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+    const channelData = audioBuffer.getChannelData(0); // Mono (first channel)
+    const rawData = new Uint8Array(channelData.length);
+
+    // Convert float [-1,1] to unsigned 8-bit [0,255]
+    for (let i = 0; i < channelData.length; i++) {
+        let sample = channelData[i];
+        sample = Math.max(-1, Math.min(1, sample)); // Clamp
+        rawData[i] = Math.floor((sample + 1) * 127.5); 
+    }
+
+    return rawData;
+}
+
+document.getElementById('convertBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('mp3Input');
+    if (!fileInput.files.length) {
+        alert('Please select an MP3 file first.');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const rawData = await convertMp3To8Bit(file);
+
+    // Prompt for filename
+    const saveName = prompt('Enter filename for raw 8-bit data:', 'output.raw');
+    if (!saveName) return;
+
+    // Create Blob and trigger download
+    const blob = new Blob([rawData], { type: 'application/octet-stream' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = saveName;
+    link.click();
+    URL.revokeObjectURL(link.href);
+});
+</script>
+</body>
+</html>
