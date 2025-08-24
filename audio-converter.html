@@ -29,6 +29,9 @@ convertBtn.onclick = async () => {
     const file = fileInput.files[0];
     if (!file) return alert("Select an MP3 file first");
 
+    const filename = prompt("Enter filename for the converted file:", file.name.replace(/\.\w+$/, '_8bit.pcm'));
+    if (!filename) return;
+
     const arrayBuffer = await file.arrayBuffer();
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
@@ -47,7 +50,7 @@ convertBtn.onclick = async () => {
     const blob = new Blob([pcm8], {type: "application/octet-stream"});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = file.name.replace(/\.\w+$/, '_8bit.pcm');
+    a.download = filename;
     a.click();
 };
 </script>
