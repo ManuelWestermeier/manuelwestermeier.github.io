@@ -3,301 +3,229 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Links — Manuel Westermeier</title>
-  <meta name="description" content="Links to Manuel Westermeier's projects and channels." />
+  <title>Manuel Westermeier — Links</title>
+  <meta name="description" content="Links to Manuel Westermeier’s GitHub projects, homepage, TikTok and YouTube." />
   <link rel="icon" href="https://manuelwestermeier.github.io/logo.png" />
   <meta name="theme-color" content="#0f172a" />
 
   <style>
-    :root{
-      --bg-1: linear-gradient(135deg,#0f172a 0%, #071124 50%, #032b2e 100%);
+    :root {
+      --bg-1: linear-gradient(135deg,#0f172a 0%, #0b1328 40%, #071c25 100%);
       --card: rgba(255,255,255,0.05);
-      --glass: rgba(255,255,255,0.06);
-      --accent: linear-gradient(90deg,#7c3aed,#06b6d4);
-      --muted: #9aa4b2;
+      --muted: #a2adbd;
       --radius: 18px;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
       background: var(--bg-1);
-      color:#e6eef6;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:32px;
+      color: #e6eef6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .wrap{
-      width:100%;
-      max-width:980px;
-      border-radius:26px;
-      padding:28px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    .wrap {
+      width: 100%;
+      max-width: 880px;
+      border-radius: 24px;
+      padding: 28px;
+      background: rgba(255,255,255,0.02);
       box-shadow: 0 10px 40px rgba(2,6,23,0.7);
-      backdrop-filter: blur(8px) saturate(120%);
+      backdrop-filter: blur(10px) saturate(120%);
       border: 1px solid rgba(255,255,255,0.04);
+      position: relative;
+      overflow: hidden;
     }
 
-    header{
-      display:flex;
-      gap:18px;
-      align-items:center;
-      margin-bottom:22px;
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
     }
 
-    .brand {
-      display:flex;
-      gap:12px;
-      align-items:center;
+    .logo {
+      width: 64px; height: 64px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 6px 20px rgba(12,18,30,0.6);
     }
 
-    .logo{
-      width:64px;height:64px;border-radius:12px;overflow:hidden;flex:0 0 64px;
-      box-shadow: 0 6px 20px rgba(12,18,30,0.6), inset 0 -6px 20px rgba(255,255,255,0.02);
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      display:flex;align-items:center;justify-content:center;
-    }
-    .logo img{width:100%;height:100%;object-fit:cover;display:block}
-
-    h1{
-      font-size:20px;
-      margin:0;
-      letter-spacing: -0.01em;
-    }
-    p.lead{
-      margin:4px 0 0 0;
-      color:var(--muted);
-      font-size:13px;
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
-      gap:16px;
-      margin-top:18px;
+    h1 {
+      margin: 0;
+      font-size: 20px;
     }
 
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:16px;
-      padding:16px;
-      display:flex;
-      gap:12px;
-      align-items:center;
-      transition: transform .28s cubic-bezier(.2,.9,.3,1), box-shadow .28s;
-      border:1px solid rgba(255,255,255,0.03);
-    }
-    .card:hover{
-      transform: translateY(-6px) scale(1.01);
-      box-shadow: 0 18px 40px rgba(2,6,23,0.6);
+    p.lead {
+      margin: 4px 0 0 0;
+      color: var(--muted);
+      font-size: 13px;
     }
 
-    .icon-wrap{
-      width:64px;height:64px;border-radius:12px;display:flex;align-items:center;justify-content:center;
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-      flex:0 0 64px;
-      overflow:hidden;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
     }
 
-    .icon-wrap img{width:56px;height:56px;object-fit:cover;border-radius:8px}
-
-    .card-body{
-      flex:1;
-      min-width:0;
+    .card {
+      background: rgba(255,255,255,0.03);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all .25s ease;
+      border: 1px solid rgba(255,255,255,0.03);
     }
 
-    .card-title{
-      display:flex;align-items:center;gap:8px;justify-content:space-between;
-    }
-    .card-title h2{margin:0;font-size:15px}
-    .card-title .badge{
-      font-size:12px;padding:6px 8px;border-radius:999px;background:linear-gradient(90deg,#111827,#0b1220);color:var(--muted);border:1px solid rgba(255,255,255,0.02)
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(2,6,23,0.6);
     }
 
-    .desc{color:var(--muted);font-size:13px;margin-top:6px;display:block}
-
-    .actions{
-      margin-left:auto;display:flex;gap:8px;align-items:center;
+    .card h2 {
+      margin: 0;
+      font-size: 15px;
+      color: #fff;
     }
 
-    .btn{
-      -webkit-appearance:none;border:0;padding:10px 12px;border-radius:12px;background:transparent;color:inherit;
-      cursor:pointer;font-weight:600;font-size:13px;
-      transition:all .18s;
-      display:inline-flex;align-items:center;gap:8px;
+    .desc {
+      color: var(--muted);
+      font-size: 13px;
     }
-    .btn.primary{
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       background: linear-gradient(90deg,#7c3aed,#06b6d4);
-      color:white;padding:10px 14px;border-radius:12px;
-      box-shadow: 0 8px 28px rgba(124,58,237,0.18);
-    }
-    .btn.ghost{
-      background:rgba(255,255,255,0.02);
-      color:var(--muted);
-      border:1px solid rgba(255,255,255,0.02);
-    }
-
-    .small{
-      font-size:12px;color:var(--muted)
+      color: #fff;
+      font-weight: 600;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      text-decoration: none;
+      transition: transform .2s;
+      box-shadow: 0 6px 20px rgba(124,58,237,0.2);
     }
 
-    footer{
-      margin-top:20px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;padding-top:10px;border-top:1px dashed rgba(255,255,255,0.02);
+    .btn:hover {
+      transform: scale(1.04);
     }
 
-    /* responsive niceties */
-    @media (max-width:480px){
-      .brand h1{font-size:16px}
-      .logo{width:56px;height:56px}
+    footer {
+      margin-top: 26px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
     }
 
-    /* subtle floating gradient circles */
-    .bg-deco{
-      position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:hidden;border-radius:26px;
+    /* gentle gradient orbs */
+    .bg-deco::before, .bg-deco::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.3;
+      pointer-events: none;
     }
-    .bg-deco::before, .bg-deco::after{
-      content:"";position:absolute;border-radius:50%;filter:blur(60px);opacity:0.5;
+
+    .bg-deco::before {
+      width: 380px; height: 380px;
+      top: -100px; right: -120px;
+      background: linear-gradient(160deg, #7c3aed, #06b6d4);
     }
-    .bg-deco::before{width:360px;height:360px;right:-80px;top:-120px;background:linear-gradient(180deg,#7c3aed,#06b6d4)}
-    .bg-deco::after{width:420px;height:420px;left:-160px;bottom:-140px;background:linear-gradient(180deg,#ef4444,#f59e0b)}
+
+    .bg-deco::after {
+      width: 460px; height: 460px;
+      bottom: -160px; left: -180px;
+      background: linear-gradient(160deg, #ef4444, #f59e0b);
+    }
+
+    @media (max-width: 480px) {
+      .logo { width: 52px; height: 52px; }
+      h1 { font-size: 17px; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap" role="main" aria-labelledby="main-title">
-    <div class="bg-deco" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="bg-deco"></div>
 
     <header>
-      <div class="brand" style="flex:1">
-        <div class="logo" title="Manuel Westermeier">
-          <img src="https://manuelwestermeier.github.io/logo.png" alt="Manuel Westermeier logo">
-        </div>
-        <div>
-          <h1 id="main-title">Manuel Westermeier — quick links</h1>
-          <p class="lead">Music, programming & projects. Click any card to open in a new tab.</p>
-        </div>
+      <div class="logo">
+        <img src="https://manuelwestermeier.github.io/logo.png" alt="Logo">
       </div>
-
-      <div style="display:flex;gap:8px;align-items:center">
-        <a class="btn ghost" href="https://manuel-westermeier.onrender.com/" target="_blank" rel="noopener">
-          Visit homepage
-        </a>
-        <a class="btn primary" href="https://github.com/ManuelWestermeier/esp-wroom-2-4-inch-os" target="_blank" rel="noopener">
-          View project
-        </a>
+      <div>
+        <h1>Manuel Westermeier — Links</h1>
+        <p class="lead">Projects, code, and creativity.</p>
       </div>
     </header>
 
-    <div class="grid" role="list">
+    <div class="grid">
 
-      <!-- YouTube -->
-      <article class="card" role="listitem" aria-labelledby="yt-title">
-        <div class="icon-wrap" aria-hidden="true">
-          <!-- YouTube red square with play -->
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-            <rect x="1" y="4" width="22" height="16" rx="4" fill="#FF0000"/>
-            <path d="M9.5 8.5v7l6-3.5-6-3.5z" fill="#fff"/>
-          </svg>
-        </div>
+      <!-- GITHUB / PROJECT -->
+      <div class="card">
+        <h2>ESP32 WROOM 2.4" OS — GitHub Project</h2>
+        <span class="desc">Open-source OS for 2.4" ESP32-WROOM displays. Includes window system, Lua sandbox & apps.</span>
+        <a class="btn" href="https://github.com/ManuelWestermeier/esp-wroom-2-4-inch-os" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+      </div>
 
-        <div class="card-body">
-          <div class="card-title">
-            <h2 id="yt-title">TAGESSCHATTEN — Music (YouTube)</h2>
-            <div class="badge">YouTube</div>
-          </div>
-          <span class="desc">Music channel — subscribe with confirmation. Friendly beats & recordings.</span>
-          <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
-            <a class="btn primary" href="https://www.youtube.com/@TAGESSCHATTEN?sub_confirmation=1" target="_blank" rel="noopener noreferrer">
-              Subscribe (with confirmation)
-            </a>
-            <a class="btn ghost" href="https://www.youtube.com/channel/UCFYLsEGt9q6beCB0picBbgA" target="_blank" rel="noopener noreferrer" title="Direct channel link">Channel</a>
-          </div>
-        </div>
-      </article>
+      <div class="card">
+        <h2>General GitHub — Manuel Westermeier</h2>
+        <span class="desc">Browse all repositories and open-source work by Manuel Westermeier.</span>
+        <a class="btn" href="https://github.com/ManuelWestermeier" target="_blank" rel="noopener noreferrer">Visit GitHub</a>
+      </div>
 
       <!-- TikTok -->
-      <article class="card" role="listitem" aria-labelledby="tt-title">
-        <div class="icon-wrap" aria-hidden="true">
-          <img src="https://p16-pu-sign-no.tiktokcdn-eu.com/tos-no1a-avt-0068c001-no/db7be5f14c77f79b4d77ea4f6aed0515~tplv-tiktokx-cropcenter:1080:1080.jpeg?dr=10399&refresh_token=aec1c523&x-expires=1760547600&x-signature=JPp8KUfrMrGLOfARCPnqIrw4024%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=no1a" alt="TikTok logo">
-        </div>
+      <div class="card">
+        <h2>@pdev111 — Programming (TikTok)</h2>
+        <span class="desc">Programming, ESP32 and creative projects in short form.</span>
+        <a class="btn" href="https://www.tiktok.com/@pdev111" target="_blank" rel="noopener noreferrer">
+          <img src="https://p16-pu-sign-no.tiktokcdn-eu.com/tos-no1a-avt-0068c001-no/db7be5f14c77f79b4d77ea4f6aed0515~tplv-tiktokx-cropcenter:1080:1080.jpeg?dr=10399&refresh_token=aec1c523&x-expires=1760547600&x-signature=JPp8KUfrMrGLOfARCPnqIrw4024%3D&t=4d5b0474&ps=13740610&shp=a5d48078&shcp=81f88b70&idc=no1a" alt="TikTok" style="width:20px;height:20px;border-radius:4px;">
+          Visit TikTok
+        </a>
+      </div>
 
-        <div class="card-body">
-          <div class="card-title">
-            <h2 id="tt-title">@pdev111 — Programming (TikTok)</h2>
-            <div class="badge">TikTok</div>
-          </div>
-          <span class="desc">Short programming clips, tips & demos — ideal for quick learning.</span>
-          <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
-            <a class="btn primary" href="https://www.tiktok.com/@pdev111" target="_blank" rel="noopener noreferrer">
-              Visit TikTok
-            </a>
-            <a class="btn ghost" href="https://www.tiktok.com/@pdev111?lang=en" target="_blank" rel="noopener noreferrer" title="TikTok (alternate)"><small class="small">open</small></a>
-          </div>
-        </div>
-      </article>
+      <!-- YouTube -->
+      <div class="card">
+        <h2>TAGESSCHATTEN — Music (YouTube)</h2>
+        <span class="desc">Music, instrumentals and creative compositions from Manuel Westermeier.</span>
+        <a class="btn" href="https://www.youtube.com/@TAGESSCHATTEN" target="_blank" rel="noopener noreferrer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="vertical-align:middle">
+            <rect x="1" y="4" width="22" height="16" rx="4" fill="#fff" opacity="0.9"/>
+            <path d="M9.5 8.5v7l6-3.5-6-3.5z" fill="#0f172a"/>
+          </svg>
+          Visit YouTube
+        </a>
+      </div>
 
       <!-- Homepage -->
-      <article class="card" role="listitem" aria-labelledby="home-title">
-        <div class="icon-wrap" aria-hidden="true">
-          <img src="https://manuelwestermeier.github.io/logo.png" alt="Homepage logo">
-        </div>
-
-        <div class="card-body">
-          <div class="card-title">
-            <h2 id="home-title">Manuel's Homepage</h2>
-            <div class="badge">Website</div>
-          </div>
-          <span class="desc">Personal site and central hub for projects, posts and contact info.</span>
-          <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
-            <a class="btn primary" href="https://manuel-westermeier.onrender.com/" target="_blank" rel="noopener noreferrer">
-              Visit homepage
-            </a>
-            <a class="btn ghost" href="https://manuel-westermeier.github.io/logo.png" target="_blank" rel="noopener noreferrer" title="Logo image"><small class="small">logo</small></a>
-          </div>
-        </div>
-      </article>
-
-      <!-- ESP32 Project -->
-      <article class="card" role="listitem" aria-labelledby="proj-title">
-        <div class="icon-wrap" aria-hidden="true">
-          <!-- GitHub / project icon -->
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-            <rect x="1" y="1" width="22" height="22" rx="6" fill="#0b1220"/>
-            <path d="M12 2.5a9.5 9.5 0 00-3 18.5c.48.09.66-.21.66-.47v-1.66c-2.7.59-3.27-1.16-3.27-1.16-.44-1.12-1.07-1.42-1.07-1.42-.88-.61.07-.6.07-.6.98.07 1.5 1.01 1.5 1.01.86 1.49 2.25 1.06 2.8.81.09-.64.34-1.06.62-1.3-2.15-.24-4.41-1.07-4.41-4.76 0-1.05.37-1.9.98-2.57-.1-.24-.43-1.22.09-2.54 0 0 .8-.26 2.62 1a9.05 9.05 0 014.76 0c1.82-1.26 2.62-1 2.62-1 .52 1.32.19 2.3.09 2.54.61.67.98 1.52.98 2.57 0 3.7-2.27 4.52-4.43 4.75.35.3.65.9.65 1.82v2.7c0 .27.18.58.67.48A9.5 9.5 0 0012 2.5z" fill="#fff"/>
-          </svg>
-        </div>
-
-        <div class="card-body">
-          <div class="card-title">
-            <h2 id="proj-title">esp-wroom 2.4" OS — ESP32 project</h2>
-            <div class="badge">GitHub</div>
-          </div>
-          <span class="desc">Firmware & OS for ESP32 WROOM 2.4" displays — source, docs and examples on GitHub.</span>
-          <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
-            <a class="btn primary" href="https://github.com/ManuelWestermeier/esp-wroom-2-4-inch-os" target="_blank" rel="noopener noreferrer">
-              View project on GitHub
-            </a>
-            <a class="btn ghost" href="https://github.com/ManuelWestermeier/esp-wroom-2-4-inch-os/releases" target="_blank" rel="noopener noreferrer" title="Releases"><small class="small">releases</small></a>
-          </div>
-        </div>
-      </article>
+      <div class="card">
+        <h2>Homepage</h2>
+        <span class="desc">Personal site — portfolio, updates and contact page.</span>
+        <a class="btn" href="https://manuel-westermeier.onrender.com/" target="_blank" rel="noopener noreferrer">Open Homepage</a>
+      </div>
 
     </div>
 
     <footer>
-      <div>Made with ♥ by Manuel Westermeier</div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <a href="https://www.youtube.com/@TAGESSCHATTEN?sub_confirmation=1" target="_blank" rel="noopener" class="small">YouTube</a>
-        <span style="opacity:.4">•</span>
-        <a href="https://www.tiktok.com/@pdev111" target="_blank" rel="noopener" class="small">TikTok</a>
-        <span style="opacity:.4">•</span>
-        <a href="https://manuel-westermeier.onrender.com/" target="_blank" rel="noopener" class="small">Homepage</a>
-      </div>
+      © 2025 Manuel Westermeier — All rights reserved
     </footer>
   </div>
 </body>
