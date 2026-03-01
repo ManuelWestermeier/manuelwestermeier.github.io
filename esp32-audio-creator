@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ESP32 4bit 5.5kHz Audio Converter</title>
+<style>
+body { font-family: Arial; margin: 40px; background:#111; color:#eee; }
+button { padding:10px; margin:5px; }
+</style>
+</head>
+<body>
+
+<h2>ESP32 4bit / 5.5kHz Audio Converter</h2>
+
+<input type="file" id="fileInput" accept=".wav">
+<br><br>
+<button onclick="processAudio()">Convert</button>
+<button onclick="downloadHeader()">Download .h</button>
+<button onclick="uploadToESP()">Upload via WebSerial</button>
+
+<pre id="log"></pre>
+
+<script>
+let processedData = null;
+
+function log(msg){
+  document.getElementById("log").textContent += msg + "\n";
+}
+
+async function processAudio(){
+  const file = document.getElementById('fileInput').files[0];
+  if(!file){ alert("Select WAV file"); return; }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+  const input = audioBuffer.getChannelData(0);
+  const inputRate = audioBuffer.sampleRate;
+  const targetRate = 5500;
+
+  const ratio = inputRate / targetRate;
+  const newLength = Math.floor(input.length / ratio);
+  let resampled = new Float32Array(newLength);
+
+  for(let i=0;i<newLength;i++){
+    resampled[i] = input[Math.floor(i * ratio)];
+  }
+
+  // 4-bit quantization
+  processedData = new Uint8Array(newLength);
+  for(let i=0;i<newLength;i++){
+    let s = resampled[i];
+    s = Math.max(-1, Math.min(1, s));
+    let q = Math.floor((s + 1) * 7.5); // 0–15
+    processedData[i] = q & 0x0F;
+  }
+
+  log("Converted samples: " + processedData.length);
+}
+
+function downloadHeader(){
+  if(!processedData){ alert("Convert first"); return; }
+
+  let text = "const uint8_t audioData[] = {\n";
+  for(let i=0;i<processedData.length;i++){
+    text += processedData[i] + ",";
+    if(i%20==0) text+="\n";
+  }
+  text += "\n};\n";
+  text += "const unsigned int audioLen = " + processedData.length + ";";
+
+  const blob = new Blob([text], {type:"text/plain"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "audio.h";
+  a.click();
+}
+
+async function uploadToESP(){
+  if(!processedData){ alert("Convert first"); return; }
+
+  const port = await navigator.serial.requestPort();
+  await port.open({ baudRate: 921600 });
+
+  const writer = port.writable.getWriter();
+
+  await writer.write(new Uint8Array([
+    (processedData.length>>24)&255,
+    (processedData.length>>16)&255,
+    (processedData.length>>8)&255,
+    (processedData.length)&255
+  ]));
+
+  await writer.write(processedData);
+
+  writer.releaseLock();
+  log("Upload done");
+}
+</script>
+
+</body>
+</html>
