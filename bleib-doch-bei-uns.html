@@ -1,8 +1,8 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Minimalistischer Comic – Der Weg nach Emmaus</title>
+<title>Minimalistischer Comic – Emmaus</title>
 <style>
     body {
         margin: 0;
@@ -28,10 +28,15 @@
     }
 
     .speech {
-        font-size: 18px;
+        font-size: 20px;
         fill: #222;
         opacity: 0;
         animation: fadeIn 1s forwards;
+    }
+
+    .label {
+        font-size: 14px;
+        fill: #444;
     }
 
     .hint {
@@ -45,11 +50,6 @@
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
-
-    .appear {
-        opacity: 0;
-        animation: fadeIn 1s forwards;
-    }
 </style>
 </head>
 <body>
@@ -60,105 +60,109 @@
 </div>
 
 <script>
+const svg = document.getElementById("scene");
+
+function drawPerson(x, color, name, halo=false) {
+    return `
+    ${halo ? `<circle cx="${x}" cy="210" r="35" stroke="#f2c94c" stroke-width="4" fill="none"/>` : ``}
+    <circle cx="${x}" cy="250" r="25" stroke="${color}" fill="none" stroke-width="3"/>
+    <line x1="${x}" y1="275" x2="${x}" y2="340" stroke="${color}" stroke-width="3"/>
+    <line x1="${x}" y1="300" x2="${x-30}" y2="310" stroke="${color}" stroke-width="3"/>
+    <line x1="${x}" y1="300" x2="${x+30}" y2="310" stroke="${color}" stroke-width="3"/>
+    <line x1="${x}" y1="340" x2="${x-20}" y2="380" stroke="${color}" stroke-width="3"/>
+    <line x1="${x}" y1="340" x2="${x+20}" y2="380" stroke="${color}" stroke-width="3"/>
+    <text x="${x-40}" y="420" class="label">${name}</text>
+    `;
+}
+
 const scenes = [
+
 {
-draw: function(svg){
+draw: function(){
 svg.innerHTML = `
 <rect width="800" height="500" fill="#f4f1ea"/>
 <line x1="100" y1="400" x2="700" y2="400" stroke="#999" stroke-width="3"/>
 
-<!-- Zwei Jünger -->
-<circle cx="300" cy="300" r="25" stroke="#333" fill="none" stroke-width="3" class="appear"/>
-<line x1="300" y1="325" x2="300" y2="380" stroke="#333" stroke-width="3"/>
-<line x1="300" y1="350" x2="270" y2="360" stroke="#333" stroke-width="3"/>
-<line x1="300" y1="350" x2="330" y2="360" stroke="#333" stroke-width="3"/>
+${drawPerson(280, "#2d6cdf", "Kleopas")}
+${drawPerson(420, "#27ae60", "Jünger")}
 
-<circle cx="400" cy="300" r="25" stroke="#333" fill="none" stroke-width="3" class="appear"/>
-<line x1="400" y1="325" x2="400" y2="380" stroke="#333" stroke-width="3"/>
-<line x1="400" y1="350" x2="370" y2="360" stroke="#333" stroke-width="3"/>
-<line x1="400" y1="350" x2="430" y2="360" stroke="#333" stroke-width="3"/>
-
-<text x="200" y="120" class="speech">„Wir hofften, er sei der Retter…“</text>
+<text x="180" y="120" class="speech">
+„Wir hofften, er sei der Retter Israels…“
+</text>
 `;
 }
 },
+
 {
-draw: function(svg){
+draw: function(){
 svg.innerHTML = `
 <rect width="800" height="500" fill="#f4f1ea"/>
 <line x1="100" y1="400" x2="700" y2="400" stroke="#999" stroke-width="3"/>
 
-<!-- Drei Personen -->
-${drawPerson(250)}
-${drawPerson(350)}
-${drawPerson(450)}
+${drawPerson(230, "#2d6cdf", "Kleopas")}
+${drawPerson(370, "#27ae60", "Jünger")}
+${drawPerson(510, "#c0392b", "Jesus", true)}
 
-<text x="150" y="100" class="speech">Jesus geht mit – doch sie erkennen ihn nicht.</text>
+<text x="120" y="100" class="speech">
+Ein Fremder schließt sich an.
+</text>
 `;
 }
 },
+
 {
-draw: function(svg){
+draw: function(){
 svg.innerHTML = `
 <rect width="800" height="500" fill="#f4f1ea"/>
 
 <!-- Tisch -->
-<rect x="250" y="300" width="300" height="20" fill="#999"/>
-<rect x="280" y="320" width="240" height="20" fill="#bbb"/>
+<rect x="250" y="320" width="300" height="15" fill="#999"/>
 
-${drawPerson(320)}
-${drawPerson(480)}
-
-<!-- Jesus -->
-<circle cx="400" cy="250" r="25" stroke="#333" fill="none" stroke-width="3"/>
-<line x1="400" y1="275" x2="400" y2="330" stroke="#333" stroke-width="3"/>
+${drawPerson(300, "#2d6cdf", "Kleopas")}
+${drawPerson(500, "#27ae60", "Jünger")}
+${drawPerson(400, "#c0392b", "Jesus", true)}
 
 <!-- Brot -->
-<circle cx="400" cy="310" r="10" fill="#333" class="appear"/>
+<circle cx="400" cy="330" r="10" fill="#c0392b"/>
 
-<text x="170" y="120" class="speech">Beim Brotbrechen erkennen sie ihn.</text>
+<text x="160" y="120" class="speech">
+Beim Brotbrechen werden ihre Augen geöffnet.
+</text>
 `;
 }
 },
+
 {
-draw: function(svg){
+draw: function(){
 svg.innerHTML = `
 <rect width="800" height="500" fill="#f4f1ea"/>
-
-${drawPerson(300)}
-${drawPerson(500)}
-
 <line x1="100" y1="400" x2="700" y2="400" stroke="#999" stroke-width="3"/>
 
-<text x="200" y="100" class="speech">„Brannte nicht unser Herz?“</text>
-<text x="200" y="140" class="speech">Sie kehren nach Jerusalem zurück.</text>
+${drawPerson(300, "#2d6cdf", "Kleopas")}
+${drawPerson(500, "#27ae60", "Jünger")}
+
+<text x="200" y="120" class="speech">
+„Brannte nicht unser Herz?“
+</text>
+<text x="200" y="160" class="speech">
+Sie kehren nach Jerusalem zurück.
+</text>
 `;
 }
 }
+
 ];
 
-function drawPerson(x){
-return `
-<circle cx="${x}" cy="250" r="25" stroke="#333" fill="none" stroke-width="3"/>
-<line x1="${x}" y1="275" x2="${x}" y2="330" stroke="#333" stroke-width="3"/>
-<line x1="${x}" y1="300" x2="${x-30}" y2="310" stroke="#333" stroke-width="3"/>
-<line x1="${x}" y1="300" x2="${x+30}" y2="310" stroke="#333" stroke-width="3"/>
-<line x1="${x}" y1="330" x2="${x-20}" y2="360" stroke="#333" stroke-width="3"/>
-<line x1="${x}" y1="330" x2="${x+20}" y2="360" stroke="#333" stroke-width="3"/>
-`;
-}
-
 let current = 0;
-const svg = document.getElementById("scene");
 
 function nextScene(){
-scenes[current].draw(svg);
+scenes[current].draw();
 current = (current + 1) % scenes.length;
 }
 
 document.body.addEventListener("click", nextScene);
-
 nextScene();
+
 </script>
 
 </body>
