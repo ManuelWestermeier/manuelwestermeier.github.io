@@ -1,0 +1,165 @@
+ <!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Minimalistischer Comic – Der Weg nach Emmaus</title>
+<style>
+    body {
+        margin: 0;
+        background: #f4f1ea;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    #comic {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    svg {
+        width: 80vw;
+        max-width: 900px;
+        height: 60vh;
+    }
+
+    .speech {
+        font-size: 18px;
+        fill: #222;
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+    }
+
+    .hint {
+        position: absolute;
+        bottom: 20px;
+        font-size: 14px;
+        color: #777;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .appear {
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+    }
+</style>
+</head>
+<body>
+
+<div id="comic">
+    <svg id="scene" viewBox="0 0 800 500"></svg>
+    <div class="hint">Click → nächste Szene</div>
+</div>
+
+<script>
+const scenes = [
+{
+draw: function(svg){
+svg.innerHTML = `
+<rect width="800" height="500" fill="#f4f1ea"/>
+<line x1="100" y1="400" x2="700" y2="400" stroke="#999" stroke-width="3"/>
+
+<!-- Zwei Jünger -->
+<circle cx="300" cy="300" r="25" stroke="#333" fill="none" stroke-width="3" class="appear"/>
+<line x1="300" y1="325" x2="300" y2="380" stroke="#333" stroke-width="3"/>
+<line x1="300" y1="350" x2="270" y2="360" stroke="#333" stroke-width="3"/>
+<line x1="300" y1="350" x2="330" y2="360" stroke="#333" stroke-width="3"/>
+
+<circle cx="400" cy="300" r="25" stroke="#333" fill="none" stroke-width="3" class="appear"/>
+<line x1="400" y1="325" x2="400" y2="380" stroke="#333" stroke-width="3"/>
+<line x1="400" y1="350" x2="370" y2="360" stroke="#333" stroke-width="3"/>
+<line x1="400" y1="350" x2="430" y2="360" stroke="#333" stroke-width="3"/>
+
+<text x="200" y="120" class="speech">„Wir hofften, er sei der Retter…“</text>
+`;
+}
+},
+{
+draw: function(svg){
+svg.innerHTML = `
+<rect width="800" height="500" fill="#f4f1ea"/>
+<line x1="100" y1="400" x2="700" y2="400" stroke="#999" stroke-width="3"/>
+
+<!-- Drei Personen -->
+${drawPerson(250)}
+${drawPerson(350)}
+${drawPerson(450)}
+
+<text x="150" y="100" class="speech">Jesus geht mit – doch sie erkennen ihn nicht.</text>
+`;
+}
+},
+{
+draw: function(svg){
+svg.innerHTML = `
+<rect width="800" height="500" fill="#f4f1ea"/>
+
+<!-- Tisch -->
+<rect x="250" y="300" width="300" height="20" fill="#999"/>
+<rect x="280" y="320" width="240" height="20" fill="#bbb"/>
+
+${drawPerson(320)}
+${drawPerson(480)}
+
+<!-- Jesus -->
+<circle cx="400" cy="250" r="25" stroke="#333" fill="none" stroke-width="3"/>
+<line x1="400" y1="275" x2="400" y2="330" stroke="#333" stroke-width="3"/>
+
+<!-- Brot -->
+<circle cx="400" cy="310" r="10" fill="#333" class="appear"/>
+
+<text x="170" y="120" class="speech">Beim Brotbrechen erkennen sie ihn.</text>
+`;
+}
+},
+{
+draw: function(svg){
+svg.innerHTML = `
+<rect width="800" height="500" fill="#f4f1ea"/>
+
+${drawPerson(300)}
+${drawPerson(500)}
+
+<line x1="100" y1="400" x2="700" y2="400" stroke="#999" stroke-width="3"/>
+
+<text x="200" y="100" class="speech">„Brannte nicht unser Herz?“</text>
+<text x="200" y="140" class="speech">Sie kehren nach Jerusalem zurück.</text>
+`;
+}
+}
+];
+
+function drawPerson(x){
+return `
+<circle cx="${x}" cy="250" r="25" stroke="#333" fill="none" stroke-width="3"/>
+<line x1="${x}" y1="275" x2="${x}" y2="330" stroke="#333" stroke-width="3"/>
+<line x1="${x}" y1="300" x2="${x-30}" y2="310" stroke="#333" stroke-width="3"/>
+<line x1="${x}" y1="300" x2="${x+30}" y2="310" stroke="#333" stroke-width="3"/>
+<line x1="${x}" y1="330" x2="${x-20}" y2="360" stroke="#333" stroke-width="3"/>
+<line x1="${x}" y1="330" x2="${x+20}" y2="360" stroke="#333" stroke-width="3"/>
+`;
+}
+
+let current = 0;
+const svg = document.getElementById("scene");
+
+function nextScene(){
+scenes[current].draw(svg);
+current = (current + 1) % scenes.length;
+}
+
+document.body.addEventListener("click", nextScene);
+
+nextScene();
+</script>
+
+</body>
+</html>
