@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Immanuel Kant — Fake Instagram (modern)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-1:#071029;
+      --bg-2:#0b1220;
+      --card: rgba(255,255,255,0.04);
+      --muted:#94a3b8;
+      --accent-1:#6366f1;
+      --accent-2:#06b6d4;
+      --glass: rgba(255,255,255,0.06);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:'Inter',system-ui,Arial,sans-serif;
+      background:linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color:#e6eef8;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:28px;
+    }
+    .wrap{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:360px 1fr;gap:28px}
+
+    /* header */
+    .topbar{grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;margin-bottom:4px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent-1),#ef4444);display:flex;align-items:center;justify-content:center;font-weight:700}
+    .brand h1{font-size:16px;margin:0}
+    .brand p{margin:0;color:var(--muted);font-size:13px}
+    .actions{display:flex;gap:8px}
+    .btn{background:var(--glass);border:1px solid rgba(255,255,255,0.03);padding:8px 12px;border-radius:10px;color:inherit;font-weight:600;cursor:pointer}
+
+    /* profile */
+    .profile-card{background:var(--card);padding:22px;border-radius:var(--radius);backdrop-filter:blur(8px);box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    .profile-top{display:flex;gap:14px;align-items:center}
+    .avatar{width:84px;height:84px;border-radius:14px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
+    .profile-info h2{margin:0;font-size:20px}
+    .profile-info .username{color:var(--muted);margin-top:2px}
+    .bio{margin-top:12px;color:#dce7f8;line-height:1.5}
+    .tags{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}
+    .tag{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:999px;font-size:13px;color:var(--muted)}
+
+    /* feed */
+    .feed{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+    .post{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;overflow:hidden;box-shadow:0 12px 40px rgba(2,6,23,0.6);display:flex;flex-direction:column}
+    .post-media{width:100%;height:280px;display:block;position:relative}
+    .post-media img{width:100%;height:100%;object-fit:cover;display:block}
+    .post-body{padding:18px}
+    .post-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .post-head .small-avatar{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-weight:700}
+    .post-head .meta{font-size:14px}
+    .post-head .meta .handle{color:var(--muted)}
+    .post-text{line-height:1.6;color:#e6eef8;margin-bottom:12px}
+    .hashtags{color:var(--accent-2);font-weight:600;margin-bottom:10px}
+    .reactions{display:flex;gap:14px;align-items:center;border-top:1px solid rgba(255,255,255,0.03);padding:12px 18px}
+    .reaction{display:flex;align-items:center;gap:8px;color:var(--muted);font-weight:600}
+
+    /* comments */
+    .comments{padding:0 18px 18px;border-top:1px solid rgba(255,255,255,0.02)}
+    .comment{margin-top:10px;font-size:14px;color:#dbe9ff}
+
+    /* responsive */
+    @media (max-width:1000px){
+      .wrap{grid-template-columns:1fr;padding:0 12px}
+      .feed{grid-template-columns:1fr}
+      .post-media{height:220px}
+    }
+    @media (max-width:460px){
+      .post-media{height:180px}
+      .avatar{width:64px;height:64px}
+    }
+
+    /* small interactions */
+    .post:hover{transform:translateY(-6px);transition:transform .18s ease}
+    .btn:hover{transform:translateY(-2px)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">IK</div>
+        <div>
+          <h1>Immanuel Kant</h1>
+          <p>Fake-Instagram • @denk_selbst</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn">Folgen</button>
+        <button class="btn">Nachricht</button>
+      </div>
+    </div>
+
+    <aside class="profile-card">
+      <div class="profile-top">
+        <div class="avatar">IK</div>
+        <div class="profile-info">
+          <h2>Immanuel Kant</h2>
+          <div class="username">@denk_selbst</div>
+          <div class="username" style="font-size:13px;margin-top:6px;color:var(--muted)">Königsberg</div>
+        </div>
+      </div>
+      <div class="bio">Philosoph aus Königsberg. „Habe Mut, dich deines eigenen Verstandes zu bedienen.“</div>
+      <div class="tags">
+        <span class="tag">#Aufklärung</span>
+        <span class="tag">#Selbstdenken</span>
+        <span class="tag">#Vernunft</span>
+      </div>
+    </aside>
+
+    <main>
+      <section class="feed">
+
+        <!-- Post 1 -->
+        <article class="post">
+          <div class="post-media">
+            <img src="https://cdn.pixabay.com/photo/2014/04/02/11/18/people-305836_1280.png" alt="Viele Menschen mit Handys, eine Person liest ein Buch" />
+          </div>
+          <div class="post-body">
+            <div class="post-head">
+              <div class="small-avatar">IK</div>
+              <div class="meta">
+                <div><strong>Immanuel Kant</strong></div>
+                <div class="handle">@denk_selbst • Vor 3 Std.</div>
+              </div>
+            </div>
+            <div class="post-text">Viele Menschen glauben heute alles, was sie im Internet lesen. Doch Aufklärung bedeutet, selbst zu denken und Informationen zu hinterfragen. Nur weil etwas viele Likes hat, heißt das nicht, dass es wahr ist.
+            <br><br>Die größte Freiheit des Menschen ist die Fähigkeit, seinen eigenen Verstand zu benutzen. Prüft Informationen, denkt kritisch und bildet euch eure eigene Meinung.</div>
+            <div class="hashtags">#Aufklärung #Selbstdenken #KritischesDenken #FakeNews</div>
+          </div>
+          <div class="reactions">
+            <div class="reaction">❤️ 1.2k</div>
+            <div class="reaction">💬 342</div>
+            <div class="reaction">🔁 46</div>
+          </div>
+          <div class="comments">
+            <div class="comment">• "True, man sollte echt nicht alles glauben."</div>
+            <div class="comment">• "Aber manchmal ist es schwer zu wissen, was stimmt."</div>
+            <div class="comment">• "Eigene Meinung bilden ist wichtig."</div>
+          </div>
+        </article>
+
+        <!-- Post 2 -->
+        <article class="post">
+          <div class="post-media">
+            <img src="https://media.istockphoto.com/id/1350008042/de/foto/kanarienvogel-fliegt-von-einem-vogelkäfig-der-von-händen-gedrückt-wird.jpg?s=612x612&w=0&k=20&c=PUEvGtNcl66YVWn6ISrUYU1b8BgAywgY_HnWHjOcwrw=" alt="Vogel fliegt aus Käfig - Symbol für Freiheit" />
+          </div>
+          <div class="post-body">
+            <div class="post-head">
+              <div class="small-avatar">IK</div>
+              <div class="meta">
+                <div><strong>Immanuel Kant</strong></div>
+                <div class="handle">@denk_selbst • Gestern</div>
+              </div>
+            </div>
+            <div class="post-text">Aufklärung bedeutet Freiheit: Freiheit zu denken, zu lernen und seine Meinung zu sagen. Bildung ist der Schlüssel dazu. Wenn Menschen Zugang zu Wissen haben, können sie bessere Entscheidungen treffen.
+            <br><br>Auch heute müssen wir für Vernunft, Toleranz und Gleichberechtigung eintreten. Eine aufgeklärte Gesellschaft basiert auf Respekt, Wissen und kritischem Denken.</div>
+            <div class="hashtags">#Freiheit #Bildung #Vernunft #Aufklärung</div>
+          </div>
+          <div class="reactions">
+            <div class="reaction">❤️ 980</div>
+            <div class="reaction">💬 210</div>
+            <div class="reaction">🔁 72</div>
+          </div>
+          <div class="comments">
+            <div class="comment">• "Bildung sollte überall kostenlos sein."</div>
+            <div class="comment">• "Respekt und Toleranz sind mega wichtig."</div>
+            <div class="comment">• "Mehr Leute sollten sich wirklich mit solchen Themen beschäftigen."</div>
+          </div>
+        </article>
+
+      </section>
+    </main>
+
+  </div>
+</body>
+</html>
