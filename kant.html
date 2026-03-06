@@ -10,13 +10,13 @@
 
 <script>
 tailwind.config = {
-theme: {
-extend: {
-fontFamily: {
-sans: ['Inter','ui-sans-serif','system-ui']
-}
-}
-}
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter','ui-sans-serif','system-ui']
+      }
+    }
+  }
 }
 </script>
 
@@ -28,268 +28,273 @@ sans: ['Inter','ui-sans-serif','system-ui']
 
 <div class="max-w-6xl mx-auto p-6">
 
-<!-- Top bar -->
-<div class="navbar bg-base-200/20 backdrop-blur rounded-2xl mb-6 shadow-lg">
-<div class="flex-1">
-<a class="btn btn-ghost text-xl">PhilosophyFeed</a>
-</div>
-<div class="flex gap-2">
-<button class="btn btn-sm btn-outline">Folgen</button>
-<button class="btn btn-sm btn-primary">Nachricht</button>
-</div>
-</div>
-
-<div class="grid lg:grid-cols-3 gap-6">
-
-<!-- Profile -->
-<div class="card bg-base-200/20 backdrop-blur shadow-xl">
-<div class="card-body">
-
-<div class="flex items-center gap-4">
-<img class="w-20 h-20 rounded-xl object-cover"
-src="https://cdn.pixabay.com/photo/2017/04/08/11/07/nerve-cells-2213009_1280.jpg">
-
-<div>
-<h2 class="text-xl font-bold">Jean-Jacques Rousseau</h2>
-<p class="text-sm opacity-70">@retour_nature</p>
-<p class="text-xs opacity-60">Genf • Philosoph</p>
-</div>
-</div>
-
-<p class="mt-4 text-sm leading-relaxed">
-Philosoph der Aufklärung, aber Kritiker des blinden Fortschritts.
-Bekannt für die Idee des <strong>Gemeinwillens</strong> und den Aufruf
-<strong>„Zurück zur Natur“</strong>.
-</p>
-
-<div class="flex flex-wrap gap-2 mt-3">
-<span class="badge badge-outline">#Aufklärung</span>
-<span class="badge badge-outline">#Natur</span>
-<span class="badge badge-outline">#Gemeinwille</span>
-<span class="badge badge-outline">#Philosophie</span>
-</div>
-
-</div>
-</div>
-
-
-<!-- FEED -->
-<div class="lg:col-span-2 flex flex-col gap-6">
-
-<!-- Buch Post 1 -->
-<div class="card bg-base-200/20 backdrop-blur shadow-xl">
-<div class="card-body">
-<h2 class="card-title">📜 Mein erster großer Erfolg</h2>
-
-<p>
-1750 stellte ich mir eine Frage:
-Machen Wissenschaft und Kunst den Menschen wirklich besser?
-</p>
-
-<p>
-Diese Gedanken schrieb ich in meinem Werk
-<strong>„Discours sur les sciences et les arts“</strong>.
-</p>
-
-<p>
-Viele hielten meine Idee für verrückt – doch genau dieser Text
-gewann den Preis der Académie de Dijon.
-</p>
-
-<p>
-Ironisch, nicht wahr?
-Ein Text, der den Fortschritt kritisiert,
-wird von einer Akademie ausgezeichnet.
-</p>
-
-<div class="text-primary font-semibold">
-#Rousseau #Philosophie #Aufklärung
-</div>
-</div>
-</div>
-
-
-<!-- Buch Post 2 -->
-<div class="card bg-base-200/20 backdrop-blur shadow-xl">
-<div class="card-body">
-
-<h2 class="card-title">⚖️ Woher kommt Ungleichheit?</h2>
-
-<p>
-Nach meinem ersten Diskurs ließ mich eine Frage nicht los:
-Warum sind Menschen so ungleich?
-</p>
-
-<p>
-In meinem Werk
-<strong>„Discours sur l’origine et les fondements de l’inégalité parmi les hommes“</strong>
-untersuchte ich genau das.
-</p>
-
-<p>
-Der Mensch wird frei geboren –
-doch viele Ungleichheiten entstehen erst durch die Gesellschaft.
-</p>
+  <!-- Top bar -->
+  <div class="navbar bg-base-200/20 backdrop-blur rounded-2xl mb-6 shadow-lg">
+    <div class="flex-1">
+      <a class="btn btn-ghost text-xl">PhilosophyFeed</a>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn btn-sm btn-outline">Folgen</button>
+      <button class="btn btn-sm btn-primary">Nachricht</button>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+
+    <!-- Profile -->
+    <div class="card bg-base-200/20 backdrop-blur shadow-xl">
+      <div class="card-body">
+
+        <div class="flex items-center gap-4">
+          <img class="w-20 h-20 rounded-xl object-cover"
+               src="https://cdn.pixabay.com/photo/2017/04/08/11/07/nerve-cells-2213009_1280.jpg" alt="Rousseau">
+
+          <div>
+            <h2 class="text-xl font-bold">Jean-Jacques Rousseau</h2>
+            <p class="text-sm opacity-70">@retour_nature</p>
+            <p class="text-xs opacity-60">Genf • Philosoph</p>
+          </div>
+        </div>
+
+        <p class="mt-4 text-sm leading-relaxed">
+          Philosoph der Aufklärung, aber Kritiker des blinden Fortschritts.
+          Bekannt für die Idee des <strong>Gemeinwillens</strong> und den Aufruf
+          <strong>„Zurück zur Natur“</strong>.
+        </p>
+
+        <div class="flex flex-wrap gap-2 mt-3">
+          <span class="badge badge-outline">#Aufklärung</span>
+          <span class="badge badge-outline">#Natur</span>
+          <span class="badge badge-outline">#Gemeinwille</span>
+          <span class="badge badge-outline">#Philosophie</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FEED -->
+    <div class="lg:col-span-2 flex flex-col gap-6">
+
+      <!-- Buch Post 1 -->
+      <div class="card bg-base-200/20 backdrop-blur shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">📜 Mein erster großer Erfolg</h2>
+
+          <p>
+            1750 stellte ich mir eine Frage:
+            Machen Wissenschaft und Kunst den Menschen wirklich besser?
+          </p>
+
+          <p>
+            Diese Gedanken schrieb ich in meinem Werk
+            <strong>„Discours sur les sciences et les arts“</strong>.
+          </p>
+
+          <p>
+            Viele hielten meine Idee für verrückt – doch genau dieser Text
+            gewann den Preis der Académie de Dijon.
+          </p>
+
+          <p>
+            Ironisch, nicht wahr?
+            Ein Text, der den Fortschritt kritisiert,
+            wird von einer Akademie ausgezeichnet.
+          </p>
+
+          <div class="text-primary font-semibold">
+            #Rousseau #Philosophie #Aufklärung
+          </div>
+        </div>
+      </div>
+
+      <!-- Buch Post 2 -->
+      <div class="card bg-base-200/20 backdrop-blur shadow-xl">
+        <div class="card-body">
+
+          <h2 class="card-title">⚖️ Woher kommt Ungleichheit?</h2>
+
+          <p>
+            Nach meinem ersten Diskurs ließ mich eine Frage nicht los:
+            Warum sind Menschen so ungleich?
+          </p>
+
+          <p>
+            In meinem Werk
+            <strong>„Discours sur l’origine et les fondements de l’inégalité parmi les hommes“</strong>
+            untersuchte ich genau das.
+          </p>
+
+          <p>
+            Der Mensch wird frei geboren –
+            doch viele Ungleichheiten entstehen erst durch die Gesellschaft.
+          </p>
+
+          <div class="text-primary font-semibold">
+            #Gesellschaft #Rousseau #Philosophie
+          </div>
 
-<div class="text-primary font-semibold">
-#Gesellschaft #Rousseau #Philosophie
-</div>
+        </div>
+      </div>
 
-</div>
-</div>
+      <!-- Buch Post 3 -->
+      <div class="card bg-base-200/20 backdrop-blur shadow-xl">
+        <div class="card-body">
 
+          <h2 class="card-title">🗳 Über Freiheit und Politik</h2>
 
-<!-- Buch Post 3 -->
-<div class="card bg-base-200/20 backdrop-blur shadow-xl">
-<div class="card-body">
+          <p>
+            In meinem Werk <strong>„Du contrat social“</strong> schrieb ich einen Satz,
+            der mich bis heute begleitet:
+          </p>
 
-<h2 class="card-title">🗳 Über Freiheit und Politik</h2>
-
-<p>
-In meinem Werk <strong>„Du contrat social“</strong> schrieb ich einen Satz,
-der mich bis heute begleitet:
-</p>
-
-<p class="italic text-lg">
-„Der Mensch ist frei geboren, und überall liegt er in Ketten.“
-</p>
-
-<p>
-Eine gerechte Gesellschaft kann nur entstehen,
-wenn die Macht vom Volk ausgeht.
-</p>
-
-<div class="text-primary font-semibold">
-#Freiheit #Politik #Gesellschaft
-</div>
-
-</div>
-</div>
-
-
-<!-- Buch Post 4 -->
-<div class="card bg-base-200/20 backdrop-blur shadow-xl">
-<div class="card-body">
-
-<h2 class="card-title">🌱 Wie sollte man Kinder erziehen?</h2>
-
-<p>
-In meinem Buch <strong>„Émile ou De l’éducation“</strong>
-fragte ich mich:
-Wie erzieht man einen freien Menschen?
-</p>
-
-<p>
-Kinder sollten nicht nur Regeln lernen,
-sondern die Welt selbst entdecken.
-</p>
-
-<p>
-Die Natur ist oft der beste Lehrer.
-</p>
-
-<div class="text-primary font-semibold">
-#Erziehung #Rousseau #Bildung
-</div>
-
-</div>
-</div>
-
-
-<!-- Buch Post 5 -->
-<div class="card bg-base-200/20 backdrop-blur shadow-xl">
-<div class="card-body">
-
-<h2 class="card-title">❤️ Gefühle und Natur</h2>
-
-<p>
-In meinem Roman
-<strong>„Julie ou la Nouvelle Héloïse“</strong>
-schrieb ich über Liebe, Natur und menschliche Gefühle.
-</p>
-
-<p>
-Denn der Mensch ist nicht nur ein denkendes Wesen –
-sondern auch ein fühlendes.
-</p>
-
-<div class="text-primary font-semibold">
-#Literatur #Gefühle #Natur
-</div>
-
-</div>
-</div>
-
-
-<!-- NEUER POST -->
-<div class="card bg-base-200/20 backdrop-blur shadow-xl">
-
-<figure>
-<img src="https://cdn.pixabay.com/photo/2016/11/29/03/53/city-1869716_1280.jpg"
-class="w-full h-72 object-cover"/>
-</figure>
-
-<div class="card-body">
-
-<h2 class="card-title">🏙 Der „zivilisatorische Fortschritt“</h2>
-
-<p>
-Der „zivilisatorische Fortschritt“ beschreibt scheinbar eine Verbesserung
-der Gesellschaft. Doch ist es wirklich so?
-</p>
-
-<p>
-Man muss zwischen den Zeilen lesen,
-das Versteckte erkennen und Dinge hinterfragen.
-So klar dieses Wort auch erscheinen mag –
-es ist nicht so eindeutig, wie es scheint.
-</p>
-
-<p>
-Ich bin überzeugt, dass die Entwicklung von Wissenschaften,
-Künsten und gesellschaftlicher Verfeinerung
-den Menschen von seinem ursprünglichen,
-<strong>guten Naturzustand</strong> entfremdet hat.
-</p>
-
-<p>
-Dieser Fortschritt ist nicht nur eine Verbesserung der Lebensumstände.
-Er kann auch eine Quelle von
-Ungleichheit, Unfreiheit und künstlichen Bedürfnissen sein.
-</p>
-
-<div class="text-primary font-semibold">
-#Fortschritt #Gesellschaft #Natur
-</div>
-
-</div>
-</div>
-
-
-<!-- Quote -->
-<div class="card bg-base-200/20 backdrop-blur shadow-xl">
-<div class="card-body">
-
-<h2 class="card-title">Kurzer Gedanke</h2>
-
-<p class="text-lg italic">
-„Der Mensch ist frei geboren – und überall liegt er in Ketten.“
-</p>
-
-<p>
-Eine Gesellschaft sollte Freiheit ermöglichen,
-nicht sie einschränken.
-</p>
-
-<div class="text-primary font-semibold">
-#Zitat #Rousseau #Freiheit
-</div>
-
-</div>
-</div>
-
-</div>
-</div>
+          <p class="italic text-lg">
+            „Der Mensch ist frei geboren, und überall liegt er in Ketten.“
+          </p>
+
+          <p>
+            Eine gerechte Gesellschaft kann nur entstehen,
+            wenn die Macht vom Volk ausgeht.
+          </p>
+
+          <div class="text-primary font-semibold">
+            #Freiheit #Politik #Gesellschaft
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Buch Post 4 -->
+      <div class="card bg-base-200/20 backdrop-blur shadow-xl">
+        <div class="card-body">
+
+          <h2 class="card-title">🌱 Wie sollte man Kinder erziehen?</h2>
+
+          <p>
+            In meinem Buch <strong>„Émile ou De l’éducation“</strong>
+            fragte ich mich:
+            Wie erzieht man einen freien Menschen?
+          </p>
+
+          <p>
+            Kinder sollten nicht nur Regeln lernen,
+            sondern die Welt selbst entdecken.
+          </p>
+
+          <p>
+            Die Natur ist oft der beste Lehrer.
+          </p>
+
+          <div class="text-primary font-semibold">
+            #Erziehung #Rousseau #Bildung
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Buch Post 5 (mit Personenbild) -->
+      <div class="card bg-base-200/20 backdrop-blur shadow-xl">
+        <figure>
+          <!-- Bild mit verschiedenen Gesichtern passend für einen Post über Gefühle und Beziehungen -->
+          <img src="https://cdn.pixabay.com/photo/2014/04/02/11/18/people-305836_1280.png"
+               class="w-full h-72 object-cover" alt="verschiedene Gesichter">
+        </figure>
+
+        <div class="card-body">
+
+          <h2 class="card-title">❤️ Gefühle und Natur</h2>
+
+          <p>
+            In meinem Roman
+            <strong>„Julie ou la Nouvelle Héloïse“</strong>
+            schrieb ich über Liebe, Natur und menschliche Gefühle.
+          </p>
+
+          <p>
+            Denn der Mensch ist nicht nur ein denkendes Wesen –
+            sondern auch ein fühlendes.
+          </p>
+
+          <div class="text-primary font-semibold">
+            #Literatur #Gefühle #Natur
+          </div>
+
+        </div>
+      </div>
+
+      <!-- NEUER POST -->
+      <div class="card bg-base-200/20 backdrop-blur shadow-xl">
+
+        <figure>
+          <img src="https://cdn.pixabay.com/photo/2016/11/29/03/53/city-1869716_1280.jpg"
+               class="w-full h-72 object-cover" alt="Stadt vs Natur">
+        </figure>
+
+        <div class="card-body">
+
+          <h2 class="card-title">🏙 Der „zivilisatorische Fortschritt“</h2>
+
+          <p>
+            Der „zivilisatorische Fortschritt“ beschreibt scheinbar eine Verbesserung
+            der Gesellschaft. Doch ist es wirklich so?
+          </p>
+
+          <p>
+            Man muss zwischen den Zeilen lesen,
+            das Versteckte erkennen und Dinge hinterfragen.
+            So klar dieses Wort auch erscheinen mag –
+            es ist nicht so eindeutig, wie es scheint.
+          </p>
+
+          <p>
+            Ich bin überzeugt, dass die Entwicklung von Wissenschaften,
+            Künsten und gesellschaftlicher Verfeinerung
+            den Menschen von seinem ursprünglichen,
+            <strong>guten Naturzustand</strong> entfremdet hat.
+          </p>
+
+          <p>
+            Dieser Fortschritt ist nicht nur eine Verbesserung der Lebensumstände.
+            Er kann auch eine Quelle von
+            Ungleichheit, Unfreiheit und künstlichen Bedürfnissen sein.
+          </p>
+
+          <div class="text-primary font-semibold">
+            #Fortschritt #Gesellschaft #Natur
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Kurzer Gedanke (mit Vogelbild: Symbol für Freiheit) -->
+      <div class="card bg-base-200/20 backdrop-blur shadow-xl">
+        <figure>
+          <!-- Vogel, der freigelassen wird – passt zur Metapher der Freiheit -->
+          <img src="https://media.istockphoto.com/id/1350008042/de/foto/kanarienvogel-fliegt-von-einem-vogelkäfig-der-von-händen-gedrückt-wird.jpg?s=612x612&w=0&k=20&c=PUEvGtNcl66YVWn6ISrUYU1b8BgAywgY_HnWHjOcwrw="
+               class="w-full h-72 object-cover" alt="Vogel wird freigelassen">
+        </figure>
+
+        <div class="card-body">
+
+          <h2 class="card-title">Kurzer Gedanke</h2>
+
+          <p class="text-lg italic">
+            „Der Mensch ist frei geboren – und überall liegt er in Ketten.“
+          </p>
+
+          <p>
+            Eine Gesellschaft sollte Freiheit ermöglichen,
+            nicht sie einschränken.
+          </p>
+
+          <div class="text-primary font-semibold">
+            #Zitat #Rousseau #Freiheit
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 </body>
