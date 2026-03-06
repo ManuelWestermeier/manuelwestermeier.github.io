@@ -75,8 +75,14 @@ tailwind.config = {
     <!-- FEED -->
     <div class="lg:col-span-2 flex flex-col gap-6">
 
-      <!-- Buch Post 1 -->
+      <!-- Buch Post 1 (mit lokalem Bild /IMG_0521.jpeg) -->
       <div class="card bg-base-200/20 backdrop-blur shadow-xl">
+        <figure class="m-0">
+          <!-- "ganz open": volles Bild innerhalb der Card -->
+          <img src="/IMG_0521.jpeg"
+               class="w-full h-72 object-cover max-w-none" alt="IMG_0521 - Mein erster großer Erfolg">
+        </figure>
+
         <div class="card-body">
           <h2 class="card-title">📜 Mein erster großer Erfolg</h2>
 
@@ -95,14 +101,35 @@ tailwind.config = {
             gewann den Preis der Académie de Dijon.
           </p>
 
-          <p>
-            Ironisch, nicht wahr?
-            Ein Text, der den Fortschritt kritisiert,
-            wird von einer Akademie ausgezeichnet.
-          </p>
-
           <div class="text-primary font-semibold">
             #Rousseau #Philosophie #Aufklärung
+          </div>
+
+          <!-- Comments -->
+          <div class="mt-4 border-t border-white/10 pt-4">
+            <div class="flex items-start gap-3">
+              <img class="w-9 h-9 rounded-full object-cover" src="https://i.pravatar.cc/40?u=anna" alt="Anna">
+              <div>
+                <div class="text-sm font-semibold">Anna_Kritik <span class="text-xs text-white/60">· 2d</span></div>
+                <div class="text-sm text-white/80">Spannend — hätte nie gedacht, dass gerade eine Akademie so einen Text auszeichnet. Paradox.</div>
+              </div>
+            </div>
+
+            <div class="mt-3 flex items-start gap-3">
+              <img class="w-9 h-9 rounded-full object-cover" src="https://i.pravatar.cc/40?u=historiker" alt="Historiker">
+              <div>
+                <div class="text-sm font-semibold">Historiker <span class="text-xs text-white/60">· 3d</span></div>
+                <div class="text-sm text-white/80">Gute Zusammenfassung — zeigt das Paradox von Rousseaus Kritik am Fortschritt.</div>
+              </div>
+            </div>
+
+            <div class="mt-3 flex items-start gap-3">
+              <img class="w-9 h-9 rounded-full object-cover" src="https://i.pravatar.cc/40?u=leser42" alt="Leser42">
+              <div>
+                <div class="text-sm font-semibold">Leser42 <span class="text-xs text-white/60">· 5d</span></div>
+                <div class="text-sm text-white/80">Habe das Werk gelesen — provozierend und notwendig.</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -133,6 +160,17 @@ tailwind.config = {
             #Gesellschaft #Rousseau #Philosophie
           </div>
 
+          <!-- Comments -->
+          <div class="mt-4 border-t border-white/10 pt-4">
+            <div class="flex items-start gap-3">
+              <img class="w-9 h-9 rounded-full object-cover" src="https://i.pravatar.cc/40?u=sven" alt="Sven">
+              <div>
+                <div class="text-sm font-semibold">SvenTheorie <span class="text-xs text-white/60">· 1w</span></div>
+                <div class="text-sm text-white/80">Rousseau zeigt, wie Gesellschaft Strukturen schafft — zeitlos relevant.</div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -158,6 +196,17 @@ tailwind.config = {
 
           <div class="text-primary font-semibold">
             #Freiheit #Politik #Gesellschaft
+          </div>
+
+          <!-- Comments -->
+          <div class="mt-4 border-t border-white/10 pt-4">
+            <div class="flex items-start gap-3">
+              <img class="w-9 h-9 rounded-full object-cover" src="https://i.pravatar.cc/40?u=politiker" alt="Politiker">
+              <div>
+                <div class="text-sm font-semibold">PolitikFan <span class="text-xs text-white/60">· 6d</span></div>
+                <div class="text-sm text-white/80">Starker Satz — erklärt viele moderne Demokratiedebatten.</div>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -193,10 +242,9 @@ tailwind.config = {
 
       <!-- Buch Post 5 (mit Personenbild) -->
       <div class="card bg-base-200/20 backdrop-blur shadow-xl">
-        <figure>
-          <!-- Bild mit verschiedenen Gesichtern passend für einen Post über Gefühle und Beziehungen -->
+        <figure class="m-0">
           <img src="https://cdn.pixabay.com/photo/2014/04/02/11/18/people-305836_1280.png"
-               class="w-full h-72 object-cover" alt="verschiedene Gesichter">
+               class="w-full h-72 object-cover max-w-none" alt="verschiedene Gesichter">
         </figure>
 
         <div class="card-body">
@@ -218,15 +266,25 @@ tailwind.config = {
             #Literatur #Gefühle #Natur
           </div>
 
+          <!-- Comments -->
+          <div class="mt-4 border-t border-white/10 pt-4">
+            <div class="flex items-start gap-3">
+              <img class="w-9 h-9 rounded-full object-cover" src="https://i.pravatar.cc/40?u=marie" alt="Marie">
+              <div>
+                <div class="text-sm font-semibold">Marie_Leser <span class="text-xs text-white/60">· 4d</span></div>
+                <div class="text-sm text-white/80">Wunderschöne Darstellung von Gefühlen — besonders die Naturbilder.</div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
       <!-- NEUER POST -->
       <div class="card bg-base-200/20 backdrop-blur shadow-xl">
-
-        <figure>
-          <img src="https://cdn.pixabay.com/photo/2025/06/18/08/31/wheat-9666681_1280.jpg"
-               class="w-full h-72 object-cover" alt="Stadt vs Natur">
+        <figure class="m-0">
+          <img src="https://cdn.pixabay.com/photo/2016/11/29/03/53/city-1869716_1280.jpg"
+               class="w-full h-72 object-cover max-w-none" alt="Stadt vs Natur">
         </figure>
 
         <div class="card-body">
@@ -262,15 +320,33 @@ tailwind.config = {
             #Fortschritt #Gesellschaft #Natur
           </div>
 
+          <!-- Comments -->
+          <div class="mt-4 border-t border-white/10 pt-4">
+            <div class="flex items-start gap-3">
+              <img class="w-9 h-9 rounded-full object-cover" src="https://i.pravatar.cc/40?u=philip" alt="Philip">
+              <div>
+                <div class="text-sm font-semibold">PhilipDenker <span class="text-xs text-white/60">· 2d</span></div>
+                <div class="text-sm text-white/80">Stimme größtenteils zu — Fortschritt bringt oft neue Zwänge.</div>
+              </div>
+            </div>
+
+            <div class="mt-3 flex items-start gap-3">
+              <img class="w-9 h-9 rounded-full object-cover" src="https://i.pravatar.cc/40?u=ina" alt="Ina">
+              <div>
+                <div class="text-sm font-semibold">Ina_Politik <span class="text-xs text-white/60">· 5d</span></div>
+                <div class="text-sm text-white/80">Diskussion eröffnet: Was ist echtes Wohlbefinden?</div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
       <!-- Kurzer Gedanke (mit Vogelbild: Symbol für Freiheit) -->
       <div class="card bg-base-200/20 backdrop-blur shadow-xl">
-        <figure>
-          <!-- Vogel, der freigelassen wird – passt zur Metapher der Freiheit -->
+        <figure class="m-0">
           <img src="https://media.istockphoto.com/id/1350008042/de/foto/kanarienvogel-fliegt-von-einem-vogelkäfig-der-von-händen-gedrückt-wird.jpg?s=612x612&w=0&k=20&c=PUEvGtNcl66YVWn6ISrUYU1b8BgAywgY_HnWHjOcwrw="
-               class="w-full h-72 object-cover" alt="Vogel wird freigelassen">
+               class="w-full h-72 object-cover max-w-none" alt="Vogel wird freigelassen">
         </figure>
 
         <div class="card-body">
@@ -288,6 +364,17 @@ tailwind.config = {
 
           <div class="text-primary font-semibold">
             #Zitat #Rousseau #Freiheit
+          </div>
+
+          <!-- Comments -->
+          <div class="mt-4 border-t border-white/10 pt-4">
+            <div class="flex items-start gap-3">
+              <img class="w-9 h-9 rounded-full object-cover" src="https://i.pravatar.cc/40?u=max" alt="Max">
+              <div>
+                <div class="text-sm font-semibold">Max_94 <span class="text-xs text-white/60">· 1w</span></div>
+                <div class="text-sm text-white/80">Immer wieder treffend – dieses Zitat bleibt.</div>
+              </div>
+            </div>
           </div>
 
         </div>
