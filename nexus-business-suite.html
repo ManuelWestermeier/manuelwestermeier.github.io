@@ -1,0 +1,2978 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS — Business Suite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #070a12;
+  --bg2: #0b0f1a;
+  --surface: #0f1525;
+  --surface2: #141c30;
+  --surface3: #1a2440;
+  --border: #1e2a42;
+  --border2: #253350;
+  --accent: #e8a020;
+  --accent-dim: rgba(232,160,32,0.12);
+  --accent-glow: rgba(232,160,32,0.25);
+  --blue: #4a8fff;
+  --blue-dim: rgba(74,143,255,0.12);
+  --green: #18d8a0;
+  --green-dim: rgba(24,216,160,0.12);
+  --red: #ff4d6a;
+  --red-dim: rgba(255,77,106,0.12);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.12);
+  --orange: #fb923c;
+  --text: #e8edf8;
+  --text2: #8996b0;
+  --text3: #4a5878;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --font: 'Outfit', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { height:100%; }
+body { background:var(--bg); color:var(--text); font-family:var(--font); height:100vh; overflow:hidden; display:flex; font-size:14px; }
+
+/* ============ SCROLLBAR ============ */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:10px; }
+
+/* ============ SIDEBAR ============ */
+#sidebar {
+  width:220px; min-width:220px; background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  overflow:hidden; transition:.3s ease;
+  position:relative; z-index:100;
+}
+.sidebar-header {
+  padding:20px 16px 16px;
+  border-bottom:1px solid var(--border);
+}
+.logo {
+  display:flex; align-items:center; gap:10px;
+}
+.logo-mark {
+  width:32px; height:32px;
+  background:linear-gradient(135deg, var(--accent), #c07010);
+  border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:14px; color:#000; letter-spacing:-.5px;
+  box-shadow:0 0 20px var(--accent-glow);
+}
+.logo-text { font-size:18px; font-weight:700; letter-spacing:-.5px; }
+.logo-sub { font-size:10px; color:var(--text3); font-weight:500; letter-spacing:1.5px; text-transform:uppercase; }
+.sidebar-company {
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+}
+.company-badge {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:8px 10px;
+  cursor:pointer; transition:.2s;
+}
+.company-badge:hover { border-color:var(--accent); }
+.company-name { font-size:12px; font-weight:600; }
+.company-plan {
+  font-size:10px; color:var(--accent); font-weight:500;
+  letter-spacing:.5px; text-transform:uppercase;
+}
+nav { flex:1; overflow-y:auto; padding:8px 8px; }
+.nav-section-label {
+  font-size:9px; font-weight:600; color:var(--text3);
+  letter-spacing:1.5px; text-transform:uppercase;
+  padding:12px 8px 4px;
+}
+.nav-item {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 10px; border-radius:8px;
+  cursor:pointer; transition:.15s; margin-bottom:1px;
+  color:var(--text2); font-size:13px; font-weight:500;
+  position:relative;
+}
+.nav-item:hover { background:var(--surface); color:var(--text); }
+.nav-item.active {
+  background:var(--accent-dim); color:var(--accent);
+  font-weight:600;
+}
+.nav-item.active::before {
+  content:'';
+  position:absolute; left:0; top:50%; transform:translateY(-50%);
+  width:3px; height:60%; background:var(--accent); border-radius:0 3px 3px 0;
+}
+.nav-icon { font-size:16px; width:20px; text-align:center; }
+.nav-badge {
+  margin-left:auto; background:var(--red); color:white;
+  font-size:9px; font-weight:700; padding:1px 5px; border-radius:10px;
+  font-family:var(--mono);
+}
+.sidebar-footer {
+  padding:12px 16px; border-top:1px solid var(--border);
+  display:flex; gap:8px;
+}
+.footer-btn {
+  flex:1; padding:7px; border-radius:8px; border:1px solid var(--border);
+  background:transparent; color:var(--text2); cursor:pointer;
+  font-size:16px; transition:.15s; text-align:center;
+}
+.footer-btn:hover { background:var(--surface); color:var(--text); border-color:var(--border2); }
+
+/* ============ MAIN ============ */
+#main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+.topbar {
+  height:56px; min-height:56px;
+  background:var(--bg2); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 24px;
+  gap:16px;
+}
+.topbar-title { font-size:16px; font-weight:700; flex:1; }
+.topbar-search {
+  display:flex; align-items:center; gap:8px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:6px 12px; width:220px;
+}
+.topbar-search input {
+  background:none; border:none; outline:none; color:var(--text);
+  font-family:var(--font); font-size:13px; width:100%;
+}
+.topbar-search input::placeholder { color:var(--text3); }
+.search-icon { color:var(--text3); font-size:14px; }
+.topbar-actions { display:flex; gap:8px; align-items:center; }
+.topbar-btn {
+  width:34px; height:34px; border-radius:8px;
+  border:1px solid var(--border); background:transparent;
+  color:var(--text2); cursor:pointer; transition:.15s;
+  font-size:16px; display:flex; align-items:center; justify-content:center;
+}
+.topbar-btn:hover { background:var(--surface); color:var(--text); }
+.notification-dot { position:relative; }
+.notification-dot::after {
+  content:''; position:absolute; top:6px; right:6px;
+  width:6px; height:6px; background:var(--red); border-radius:50%;
+  border:1.5px solid var(--bg2);
+}
+.avatar {
+  width:34px; height:34px; border-radius:8px;
+  background:linear-gradient(135deg, var(--blue), var(--purple));
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; cursor:pointer;
+  border:1px solid var(--border);
+}
+
+#content { flex:1; overflow-y:auto; padding:24px; }
+
+/* ============ SECTIONS ============ */
+.section { display:none; animation:fadeIn .2s ease; }
+.section.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* ============ PAGE HEADER ============ */
+.page-header { margin-bottom:24px; display:flex; align-items:flex-start; justify-content:space-between; }
+.page-title { font-size:24px; font-weight:800; letter-spacing:-.5px; }
+.page-subtitle { font-size:13px; color:var(--text2); margin-top:3px; }
+.page-actions { display:flex; gap:8px; align-items:center; }
+
+/* ============ BUTTONS ============ */
+.btn {
+  padding:8px 16px; border-radius:8px; border:none;
+  font-family:var(--font); font-size:13px; font-weight:600;
+  cursor:pointer; transition:.15s; display:inline-flex; align-items:center; gap:6px;
+}
+.btn-primary { background:var(--accent); color:#000; }
+.btn-primary:hover { background:#d4900f; box-shadow:0 0 16px var(--accent-glow); }
+.btn-secondary { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+.btn-secondary:hover { background:var(--surface3); border-color:var(--border2); }
+.btn-danger { background:var(--red-dim); color:var(--red); border:1px solid rgba(255,77,106,.2); }
+.btn-danger:hover { background:rgba(255,77,106,.2); }
+.btn-ghost { background:transparent; color:var(--text2); padding:6px 10px; }
+.btn-ghost:hover { color:var(--text); background:var(--surface); border-radius:6px; }
+.btn-sm { padding:5px 10px; font-size:12px; }
+.btn-icon { padding:7px; width:32px; height:32px; }
+
+/* ============ CARDS ============ */
+.card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:20px;
+}
+.card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.card-title { font-size:13px; font-weight:600; color:var(--text2); letter-spacing:.3px; text-transform:uppercase; }
+.card-value { font-size:28px; font-weight:800; font-family:var(--mono); letter-spacing:-1px; }
+.card-change { font-size:12px; font-weight:600; display:flex; align-items:center; gap:4px; }
+.card-change.up { color:var(--green); }
+.card-change.down { color:var(--red); }
+
+/* ============ KPI GRID ============ */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+.kpi-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:20px; position:relative; overflow:hidden;
+}
+.kpi-card::before {
+  content:''; position:absolute; top:0; right:0;
+  width:80px; height:80px; border-radius:50%;
+  transform:translate(20px,-20px);
+}
+.kpi-card.gold::before { background:radial-gradient(circle, var(--accent-glow), transparent); }
+.kpi-card.blue::before { background:radial-gradient(circle, var(--blue-dim), transparent); }
+.kpi-card.green::before { background:radial-gradient(circle, var(--green-dim), transparent); }
+.kpi-card.red::before { background:radial-gradient(circle, var(--red-dim), transparent); }
+.kpi-label { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+.kpi-value { font-size:26px; font-weight:800; font-family:var(--mono); letter-spacing:-1px; }
+.kpi-sub { font-size:11px; color:var(--text2); margin-top:6px; display:flex; align-items:center; gap:4px; }
+.kpi-icon { position:absolute; top:16px; right:16px; font-size:22px; opacity:.6; }
+
+/* ============ GRID LAYOUTS ============ */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.grid-2-1 { display:grid; grid-template-columns:2fr 1fr; gap:16px; }
+.grid-1-2 { display:grid; grid-template-columns:1fr 2fr; gap:16px; }
+.grid-3-1 { display:grid; grid-template-columns:3fr 1fr; gap:16px; }
+
+/* ============ TABLES ============ */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; }
+th {
+  text-align:left; padding:10px 14px;
+  font-size:11px; font-weight:600; color:var(--text3);
+  text-transform:uppercase; letter-spacing:.8px;
+  border-bottom:1px solid var(--border);
+}
+td { padding:11px 14px; border-bottom:1px solid var(--border); font-size:13px; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:var(--surface2); }
+.td-mono { font-family:var(--mono); font-size:12px; }
+.td-bold { font-weight:700; }
+
+/* ============ BADGES ============ */
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 8px; border-radius:20px;
+  font-size:11px; font-weight:600; letter-spacing:.3px;
+}
+.badge-green { background:var(--green-dim); color:var(--green); }
+.badge-red { background:var(--red-dim); color:var(--red); }
+.badge-blue { background:var(--blue-dim); color:var(--blue); }
+.badge-gold { background:var(--accent-dim); color:var(--accent); }
+.badge-gray { background:var(--surface3); color:var(--text2); }
+.badge-purple { background:var(--purple-dim); color:var(--purple); }
+.badge-orange { background:rgba(251,146,60,.12); color:var(--orange); }
+.badge::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; }
+
+/* ============ FORMS ============ */
+.form-group { margin-bottom:16px; }
+.form-label { display:block; font-size:12px; font-weight:600; color:var(--text2); margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px; }
+.form-input, .form-select, .form-textarea {
+  width:100%; background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:9px 12px; color:var(--text);
+  font-family:var(--font); font-size:13px; outline:none; transition:.15s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim);
+}
+.form-select { appearance:none; cursor:pointer; }
+.form-textarea { resize:vertical; min-height:80px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+
+/* ============ MODAL ============ */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.7);
+  display:none; align-items:center; justify-content:center; z-index:1000;
+  backdrop-filter:blur(4px); padding:20px;
+}
+.modal-overlay.open { display:flex; animation:fadeIn .15s ease; }
+.modal {
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:var(--radius-lg); padding:24px; width:100%; max-width:520px;
+  max-height:90vh; overflow-y:auto; box-shadow:var(--shadow);
+}
+.modal-lg { max-width:720px; }
+.modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.modal-title { font-size:17px; font-weight:700; }
+.modal-close { background:none; border:none; color:var(--text2); font-size:20px; cursor:pointer; padding:4px; }
+.modal-close:hover { color:var(--text); }
+.modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:20px; padding-top:16px; border-top:1px solid var(--border); }
+
+/* ============ TABS ============ */
+.tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:20px; }
+.tab {
+  padding:8px 16px; font-size:13px; font-weight:600; color:var(--text2);
+  cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
+  transition:.15s;
+}
+.tab:hover { color:var(--text); }
+.tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* ============ CHART CONTAINERS ============ */
+.chart-container { position:relative; }
+.chart-svg { width:100%; }
+.chart-label { font-family:var(--mono); font-size:10px; fill:var(--text3); }
+.chart-value { font-family:var(--mono); font-size:11px; fill:var(--text2); }
+.chart-line { fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.chart-area { opacity:.15; }
+.chart-bar { rx:4; ry:4; }
+.chart-legend { display:flex; gap:16px; margin-top:12px; flex-wrap:wrap; }
+.legend-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text2); }
+.legend-dot { width:8px; height:8px; border-radius:2px; }
+
+/* ============ PROGRESS ============ */
+.progress-bar { height:4px; background:var(--surface3); border-radius:10px; overflow:hidden; margin-top:6px; }
+.progress-fill { height:100%; border-radius:10px; transition:width .5s ease; }
+
+/* ============ STAT ROWS ============ */
+.stat-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); }
+.stat-row:last-child { border-bottom:none; }
+.stat-label { font-size:13px; color:var(--text2); }
+.stat-val { font-family:var(--mono); font-size:13px; font-weight:600; }
+
+/* ============ ACTIVITY FEED ============ */
+.activity-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+.activity-item:last-child { border-bottom:none; }
+.activity-icon {
+  width:32px; height:32px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center; font-size:14px;
+  flex-shrink:0;
+}
+.activity-text { font-size:13px; }
+.activity-sub { font-size:11px; color:var(--text2); margin-top:2px; }
+
+/* ============ FLOOR PLAN ============ */
+.floor-plan-grid {
+  display:grid; gap:3px; padding:16px;
+  background:var(--surface2); border-radius:var(--radius); border:1px solid var(--border);
+}
+.floor-cell {
+  width:52px; height:52px; border-radius:5px;
+  background:var(--bg2); border:1px solid var(--border);
+  cursor:pointer; transition:.15s; display:flex; align-items:center;
+  justify-content:center; font-size:9px; text-align:center;
+  color:var(--text3); overflow:hidden; padding:2px; line-height:1.2;
+  position:relative;
+}
+.floor-cell:hover { border-color:var(--accent); background:var(--surface3); }
+.floor-cell.occupied { border:1px solid; }
+.floor-cell.occupied.cat-a { background:rgba(74,143,255,.2); border-color:rgba(74,143,255,.4); color:var(--blue); }
+.floor-cell.occupied.cat-b { background:rgba(24,216,160,.2); border-color:rgba(24,216,160,.4); color:var(--green); }
+.floor-cell.occupied.cat-c { background:rgba(232,160,32,.2); border-color:rgba(232,160,32,.4); color:var(--accent); }
+.floor-cell.occupied.cat-d { background:rgba(167,139,250,.2); border-color:rgba(167,139,250,.4); color:var(--purple); }
+.floor-cell.occupied.cat-e { background:rgba(255,77,106,.2); border-color:rgba(255,77,106,.4); color:var(--red); }
+.floor-cell .cell-label { font-size:8px; font-weight:700; line-height:1; }
+.floor-cell .cell-stock { font-size:8px; color:var(--text3); }
+
+/* ============ KANBAN ============ */
+.kanban-board { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; align-items:start; }
+.kanban-col { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px; }
+.kanban-col-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.kanban-col-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; }
+.kanban-count {
+  width:20px; height:20px; border-radius:6px;
+  background:var(--surface3); font-size:11px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono);
+}
+.kanban-card {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:10px; padding:12px; margin-bottom:10px;
+  cursor:pointer; transition:.2s;
+}
+.kanban-card:hover { border-color:var(--border2); transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,0,0,.3); }
+.kanban-card-title { font-size:13px; font-weight:600; margin-bottom:6px; }
+.kanban-card-meta { font-size:11px; color:var(--text2); }
+
+/* ============ PIPELINE ============ */
+.pipeline { display:flex; gap:8px; align-items:stretch; margin-top:16px; }
+.pipeline-stage {
+  flex:1; background:var(--surface2); border:1px solid var(--border);
+  border-radius:10px; padding:14px; text-align:center;
+}
+.pipeline-stage-name { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text3); margin-bottom:8px; }
+.pipeline-count { font-size:24px; font-weight:800; font-family:var(--mono); }
+.pipeline-val { font-size:11px; color:var(--text2); margin-top:4px; }
+.pipeline-arrow { display:flex; align-items:center; color:var(--text3); font-size:18px; }
+
+/* ============ INVOICE PREVIEW ============ */
+.invoice-doc {
+  background:white; color:#333; padding:40px;
+  border-radius:8px; font-family:'Outfit', sans-serif;
+  max-width:700px; margin:0 auto;
+}
+.invoice-doc h1 { font-size:32px; font-weight:800; color:#111; }
+
+/* ============ CALENDAR ============ */
+.tax-calendar { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.tax-cal-item {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:10px; padding:14px;
+}
+.tax-cal-date { font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; margin-bottom:6px; }
+.tax-cal-name { font-size:13px; font-weight:600; margin-bottom:4px; }
+.tax-cal-amount { font-family:var(--mono); font-size:14px; font-weight:700; }
+.tax-cal-item.urgent { border-color:var(--red); background:var(--red-dim); }
+.tax-cal-item.soon { border-color:var(--accent); background:var(--accent-dim); }
+.tax-cal-item.done { opacity:.5; }
+
+/* ============ TOOLTIP ============ */
+.tooltip-wrap { position:relative; }
+.tooltip {
+  position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+  background:var(--surface3); color:var(--text); border:1px solid var(--border2);
+  border-radius:6px; padding:4px 8px; font-size:11px; white-space:nowrap;
+  pointer-events:none; opacity:0; transition:.15s; z-index:100;
+}
+.tooltip-wrap:hover .tooltip { opacity:1; }
+
+/* ============ TAG INPUT ============ */
+.tag { display:inline-flex; align-items:center; gap:4px; background:var(--blue-dim); color:var(--blue); padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; margin:2px; }
+.tag-remove { cursor:pointer; opacity:.6; }
+.tag-remove:hover { opacity:1; }
+
+/* ============ EMPTY STATE ============ */
+.empty-state { text-align:center; padding:60px 20px; color:var(--text3); }
+.empty-state-icon { font-size:48px; margin-bottom:12px; opacity:.4; }
+.empty-state-text { font-size:14px; }
+
+/* ============ LOADING ============ */
+.spinner { width:18px; height:18px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin .6s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ============ DIVIDER ============ */
+.divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
+
+/* ============ RESPONSIVE ============ */
+@media(max-width:1200px) { .kpi-grid { grid-template-columns:repeat(2,1fr); } .kanban-board { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:900px) { .grid-2, .grid-2-1, .grid-1-2, .grid-3-1 { grid-template-columns:1fr; } }
+
+/* ============ SPECIAL COMPONENTS ============ */
+.gauge-wrap { text-align:center; }
+.gauge-value { font-size:22px; font-weight:800; font-family:var(--mono); }
+.gauge-label { font-size:11px; color:var(--text2); }
+
+.score-bar { height:8px; border-radius:10px; background:var(--surface3); margin:4px 0 12px; overflow:hidden; }
+.score-fill { height:100%; border-radius:10px; }
+
+.number-display {
+  font-family:var(--mono); font-size:11px; color:var(--text2);
+  padding:2px 6px; background:var(--surface3); border-radius:4px;
+}
+
+.alert-banner {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 14px; border-radius:8px; margin-bottom:12px; font-size:13px;
+}
+.alert-banner.warning { background:var(--accent-dim); border:1px solid var(--accent-glow); color:var(--accent); }
+.alert-banner.danger { background:var(--red-dim); border:1px solid rgba(255,77,106,.2); color:var(--red); }
+.alert-banner.info { background:var(--blue-dim); border:1px solid rgba(74,143,255,.2); color:var(--blue); }
+.alert-banner.success { background:var(--green-dim); border:1px solid rgba(24,216,160,.2); color:var(--green); }
+
+.switch-wrap { display:flex; align-items:center; gap:10px; }
+.switch { position:relative; width:36px; height:20px; }
+.switch input { opacity:0; width:0; height:0; }
+.switch-slider {
+  position:absolute; cursor:pointer; inset:0;
+  background:var(--surface3); border-radius:20px; transition:.2s;
+}
+.switch-slider::before {
+  content:''; position:absolute; width:14px; height:14px; border-radius:50%;
+  left:3px; bottom:3px; background:var(--text3); transition:.2s;
+}
+.switch input:checked + .switch-slider { background:var(--accent); }
+.switch input:checked + .switch-slider::before { transform:translateX(16px); background:white; }
+
+.donut-chart { position:relative; }
+.donut-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.donut-center-val { font-size:20px; font-weight:800; font-family:var(--mono); }
+.donut-center-lbl { font-size:10px; color:var(--text3); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-mark">NX</div>
+      <div>
+        <div class="logo-text">NEXUS</div>
+        <div class="logo-sub">Business Suite</div>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-company">
+    <div class="company-badge" onclick="navigate('einstellungen')">
+      <div class="company-name" id="sb-company-name">Mein Startup GmbH</div>
+      <div class="company-plan">⭐ Growth Plan</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-section-label">Übersicht</div>
+    <div class="nav-item active" onclick="navigate('dashboard')">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+
+    <div class="nav-section-label">Finanzen</div>
+    <div class="nav-item" onclick="navigate('finanzen')">
+      <span class="nav-icon">💰</span> Kapital & Konten
+    </div>
+    <div class="nav-item" onclick="navigate('rechnungen')">
+      <span class="nav-icon">🧾</span> Rechnungen
+      <span class="nav-badge" id="badge-invoices">0</span>
+    </div>
+    <div class="nav-item" onclick="navigate('steuern')">
+      <span class="nav-icon">🏛️</span> Steuer
+    </div>
+
+    <div class="nav-section-label">Betrieb</div>
+    <div class="nav-item" onclick="navigate('lager')">
+      <span class="nav-icon">📦</span> Lager & Grundriss
+    </div>
+    <div class="nav-item" onclick="navigate('vertraege')">
+      <span class="nav-icon">📋</span> Verträge
+      <span class="nav-badge" id="badge-contracts">0</span>
+    </div>
+    <div class="nav-item" onclick="navigate('projekte')">
+      <span class="nav-icon">🚀</span> Projekte
+    </div>
+
+    <div class="nav-section-label">Team & Kunden</div>
+    <div class="nav-item" onclick="navigate('crm')">
+      <span class="nav-icon">🤝</span> CRM & Kunden
+    </div>
+    <div class="nav-item" onclick="navigate('hr')">
+      <span class="nav-icon">👥</span> HR & Team
+    </div>
+    <div class="nav-item" onclick="navigate('einstellungen')">
+      <span class="nav-icon">⚙️</span> Einstellungen
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="footer-btn" onclick="exportData()" title="Daten exportieren">💾</button>
+    <button class="footer-btn" onclick="importData()" title="Daten importieren">📤</button>
+    <button class="footer-btn" onclick="if(confirm('Alle Daten zurücksetzen?'))resetData()" title="Zurücksetzen">🗑️</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-search">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="global-search" placeholder="Suchen…" oninput="globalSearch(this.value)">
+    </div>
+    <div class="topbar-actions">
+      <button class="topbar-btn notification-dot" onclick="showNotifications()" title="Benachrichtigungen">🔔</button>
+      <button class="topbar-btn" onclick="navigate('einstellungen')" title="Einstellungen">⚙️</button>
+      <div class="avatar" id="user-avatar">ME</div>
+    </div>
+  </div>
+  <div id="content">
+
+    <!-- =================== DASHBOARD =================== -->
+    <div class="section active" id="section-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title" id="dash-greeting">Guten Morgen 👋</div>
+          <div class="page-subtitle" id="dash-date"></div>
+        </div>
+        <div class="page-actions">
+          <select class="form-select" style="width:150px" id="dash-period" onchange="renderDashboard()">
+            <option value="month">Dieser Monat</option>
+            <option value="quarter">Dieses Quartal</option>
+            <option value="year" selected>Dieses Jahr</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <div id="dash-alerts"></div>
+
+      <div class="grid-2-1" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📈 Umsatz & Ausgaben</span>
+            <div class="chart-legend" id="revenue-legend"></div>
+          </div>
+          <div id="chart-revenue" style="height:200px"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">🍩 Ausgaben</span></div>
+          <div id="chart-expenses" style="height:200px;display:flex;align-items:center;justify-content:center"></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🔄 Letzte Transaktionen</span>
+            <button class="btn btn-ghost btn-sm" onclick="navigate('finanzen')">Alle →</button>
+          </div>
+          <div id="dash-transactions"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">📅 Anstehende Ereignisse</span></div>
+          <div id="dash-events"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== FINANZEN =================== -->
+    <div class="section" id="section-finanzen">
+      <div class="page-header">
+        <div>
+          <div class="page-title">💰 Kapital & Finanzen</div>
+          <div class="page-subtitle">Konten, Transaktionen und GuV</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary" onclick="openModal('modal-account')">+ Konto</button>
+          <button class="btn btn-primary" onclick="openModal('modal-transaction')">+ Transaktion</button>
+        </div>
+      </div>
+
+      <div id="accounts-row" class="grid-3" style="margin-bottom:20px"></div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'tab-transactions')">Transaktionen</div>
+        <div class="tab" onclick="switchTab(this,'tab-pnl')">Gewinn & Verlust</div>
+        <div class="tab" onclick="switchTab(this,'tab-cashflow')">Cashflow</div>
+        <div class="tab" onclick="switchTab(this,'tab-budget')">Budget</div>
+      </div>
+
+      <div class="tab-content active" id="tab-transactions">
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <input type="text" class="form-input" style="max-width:220px" placeholder="🔍 Suchen…" id="txn-search" oninput="renderTransactions()">
+          <select class="form-select" style="max-width:150px" id="txn-filter-type" onchange="renderTransactions()">
+            <option value="">Alle Typen</option>
+            <option value="income">Einnahmen</option>
+            <option value="expense">Ausgaben</option>
+          </select>
+          <select class="form-select" style="max-width:150px" id="txn-filter-cat" onchange="renderTransactions()">
+            <option value="">Alle Kategorien</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>Datum</th><th>Beschreibung</th><th>Kategorie</th><th>Konto</th><th>Betrag</th><th>Aktionen</th>
+            </tr></thead>
+            <tbody id="transactions-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-pnl">
+        <div class="grid-2" style="margin-bottom:16px" id="pnl-kpi"></div>
+        <div class="card" id="pnl-table"></div>
+      </div>
+
+      <div class="tab-content" id="tab-cashflow">
+        <div class="card">
+          <div class="card-header"><span class="card-title">📉 Cashflow (12 Monate)</span></div>
+          <div id="chart-cashflow" style="height:240px"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-budget">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-budget')">+ Budget erfassen</button>
+        </div>
+        <div class="card" id="budget-view"></div>
+      </div>
+    </div>
+
+    <!-- =================== RECHNUNGEN =================== -->
+    <div class="section" id="section-rechnungen">
+      <div class="page-header">
+        <div><div class="page-title">🧾 Rechnungen</div><div class="page-subtitle">Erstellen, verwalten, verfolgen</div></div>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openModal('modal-invoice')">+ Rechnung</button>
+        </div>
+      </div>
+      <div class="kpi-grid" id="invoice-kpis"></div>
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <input type="text" class="form-input" style="max-width:220px" placeholder="🔍 Suchen…" id="inv-search" oninput="renderInvoices()">
+          <select class="form-select" style="max-width:150px" id="inv-filter" onchange="renderInvoices()">
+            <option value="">Alle Status</option>
+            <option value="draft">Entwurf</option>
+            <option value="sent">Versendet</option>
+            <option value="paid">Bezahlt</option>
+            <option value="overdue">Überfällig</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr>
+            <th>Nr.</th><th>Kunde</th><th>Datum</th><th>Fällig</th><th>Betrag</th><th>Status</th><th>Aktionen</th>
+          </tr></thead>
+          <tbody id="invoices-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== STEUERN =================== -->
+    <div class="section" id="section-steuern">
+      <div class="page-header">
+        <div><div class="page-title">🏛️ Steuerübersicht</div><div class="page-subtitle">MwSt, Vorauszahlungen, Kalender</div></div>
+      </div>
+      <div class="grid-3" style="margin-bottom:16px">
+        <div class="kpi-card gold">
+          <div class="kpi-label">MwSt. Schulden</div>
+          <div class="kpi-value" id="tax-vat-due">€ 0</div>
+          <div class="kpi-sub" id="tax-vat-period"></div>
+          <div class="kpi-icon">🏦</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-label">Einh. MwSt. (gesamt)</div>
+          <div class="kpi-value" id="tax-vat-collected">€ 0</div>
+          <div class="kpi-sub">Aus Einnahmen</div>
+          <div class="kpi-icon">💰</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label">Vorsteuer</div>
+          <div class="kpi-value" id="tax-vat-paid">€ 0</div>
+          <div class="kpi-sub">Aus Ausgaben abziehbar</div>
+          <div class="kpi-icon">✅</div>
+        </div>
+      </div>
+      <div class="grid-2-1" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🔢 MwSt. Rechner</span></div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Betrag (Netto)</label>
+              <input type="number" class="form-input" id="vat-net" oninput="calcVat()" placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Betrag (Brutto)</label>
+              <input type="number" class="form-input" id="vat-gross" oninput="calcVatFromGross()" placeholder="0.00">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Steuersatz</label>
+            <select class="form-select" id="vat-rate" onchange="calcVat()">
+              <option value="19">19% (Standard)</option>
+              <option value="7">7% (Ermäßigt)</option>
+              <option value="0">0% (Befreit)</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px">
+            <div class="card" style="padding:12px;text-align:center">
+              <div class="kpi-label">Netto</div>
+              <div class="kpi-value" style="font-size:18px" id="vat-res-net">–</div>
+            </div>
+            <div class="card" style="padding:12px;text-align:center;border-color:var(--accent)">
+              <div class="kpi-label">MwSt.</div>
+              <div class="kpi-value" style="font-size:18px;color:var(--accent)" id="vat-res-vat">–</div>
+            </div>
+            <div class="card" style="padding:12px;text-align:center">
+              <div class="kpi-label">Brutto</div>
+              <div class="kpi-value" style="font-size:18px" id="vat-res-gross">–</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">📊 Jahresschätzung</span></div>
+          <div id="tax-estimate"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📅 Steuer-Kalender</span>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-taxevent')">+ Termin</button>
+        </div>
+        <div class="tax-calendar" id="tax-calendar"></div>
+      </div>
+    </div>
+
+    <!-- =================== LAGER =================== -->
+    <div class="section" id="section-lager">
+      <div class="page-header">
+        <div><div class="page-title">📦 Lager & Grundriss</div><div class="page-subtitle">Lagereinheiten visualisieren & Bestände überwachen</div></div>
+        <div class="page-actions">
+          <button class="btn btn-secondary" onclick="openModal('modal-inventory')">+ Artikel</button>
+          <button class="btn btn-primary" onclick="openFloorModal()">+ Lagereinheit</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'tab-floorplan')">Grundriss</div>
+        <div class="tab" onclick="switchTab(this,'tab-inventory')">Inventar</div>
+        <div class="tab" onclick="switchTab(this,'tab-stockmove')">Bewegungen</div>
+        <div class="tab" onclick="switchTab(this,'tab-stockstats')">Statistiken</div>
+      </div>
+      <div class="tab-content active" id="tab-floorplan">
+        <div class="grid-3-1">
+          <div class="card" style="padding:12px">
+            <div class="card-header" style="margin-bottom:8px">
+              <span class="card-title">Grundriss</span>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-secondary btn-sm" onclick="clearFloor()">Leeren</button>
+              </div>
+            </div>
+            <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">
+              <span class="badge badge-blue">■ Zone A</span>
+              <span class="badge badge-green">■ Zone B</span>
+              <span class="badge badge-gold">■ Zone C</span>
+              <span class="badge badge-purple">■ Zone D</span>
+              <span class="badge badge-red">■ Zone E</span>
+            </div>
+            <div id="floor-plan-container"></div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:12px">
+              <div class="card-header"><span class="card-title">📐 Einheit bearbeiten</span></div>
+              <div id="floor-unit-editor">
+                <div class="empty-state" style="padding:20px">
+                  <div class="empty-state-icon">🖱️</div>
+                  <div class="empty-state-text">Zelle anklicken</div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">📊 Auslastung</span></div>
+              <div id="floor-stats"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-inventory">
+        <div id="inventory-alerts" style="margin-bottom:12px"></div>
+        <div class="card">
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>Artikel</th><th>SKU</th><th>Lagereinheit</th><th>Bestand</th><th>Mindestbestand</th><th>Wert</th><th>Status</th><th>Aktionen</th>
+            </tr></thead>
+            <tbody id="inventory-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-stockmove">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-stockmove')">+ Buchung</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>Datum</th><th>Artikel</th><th>Typ</th><th>Menge</th><th>Notiz</th>
+            </tr></thead>
+            <tbody id="stockmove-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-stockstats">
+        <div class="grid-2" id="stock-stats-grid"></div>
+      </div>
+    </div>
+
+    <!-- =================== VERTRÄGE =================== -->
+    <div class="section" id="section-vertraege">
+      <div class="page-header">
+        <div><div class="page-title">📋 Verträge</div><div class="page-subtitle">Verträge verwalten und Laufzeiten überwachen</div></div>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openModal('modal-contract')">+ Vertrag</button>
+        </div>
+      </div>
+      <div class="kpi-grid" id="contract-kpis" style="grid-template-columns:repeat(4,1fr)"></div>
+      <div class="card" style="margin-bottom:16px" id="contract-alerts-wrap"></div>
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <input type="text" class="form-input" style="max-width:220px" placeholder="🔍 Suchen…" id="contract-search" oninput="renderContracts()">
+          <select class="form-select" style="max-width:150px" id="contract-filter" onchange="renderContracts()">
+            <option value="">Alle Status</option>
+            <option value="active">Aktiv</option>
+            <option value="expiring">Läuft ab</option>
+            <option value="expired">Abgelaufen</option>
+            <option value="draft">Entwurf</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr>
+            <th>Titel</th><th>Partner</th><th>Typ</th><th>Wert</th><th>Start</th><th>Ende</th><th>Status</th><th>Aktionen</th>
+          </tr></thead>
+          <tbody id="contracts-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== CRM =================== -->
+    <div class="section" id="section-crm">
+      <div class="page-header">
+        <div><div class="page-title">🤝 CRM & Kunden</div><div class="page-subtitle">Kundenstamm und Sales-Pipeline</div></div>
+        <div class="page-actions">
+          <button class="btn btn-secondary" onclick="openModal('modal-deal')">+ Lead</button>
+          <button class="btn btn-primary" onclick="openModal('modal-customer')">+ Kunde</button>
+        </div>
+      </div>
+      <div class="kpi-grid" id="crm-kpis" style="grid-template-columns:repeat(4,1fr)"></div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><span class="card-title">🔀 Sales Pipeline</span></div>
+        <div class="pipeline" id="crm-pipeline"></div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'tab-customers')">Kunden</div>
+        <div class="tab" onclick="switchTab(this,'tab-leads')">Leads & Deals</div>
+      </div>
+      <div class="tab-content active" id="tab-customers">
+        <div class="card">
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>Name</th><th>Ansprechpartner</th><th>Typ</th><th>Umsatz</th><th>Status</th><th>Letzter Kontakt</th><th>Aktionen</th>
+            </tr></thead>
+            <tbody id="customers-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-leads">
+        <div class="card">
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>Lead/Deal</th><th>Kunde</th><th>Wert</th><th>Phase</th><th>Abschluss</th><th>Aktionen</th>
+            </tr></thead>
+            <tbody id="leads-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== HR =================== -->
+    <div class="section" id="section-hr">
+      <div class="page-header">
+        <div><div class="page-title">👥 HR & Team</div><div class="page-subtitle">Mitarbeiter, Gehälter und Urlaub</div></div>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openModal('modal-employee')">+ Mitarbeiter</button>
+        </div>
+      </div>
+      <div class="kpi-grid" id="hr-kpis" style="grid-template-columns:repeat(4,1fr)"></div>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'tab-team')">Team</div>
+        <div class="tab" onclick="switchTab(this,'tab-payroll')">Gehälter</div>
+        <div class="tab" onclick="switchTab(this,'tab-leave')">Urlaub</div>
+      </div>
+      <div class="tab-content active" id="tab-team">
+        <div class="grid-3" id="team-grid"></div>
+      </div>
+      <div class="tab-content" id="tab-payroll">
+        <div class="card" id="payroll-view"></div>
+      </div>
+      <div class="tab-content" id="tab-leave">
+        <div class="card" id="leave-view"></div>
+      </div>
+    </div>
+
+    <!-- =================== PROJEKTE =================== -->
+    <div class="section" id="section-projekte">
+      <div class="page-header">
+        <div><div class="page-title">🚀 Projekte</div><div class="page-subtitle">Projektboard und Aufgabenverwaltung</div></div>
+        <div class="page-actions">
+          <button class="btn btn-secondary" onclick="openModal('modal-task')">+ Aufgabe</button>
+          <button class="btn btn-primary" onclick="openModal('modal-project')">+ Projekt</button>
+        </div>
+      </div>
+      <div class="kpi-grid" id="project-kpis" style="grid-template-columns:repeat(4,1fr)"></div>
+      <div class="kanban-board" id="kanban-board"></div>
+    </div>
+
+    <!-- =================== EINSTELLUNGEN =================== -->
+    <div class="section" id="section-einstellungen">
+      <div class="page-header">
+        <div><div class="page-title">⚙️ Einstellungen</div><div class="page-subtitle">Unternehmen, Steuern, Darstellung</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🏢 Unternehmensdaten</span></div>
+          <div class="form-group"><label class="form-label">Firmenname</label><input type="text" class="form-input" id="s-company" oninput="saveSettings()"></div>
+          <div class="form-group"><label class="form-label">Rechtsform</label>
+            <select class="form-select" id="s-legal" onchange="saveSettings()">
+              <option>GmbH</option><option>UG (haftungsbeschränkt)</option><option>AG</option><option>GbR</option><option>Einzelunternehmen</option><option>OHG</option><option>KG</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Steuernummer</label><input type="text" class="form-input" id="s-taxid" oninput="saveSettings()"></div>
+          <div class="form-group"><label class="form-label">USt-IdNr.</label><input type="text" class="form-input" id="s-vatid" oninput="saveSettings()"></div>
+          <div class="form-group"><label class="form-label">Adresse</label><textarea class="form-textarea" id="s-address" oninput="saveSettings()"></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Gründungsjahr</label><input type="number" class="form-input" id="s-founded" oninput="saveSettings()"></div>
+            <div class="form-group"><label class="form-label">Währung</label>
+              <select class="form-select" id="s-currency" onchange="saveSettings()">
+                <option value="EUR">EUR €</option><option value="USD">USD $</option><option value="CHF">CHF</option><option value="GBP">GBP £</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header"><span class="card-title">🏦 Steuereinstellungen</span></div>
+            <div class="form-group"><label class="form-label">Standard MwSt-Satz</label>
+              <select class="form-select" id="s-vat" onchange="saveSettings()">
+                <option value="19">19%</option><option value="7">7%</option><option value="0">0%</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Geschäftsjahr-Beginn</label>
+              <select class="form-select" id="s-fiscal" onchange="saveSettings()">
+                <option value="1">Januar</option><option value="4">April</option><option value="7">Juli</option><option value="10">Oktober</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Unternehmenssteuer-Satz (%)</label><input type="number" class="form-input" id="s-corptax" oninput="saveSettings()"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">💾 Datenverwaltung</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn btn-secondary" onclick="exportData()">📥 Daten exportieren (JSON)</button>
+              <button class="btn btn-secondary" onclick="importData()">📤 Daten importieren</button>
+              <button class="btn btn-danger" onclick="if(confirm('Wirklich alle Daten löschen?'))resetData()">🗑️ Alle Daten zurücksetzen</button>
+            </div>
+            <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- =================== MODALS =================== -->
+
+<!-- Transaction Modal -->
+<div class="modal-overlay" id="modal-transaction">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">💸 Transaktion</div>
+      <button class="modal-close" onclick="closeModal('modal-transaction')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Typ</label>
+        <select class="form-select" id="txn-type">
+          <option value="income">Einnahme</option><option value="expense">Ausgabe</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Betrag (€)</label>
+        <input type="number" class="form-input" id="txn-amount" placeholder="0.00" min="0" step="0.01">
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Beschreibung</label>
+      <input type="text" class="form-input" id="txn-desc" placeholder="z.B. Monatsmiete, Kundenrechnung…">
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Kategorie</label>
+        <select class="form-select" id="txn-cat">
+          <option>Umsatz</option><option>Sonstiges Einkommen</option>
+          <option>Miete</option><option>Personal</option><option>Marketing</option>
+          <option>Software/Lizenzen</option><option>Bürobedarf</option><option>Logistik</option>
+          <option>Steuern</option><option>Versicherungen</option><option>Investitionen</option><option>Sonstiges</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Konto</label>
+        <select class="form-select" id="txn-account"></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Datum</label>
+        <input type="date" class="form-input" id="txn-date">
+      </div>
+      <div class="form-group"><label class="form-label">Referenz/Belegnr.</label>
+        <input type="text" class="form-input" id="txn-ref" placeholder="z.B. RE-2024-001">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">MwSt. inkludiert?</label>
+      <select class="form-select" id="txn-vat">
+        <option value="0">Keine MwSt.</option><option value="19">19% inkl.</option><option value="7">7% inkl.</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-transaction')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveTransaction()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Account Modal -->
+<div class="modal-overlay" id="modal-account">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">🏦 Konto hinzufügen</div><button class="modal-close" onclick="closeModal('modal-account')">✕</button></div>
+    <div class="form-group"><label class="form-label">Kontoname</label><input type="text" class="form-input" id="acc-name" placeholder="z.B. Hauptkonto"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Typ</label>
+        <select class="form-select" id="acc-type">
+          <option value="bank">Girokonto</option><option value="savings">Sparkonto</option><option value="cash">Kasse</option><option value="invest">Investitionskonto</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Startguthaben (€)</label><input type="number" class="form-input" id="acc-balance" value="0" step="0.01"></div>
+    </div>
+    <div class="form-group"><label class="form-label">IBAN (optional)</label><input type="text" class="form-input" id="acc-iban" placeholder="DE…"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-account')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveAccount()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Contract Modal -->
+<div class="modal-overlay" id="modal-contract">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">📋 Vertrag</div><button class="modal-close" onclick="closeModal('modal-contract')">✕</button></div>
+    <div class="form-group"><label class="form-label">Vertragstitel</label><input type="text" class="form-input" id="c-title" placeholder="z.B. Mietvertrag Büro"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Vertragspartner</label><input type="text" class="form-input" id="c-partner" placeholder="Firmenname oder Person"></div>
+      <div class="form-group"><label class="form-label">Typ</label>
+        <select class="form-select" id="c-type">
+          <option>Mietvertrag</option><option>Liefervertrag</option><option>Dienstleistungsvertrag</option><option>Arbeitsvertrag</option><option>Lizenzvertrag</option><option>Partnerschaftsvertrag</option><option>NDA</option><option>Sonstiges</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Vertragswert (€/Jahr)</label><input type="number" class="form-input" id="c-value" placeholder="0" min="0" step="0.01"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="c-status">
+          <option value="active">Aktiv</option><option value="draft">Entwurf</option><option value="expired">Abgelaufen</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Startdatum</label><input type="date" class="form-input" id="c-start"></div>
+      <div class="form-group"><label class="form-label">Enddatum</label><input type="date" class="form-input" id="c-end"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Kündigungsfrist (Tage)</label><input type="number" class="form-input" id="c-notice" placeholder="30" value="30"></div>
+    <div class="form-group"><label class="form-label">Notizen</label><textarea class="form-textarea" id="c-notes" placeholder="Wichtige Vertragsdetails…"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-contract')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveContract()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Inventory Modal -->
+<div class="modal-overlay" id="modal-inventory">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">📦 Artikel</div><button class="modal-close" onclick="closeModal('modal-inventory')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Artikelname</label><input type="text" class="form-input" id="inv-name" placeholder="z.B. Schraube M6"></div>
+      <div class="form-group"><label class="form-label">SKU / Artikelnummer</label><input type="text" class="form-input" id="inv-sku" placeholder="ART-001"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Bestand</label><input type="number" class="form-input" id="inv-qty" placeholder="0" min="0"></div>
+      <div class="form-group"><label class="form-label">Mindestbestand</label><input type="number" class="form-input" id="inv-min" placeholder="5" min="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Preis (€)</label><input type="number" class="form-input" id="inv-price" placeholder="0.00" min="0" step="0.01"></div>
+      <div class="form-group"><label class="form-label">Einheit</label>
+        <select class="form-select" id="inv-unit">
+          <option>Stück</option><option>kg</option><option>g</option><option>l</option><option>ml</option><option>m</option><option>cm</option><option>Paket</option><option>Karton</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Lagereinheit</label>
+      <select class="form-select" id="inv-warehouse-unit"></select>
+    </div>
+    <div class="form-group"><label class="form-label">Kategorie</label>
+      <select class="form-select" id="inv-cat">
+        <option>Rohstoffe</option><option>Fertigwaren</option><option>Halbfertigwaren</option><option>Verpackung</option><option>Betriebsmittel</option><option>Sonstiges</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-inventory')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveInventoryItem()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Floor Unit Modal -->
+<div class="modal-overlay" id="modal-floor-unit">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">🗺️ Lagereinheit</div><button class="modal-close" onclick="closeModal('modal-floor-unit')">✕</button></div>
+    <input type="hidden" id="fu-cell-id">
+    <div class="form-group"><label class="form-label">Name der Einheit</label><input type="text" class="form-input" id="fu-name" placeholder="z.B. Regal A1"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Zone / Kategorie</label>
+        <select class="form-select" id="fu-cat">
+          <option value="cat-a">Zone A (Blau)</option>
+          <option value="cat-b">Zone B (Grün)</option>
+          <option value="cat-c">Zone C (Gold)</option>
+          <option value="cat-d">Zone D (Lila)</option>
+          <option value="cat-e">Zone E (Rot)</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Kapazität (Einh.)</label><input type="number" class="form-input" id="fu-cap" placeholder="100" min="1"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Beschreibung</label><input type="text" class="form-input" id="fu-desc" placeholder="Optional"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="removeFloorUnit()">Entfernen</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-floor-unit')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveFloorUnit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stock Move Modal -->
+<div class="modal-overlay" id="modal-stockmove">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">🔄 Lagerbuchung</div><button class="modal-close" onclick="closeModal('modal-stockmove')">✕</button></div>
+    <div class="form-group"><label class="form-label">Artikel</label><select class="form-select" id="sm-item"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Typ</label>
+        <select class="form-select" id="sm-type">
+          <option value="in">Wareneingang (+)</option><option value="out">Warenausgang (-)</option><option value="adjust">Korrektur</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Menge</label><input type="number" class="form-input" id="sm-qty" min="1" placeholder="1"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notiz</label><input type="text" class="form-input" id="sm-note" placeholder="z.B. Lieferung von XY"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-stockmove')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveStockMove()">Buchen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Customer Modal -->
+<div class="modal-overlay" id="modal-customer">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">🤝 Kunde</div><button class="modal-close" onclick="closeModal('modal-customer')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Firmenname</label><input type="text" class="form-input" id="cust-name" placeholder="Musterfirma GmbH"></div>
+      <div class="form-group"><label class="form-label">Typ</label>
+        <select class="form-select" id="cust-type">
+          <option value="B2B">B2B</option><option value="B2C">B2C</option><option value="partner">Partner</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Ansprechpartner</label><input type="text" class="form-input" id="cust-contact" placeholder="Max Mustermann"></div>
+      <div class="form-group"><label class="form-label">E-Mail</label><input type="email" class="form-input" id="cust-email"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Telefon</label><input type="text" class="form-input" id="cust-phone"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="cust-status">
+          <option value="active">Aktiv</option><option value="lead">Lead</option><option value="inactive">Inaktiv</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Jahresumsatz (€)</label><input type="number" class="form-input" id="cust-revenue" min="0" step="0.01"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-customer')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveCustomer()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Deal Modal -->
+<div class="modal-overlay" id="modal-deal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">💼 Lead / Deal</div><button class="modal-close" onclick="closeModal('modal-deal')">✕</button></div>
+    <div class="form-group"><label class="form-label">Bezeichnung</label><input type="text" class="form-input" id="deal-title"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Kunde</label><select class="form-select" id="deal-customer"></select></div>
+      <div class="form-group"><label class="form-label">Wert (€)</label><input type="number" class="form-input" id="deal-value" min="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Phase</label>
+        <select class="form-select" id="deal-stage">
+          <option value="lead">Lead</option><option value="qualified">Qualifiziert</option><option value="proposal">Angebot</option><option value="negotiation">Verhandlung</option><option value="won">Gewonnen</option><option value="lost">Verloren</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Abschlussdatum</label><input type="date" class="form-input" id="deal-close"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-deal')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveDeal()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Employee Modal -->
+<div class="modal-overlay" id="modal-employee">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">👤 Mitarbeiter</div><button class="modal-close" onclick="closeModal('modal-employee')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Vorname</label><input type="text" class="form-input" id="emp-first"></div>
+      <div class="form-group"><label class="form-label">Nachname</label><input type="text" class="form-input" id="emp-last"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Position</label><input type="text" class="form-input" id="emp-role" placeholder="z.B. Entwickler"></div>
+      <div class="form-group"><label class="form-label">Abteilung</label>
+        <select class="form-select" id="emp-dept">
+          <option>Entwicklung</option><option>Marketing</option><option>Vertrieb</option><option>Finanzen</option><option>Logistik</option><option>HR</option><option>Management</option><option>Sonstiges</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Bruttogehalt (€/Monat)</label><input type="number" class="form-input" id="emp-salary" min="0"></div>
+      <div class="form-group"><label class="form-label">Urlaubstage/Jahr</label><input type="number" class="form-input" id="emp-vacation" value="28" min="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">E-Mail</label><input type="email" class="form-input" id="emp-email"></div>
+      <div class="form-group"><label class="form-label">Eintrittsdatum</label><input type="date" class="form-input" id="emp-start"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Status</label>
+      <select class="form-select" id="emp-status">
+        <option value="active">Aktiv</option><option value="parental">Elternzeit</option><option value="sick">Krank</option><option value="inactive">Ausgetreten</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-employee')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveEmployee()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Project Modal -->
+<div class="modal-overlay" id="modal-project">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">🚀 Projekt</div><button class="modal-close" onclick="closeModal('modal-project')">✕</button></div>
+    <div class="form-group"><label class="form-label">Projektname</label><input type="text" class="form-input" id="proj-name"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Kunde</label><select class="form-select" id="proj-customer"></select></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="proj-status">
+          <option value="backlog">Backlog</option><option value="active">Aktiv</option><option value="review">Review</option><option value="done">Fertig</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Budget (€)</label><input type="number" class="form-input" id="proj-budget" min="0"></div>
+      <div class="form-group"><label class="form-label">Deadline</label><input type="date" class="form-input" id="proj-deadline"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Beschreibung</label><textarea class="form-textarea" id="proj-desc"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-project')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveProject()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal-overlay" id="modal-task">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">✅ Aufgabe</div><button class="modal-close" onclick="closeModal('modal-task')">✕</button></div>
+    <div class="form-group"><label class="form-label">Aufgabentitel</label><input type="text" class="form-input" id="task-title"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Projekt</label><select class="form-select" id="task-project"></select></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="task-status">
+          <option value="backlog">Backlog</option><option value="active">In Arbeit</option><option value="review">Review</option><option value="done">Fertig</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Priorität</label>
+        <select class="form-select" id="task-priority">
+          <option value="low">Niedrig</option><option value="medium">Mittel</option><option value="high">Hoch</option><option value="critical">Kritisch</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Fällig am</label><input type="date" class="form-input" id="task-due"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-task')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveTask()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice Modal -->
+<div class="modal-overlay" id="modal-invoice">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div class="modal-title">🧾 Rechnung erstellen</div><button class="modal-close" onclick="closeModal('modal-invoice')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Kunde</label><select class="form-select" id="inv-m-customer"></select></div>
+      <div class="form-group"><label class="form-label">Rechnungsdatum</label><input type="date" class="form-input" id="inv-m-date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Zahlungsziel (Tage)</label><input type="number" class="form-input" id="inv-m-days" value="14" min="1"></div>
+      <div class="form-group"><label class="form-label">MwSt.-Satz</label>
+        <select class="form-select" id="inv-m-vat">
+          <option value="19">19%</option><option value="7">7%</option><option value="0">0%</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="form-label">Positionen</label>
+      <div id="inv-positions"></div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addInvPosition()">+ Position</button>
+    </div>
+    <div style="text-align:right;padding:12px;background:var(--surface2);border-radius:8px">
+      <div style="font-size:12px;color:var(--text2)">Netto: <span id="inv-total-net" class="td-mono">€ 0,00</span></div>
+      <div style="font-size:12px;color:var(--text2)">MwSt.: <span id="inv-total-vat" class="td-mono">€ 0,00</span></div>
+      <div style="font-size:16px;font-weight:700;margin-top:4px">Gesamt: <span id="inv-total-gross" class="td-mono">€ 0,00</span></div>
+    </div>
+    <div class="form-group" style="margin-top:12px"><label class="form-label">Notizen / Zahlungshinweise</label><textarea class="form-textarea" id="inv-m-notes"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-invoice')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveInvoice()">Rechnung erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Budget Modal -->
+<div class="modal-overlay" id="modal-budget">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">📊 Budget</div><button class="modal-close" onclick="closeModal('modal-budget')">✕</button></div>
+    <div class="form-group"><label class="form-label">Kategorie</label>
+      <select class="form-select" id="bud-cat">
+        <option>Personal</option><option>Marketing</option><option>Software/Lizenzen</option><option>Miete</option><option>Logistik</option><option>Bürobedarf</option><option>Investitionen</option><option>Sonstiges</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Geplantes Budget (€)</label><input type="number" class="form-input" id="bud-planned" min="0" step="0.01"></div>
+      <div class="form-group"><label class="form-label">Zeitraum</label>
+        <select class="form-select" id="bud-period">
+          <option value="monthly">Monatlich</option><option value="quarterly">Quartalsweise</option><option value="yearly">Jährlich</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-budget')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveBudget()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tax Event Modal -->
+<div class="modal-overlay" id="modal-taxevent">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">📅 Steuertermin</div><button class="modal-close" onclick="closeModal('modal-taxevent')">✕</button></div>
+    <div class="form-group"><label class="form-label">Bezeichnung</label><input type="text" class="form-input" id="te-name" placeholder="z.B. MwSt-Voranmeldung Q1"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Fälligkeitsdatum</label><input type="date" class="form-input" id="te-date"></div>
+      <div class="form-group"><label class="form-label">Betrag (€)</label><input type="number" class="form-input" id="te-amount" min="0" step="0.01"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Typ</label>
+      <select class="form-select" id="te-type">
+        <option>MwSt-Voranmeldung</option><option>Körperschaftsteuer</option><option>Gewerbesteuer</option><option>Einkommensteuer</option><option>Lohnsteuer</option><option>Sonstiges</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-taxevent')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveTaxEvent()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+//  STATE & STORAGE
+// =====================================================================
+const STORAGE_KEY = 'nexus_business_v1';
+
+const DEMO_DATA = {
+  company: { name:'Tech Startup GmbH', legal:'GmbH', taxId:'123/456/78901', vatId:'DE123456789', address:'Musterstraße 1\n10115 Berlin', founded:2023, currency:'EUR', vatRate:19, fiscalStart:1, corpTax:15 },
+  accounts: [
+    {id:1,name:'Geschäftskonto',type:'bank',balance:87500,iban:'DE89 3704 0044 0532 0130 00'},
+    {id:2,name:'Rücklagen',type:'savings',balance:25000,iban:''},
+    {id:3,name:'Kasse',type:'cash',balance:850,iban:''}
+  ],
+  transactions: [
+    {id:1,type:'income',amount:12500,desc:'Kundenrechnung RE-2024-001',cat:'Umsatz',accountId:1,date:'2024-11-05',ref:'RE-2024-001',vat:19},
+    {id:2,type:'income',amount:8900,desc:'Kundenrechnung RE-2024-002',cat:'Umsatz',accountId:1,date:'2024-11-12',ref:'RE-2024-002',vat:19},
+    {id:3,type:'expense',amount:2200,desc:'Büroraum Miete',cat:'Miete',accountId:1,date:'2024-11-01',ref:'',vat:0},
+    {id:4,type:'expense',amount:650,desc:'AWS Server Kosten',cat:'Software/Lizenzen',accountId:1,date:'2024-11-03',ref:'',vat:19},
+    {id:5,type:'income',amount:5400,desc:'Beratungsleistung',cat:'Umsatz',accountId:1,date:'2024-10-28',ref:'RE-2024-003',vat:19},
+    {id:6,type:'expense',amount:4800,desc:'Mitarbeitergehalt Oktober',cat:'Personal',accountId:1,date:'2024-10-31',ref:'',vat:0},
+    {id:7,type:'income',amount:9200,desc:'Lizenzgebühren Q3',cat:'Umsatz',accountId:1,date:'2024-10-15',ref:'',vat:19},
+    {id:8,type:'expense',amount:320,desc:'Google Ads',cat:'Marketing',accountId:1,date:'2024-10-10',ref:'',vat:19},
+    {id:9,type:'income',amount:15800,desc:'Großauftrag Kunde X',cat:'Umsatz',accountId:1,date:'2024-09-20',ref:'RE-2024-004',vat:19},
+    {id:10,type:'expense',amount:1200,desc:'Versicherungen',cat:'Versicherungen',accountId:1,date:'2024-09-01',ref:'',vat:0},
+  ],
+  contracts: [
+    {id:1,title:'Büromietvertrag Berlin',partner:'Immobilien AG',type:'Mietvertrag',value:26400,status:'active',start:'2023-01-01',end:'2025-12-31',notice:90,notes:'Inkl. Nebenkosten'},
+    {id:2,title:'AWS Enterprise Support',partner:'Amazon Web Services',type:'Lizenzvertrag',value:7800,status:'active',start:'2024-01-01',end:'2024-12-31',notice:30,notes:'Läuft bald ab!'},
+    {id:3,title:'NDA Entwicklungspartner',partner:'Devshop GmbH',type:'NDA',value:0,status:'active',start:'2023-06-01',end:'2026-06-01',notice:30,notes:''},
+    {id:4,title:'Liefervertrag Bürobedarf',partner:'Büro Plus',type:'Liefervertrag',value:3600,status:'active',start:'2024-03-01',end:'2025-03-01',notice:60,notes:''},
+  ],
+  inventory: [
+    {id:1,name:'Verpackungsmaterial',sku:'VPM-001',qty:450,minQty:100,price:0.30,unit:'Stück',warehouseUnit:'WH-A1',cat:'Verpackung'},
+    {id:2,name:'Elektronikbauteile Set',sku:'ELK-002',qty:85,minQty:50,price:12.50,unit:'Stück',warehouseUnit:'WH-B1',cat:'Rohstoffe'},
+    {id:3,name:'Produkt Demo-Einheit',sku:'PRD-001',qty:12,minQty:5,price:349.00,unit:'Stück',warehouseUnit:'WH-C1',cat:'Fertigwaren'},
+    {id:4,name:'Druckpapier A4',sku:'BRO-001',qty:8,minQty:20,price:5.50,unit:'Paket',warehouseUnit:'WH-A2',cat:'Betriebsmittel'},
+    {id:5,name:'Platinen Rohware',sku:'PLT-001',qty:200,minQty:80,price:3.20,unit:'Stück',warehouseUnit:'WH-B2',cat:'Rohstoffe'},
+  ],
+  floorPlan: {
+    rows:6, cols:10,
+    units: [
+      {cellId:'2-1',name:'Regal A1',cat:'cat-a',cap:500,desc:'Verpackungen'},
+      {cellId:'2-2',name:'Regal A2',cat:'cat-a',cap:300,desc:'Bürobedarf'},
+      {cellId:'3-1',name:'Regal B1',cat:'cat-b',cap:200,desc:'Elektronik'},
+      {cellId:'3-2',name:'Regal B2',cat:'cat-b',cap:200,desc:'Platinen'},
+      {cellId:'4-3',name:'Regal C1',cat:'cat-c',cap:100,desc:'Fertigwaren'},
+      {cellId:'5-5',name:'Sonderzone',cat:'cat-e',cap:50,desc:'Retouren'},
+    ]
+  },
+  stockMoves: [
+    {id:1,itemId:1,type:'in',qty:200,note:'Lieferung Musterpack',date:'2024-11-01'},
+    {id:2,itemId:2,type:'out',qty:15,note:'Produktion',date:'2024-11-08'},
+    {id:3,itemId:4,type:'out',qty:12,note:'Verbrauch Büro',date:'2024-11-10'},
+  ],
+  customers: [
+    {id:1,name:'Digital Solutions AG',contact:'Maria Schmidt',email:'m.schmidt@digisol.de',phone:'+49 30 1234567',type:'B2B',revenue:28700,status:'active',lastContact:'2024-11-10'},
+    {id:2,name:'Startup Hub GmbH',contact:'Jan Müller',email:'j.mueller@shub.de',phone:'+49 89 7654321',type:'B2B',revenue:12500,status:'active',lastContact:'2024-11-05'},
+    {id:3,name:'Max Privat',contact:'Max Privat',email:'max@mail.de',phone:'',type:'B2C',revenue:1200,status:'active',lastContact:'2024-10-20'},
+  ],
+  deals: [
+    {id:1,title:'ERP Integration Projekt',customerId:1,value:45000,stage:'proposal',closeDate:'2024-12-15'},
+    {id:2,title:'Jahresvertrag 2025',customerId:2,value:18000,stage:'negotiation',closeDate:'2024-12-31'},
+    {id:3,title:'Web-Shop Relaunch',customerId:3,value:5500,stage:'qualified',closeDate:'2025-01-31'},
+  ],
+  employees: [
+    {id:1,first:'Anna',last:'Weber',role:'CTO',dept:'Entwicklung',salary:6500,vacation:28,email:'a.weber@company.de',start:'2023-01-15',status:'active'},
+    {id:2,first:'Tom',last:'Fischer',role:'Full-Stack Dev',dept:'Entwicklung',salary:5200,vacation:28,email:'t.fischer@company.de',start:'2023-04-01',status:'active'},
+    {id:3,first:'Lisa',last:'Koch',role:'Marketing Lead',dept:'Marketing',salary:4800,vacation:28,email:'l.koch@company.de',start:'2023-07-01',status:'active'},
+  ],
+  projects: [
+    {id:1,name:'Produktlaunch v2.0',customerId:1,status:'active',budget:25000,deadline:'2024-12-20',desc:'Neues Feature-Set'},
+    {id:2,name:'Website Redesign',customerId:2,status:'review',budget:8000,deadline:'2024-11-30',desc:'Kompletter Neuauftritt'},
+    {id:3,name:'Datenbank Migration',customerId:0,status:'done',budget:5000,deadline:'2024-10-31',desc:'Internes Projekt'},
+  ],
+  tasks: [
+    {id:1,title:'API Dokumentation schreiben',projectId:1,status:'backlog',priority:'medium',due:'2024-12-01'},
+    {id:2,title:'Frontend Tests',projectId:1,status:'active',priority:'high',due:'2024-11-25'},
+    {id:3,title:'Design Review',projectId:2,status:'review',priority:'high',due:'2024-11-20'},
+    {id:4,title:'Server Setup',projectId:3,status:'done',priority:'critical',due:'2024-10-15'},
+    {id:5,title:'Security Audit',projectId:1,status:'backlog',priority:'critical',due:'2024-12-10'},
+  ],
+  invoices: [
+    {id:1,num:'RE-2024-001',customerId:1,date:'2024-11-01',dueDate:'2024-11-15',vatRate:19,status:'paid',positions:[{desc:'Entwicklungsleistung Nov',qty:1,price:12500}],notes:''},
+    {id:2,num:'RE-2024-002',customerId:2,date:'2024-11-10',dueDate:'2024-11-24',vatRate:19,status:'sent',positions:[{desc:'Monatliche Lizenz',qty:1,price:8900}],notes:'Zahlbar innerhalb 14 Tagen'},
+    {id:3,num:'RE-2024-003',customerId:1,date:'2024-10-20',dueDate:'2024-11-03',vatRate:19,status:'overdue',positions:[{desc:'Beratung Q4',qty:4,price:1350}],notes:''},
+  ],
+  budgets: [
+    {id:1,cat:'Personal',planned:15000,period:'monthly'},
+    {id:2,cat:'Marketing',planned:2000,period:'monthly'},
+    {id:3,cat:'Software/Lizenzen',planned:1500,period:'monthly'},
+    {id:4,cat:'Miete',planned:2200,period:'monthly'},
+  ],
+  taxEvents: [
+    {id:1,name:'MwSt-Voranmeldung Q3',date:'2024-11-10',amount:3420,type:'MwSt-Voranmeldung',done:true},
+    {id:2,name:'MwSt-Voranmeldung Q4',date:'2025-02-10',amount:3800,type:'MwSt-Voranmeldung',done:false},
+    {id:3,name:'Körperschaftsteuer 2024',date:'2025-05-31',amount:0,type:'Körperschaftsteuer',done:false},
+    {id:4,name:'Gewerbesteuer 2024',date:'2025-05-15',amount:0,type:'Gewerbesteuer',done:false},
+  ],
+  _nextId: 100
+};
+
+let state = {};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { state = JSON.parse(raw); }
+    else { state = JSON.parse(JSON.stringify(DEMO_DATA)); saveState(); }
+  } catch(e) { state = JSON.parse(JSON.stringify(DEMO_DATA)); }
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function nextId() { state._nextId = (state._nextId || 100) + 1; return state._nextId; }
+
+// =====================================================================
+//  FORMATTING
+// =====================================================================
+const fmt = (n, dec=2) => {
+  const sym = state.company?.currency === 'USD' ? '$' : state.company?.currency === 'GBP' ? '£' : state.company?.currency === 'CHF' ? 'CHF ' : '€';
+  return sym + ' ' + Number(n||0).toLocaleString('de-DE',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+};
+const fmtDate = d => d ? new Date(d).toLocaleDateString('de-DE') : '–';
+const fmtNum = n => Number(n||0).toLocaleString('de-DE');
+
+function daysUntil(dateStr) {
+  if(!dateStr) return 9999;
+  const diff = new Date(dateStr) - new Date();
+  return Math.ceil(diff / 86400000);
+}
+
+function statusBadge(status) {
+  const map = {
+    active:'badge-green', expiring:'badge-gold', expired:'badge-red', draft:'badge-gray',
+    paid:'badge-green', sent:'badge-blue', overdue:'badge-red',
+    backlog:'badge-gray', review:'badge-gold', done:'badge-green', in_progress:'badge-blue',
+    won:'badge-green', lost:'badge-red', lead:'badge-gray', qualified:'badge-blue',
+    proposal:'badge-gold', negotiation:'badge-purple',
+    B2B:'badge-blue', B2C:'badge-green', partner:'badge-purple',
+    inactive:'badge-gray'
+  };
+  const labels = {
+    active:'Aktiv', expiring:'Läuft ab', expired:'Abgelaufen', draft:'Entwurf',
+    paid:'Bezahlt', sent:'Versendet', overdue:'Überfällig',
+    backlog:'Backlog', review:'Review', done:'Fertig', active:'Aktiv',
+    won:'Gewonnen', lost:'Verloren', lead:'Lead', qualified:'Qualifiziert',
+    proposal:'Angebot', negotiation:'Verhandlung',
+    B2B:'B2B', B2C:'B2C', partner:'Partner', inactive:'Inaktiv'
+  };
+  return `<span class="badge ${map[status]||'badge-gray'}">${labels[status]||status}</span>`;
+}
+
+function priorityBadge(p) {
+  const map = {low:'badge-gray',medium:'badge-blue',high:'badge-gold',critical:'badge-red'};
+  const labels = {low:'Niedrig',medium:'Mittel',high:'Hoch',critical:'Kritisch'};
+  return `<span class="badge ${map[p]||'badge-gray'}">${labels[p]||p}</span>`;
+}
+
+// =====================================================================
+//  NAVIGATION
+// =====================================================================
+let currentSection = 'dashboard';
+const sectionTitles = {
+  dashboard:'Dashboard', finanzen:'Kapital & Finanzen', rechnungen:'Rechnungen',
+  steuern:'Steuerübersicht', lager:'Lager & Grundriss', vertraege:'Verträge',
+  crm:'CRM & Kunden', hr:'HR & Team', projekte:'Projekte', einstellungen:'Einstellungen'
+};
+
+function navigate(section) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const el = document.getElementById('section-'+section);
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if(n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+section+"'")) n.classList.add('active');
+  });
+  document.getElementById('topbar-title').textContent = sectionTitles[section] || section;
+  currentSection = section;
+  renderSection(section);
+  updateBadges();
+}
+
+function renderSection(section) {
+  const renderers = {
+    dashboard: renderDashboard,
+    finanzen: renderFinanzen,
+    rechnungen: renderInvoices,
+    steuern: renderSteuern,
+    lager: renderLager,
+    vertraege: renderContracts,
+    crm: renderCRM,
+    hr: renderHR,
+    projekte: renderProjekte,
+    einstellungen: renderEinstellungen
+  };
+  if(renderers[section]) renderers[section]();
+}
+
+function switchTab(tabEl, targetId) {
+  const tabGroup = tabEl.closest('.tabs');
+  const contentContainer = tabGroup.nextElementSibling;
+  tabGroup.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tabEl.classList.add('active');
+  // find all tab-content siblings
+  let sibling = tabGroup.nextElementSibling;
+  while(sibling) {
+    if(sibling.classList.contains('tab-content')) sibling.classList.remove('active');
+    sibling = sibling.nextElementSibling;
+  }
+  const target = document.getElementById(targetId);
+  if(target) target.classList.add('active');
+  // re-render if needed
+  if(targetId==='tab-cashflow') renderCashflowChart();
+  if(targetId==='tab-pnl') renderPnL();
+  if(targetId==='tab-budget') renderBudget();
+  if(targetId==='tab-inventory') renderInventory();
+  if(targetId==='tab-stockstats') renderStockStats();
+  if(targetId==='tab-team') renderTeamGrid();
+  if(targetId==='tab-payroll') renderPayroll();
+  if(targetId==='tab-leave') renderLeave();
+}
+
+function updateBadges() {
+  // overdue invoices
+  const overdueInv = (state.invoices||[]).filter(i=>i.status==='overdue').length;
+  const sentInv = (state.invoices||[]).filter(i=>i.status==='sent').length;
+  const invBadge = overdueInv + sentInv;
+  const ib = document.getElementById('badge-invoices');
+  if(ib) { ib.textContent = invBadge; ib.style.display = invBadge?'':'none'; }
+
+  // expiring contracts
+  const expiring = (state.contracts||[]).filter(c=>{
+    const d = daysUntil(c.end);
+    return c.status==='active' && d>=0 && d<=60;
+  }).length;
+  const cb = document.getElementById('badge-contracts');
+  if(cb) { cb.textContent = expiring; cb.style.display = expiring?'':'none'; }
+}
+
+// =====================================================================
+//  SVG CHARTS
+// =====================================================================
+function svgBarChart(data, opts={}) {
+  const { width=600, height=200, colors=['#e8a020','#4a8fff'], barRadius=4 } = opts;
+  if(!data || data.length===0) return '<p style="color:var(--text3);text-align:center;padding:60px">Keine Daten</p>';
+  const padL=40, padR=10, padT=10, padB=30;
+  const W = width-padL-padR, H = height-padT-padB;
+  const maxVal = Math.max(...data.map(d=>Math.max(...(d.values||[d.value||0]))),1);
+  const series = data[0].values ? data[0].values.length : 1;
+  const barW = Math.max(6, (W/data.length - 8) / series);
+  let svgBars='', svgLabels='', svgYAxis='';
+
+  // Y gridlines
+  for(let i=0;i<=4;i++){
+    const y = padT + H - (H*i/4);
+    const val = (maxVal*i/4);
+    svgYAxis += `<line x1="${padL}" y1="${y}" x2="${padL+W}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`;
+    svgYAxis += `<text x="${padL-4}" y="${y+4}" text-anchor="end" class="chart-label">${val>=1000?Math.round(val/1000)+'k':Math.round(val)}</text>`;
+  }
+
+  data.forEach((d,i)=>{
+    const vals = d.values || [d.value||0];
+    const groupW = W/data.length;
+    vals.forEach((v,j)=>{
+      const bh = Math.max(2, (v/maxVal)*H);
+      const x = padL + i*groupW + j*(barW+2) + (groupW - vals.length*(barW+2))/2;
+      const y = padT + H - bh;
+      svgBars += `<rect class="chart-bar" x="${x}" y="${y}" width="${barW}" height="${bh}" fill="${colors[j]||colors[0]}" opacity=".9" rx="${barRadius}"/>`;
+    });
+    const lx = padL + i*groupW + groupW/2;
+    svgLabels += `<text x="${lx}" y="${padT+H+18}" text-anchor="middle" class="chart-label">${d.label||''}</text>`;
+  });
+
+  return `<svg viewBox="0 0 ${width} ${height}" class="chart-svg">${svgYAxis}${svgBars}${svgLabels}</svg>`;
+}
+
+function svgLineChart(data, opts={}) {
+  const { width=600, height=200, color='#4a8fff', areaColor='#4a8fff' } = opts;
+  if(!data || data.length<2) return '<p style="color:var(--text3);text-align:center;padding:60px">Keine Daten</p>';
+  const padL=40, padR=10, padT=10, padB=30;
+  const W=width-padL-padR, H=height-padT-padB;
+  const maxVal = Math.max(...data.map(d=>d.value||0),1);
+  const minVal = Math.min(...data.map(d=>d.value||0),0);
+  const range = maxVal-minVal||1;
+  let pts='', apts='';
+  data.forEach((d,i)=>{
+    const x = padL + (i/(data.length-1))*W;
+    const y = padT + H - ((d.value-minVal)/range)*H;
+    pts += `${x},${y} `;
+    apts += i===0?`M${x},${padT+H} L${x},${y}`:` L${x},${y}`;
+  });
+  apts += ` L${padL+W},${padT+H} Z`;
+
+  let yAxis='', xLabels='';
+  for(let i=0;i<=4;i++){
+    const y=padT+H-(H*i/4);
+    const v=minVal+(range*i/4);
+    yAxis+=`<line x1="${padL}" y1="${y}" x2="${padL+W}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`;
+    yAxis+=`<text x="${padL-4}" y="${y+4}" text-anchor="end" class="chart-label">${v>=1000?Math.round(v/1000)+'k':Math.round(v)}</text>`;
+  }
+  data.forEach((d,i)=>{
+    if(i%(Math.ceil(data.length/8))===0||i===data.length-1){
+      const x=padL+(i/(data.length-1))*W;
+      xLabels+=`<text x="${x}" y="${padT+H+18}" text-anchor="middle" class="chart-label">${d.label||''}</text>`;
+    }
+  });
+
+  return `<svg viewBox="0 0 ${width} ${height}" class="chart-svg">
+    ${yAxis}
+    <path d="${apts}" fill="${areaColor}" opacity="0.12"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${data.map((d,i)=>{
+      const x=padL+(i/(data.length-1))*W;
+      const y=padT+H-((d.value-minVal)/range)*H;
+      return `<circle cx="${x}" cy="${y}" r="3" fill="${color}"/>`;
+    }).join('')}
+    ${xLabels}
+  </svg>`;
+}
+
+function svgDonutChart(segments, opts={}) {
+  const { size=160, stroke=28 } = opts;
+  if(!segments || segments.length===0) return '<p style="color:var(--text3)">Keine Daten</p>';
+  const total = segments.reduce((s,x)=>s+(x.value||0),0)||1;
+  const r = (size-stroke)/2, cx=size/2, cy=size/2;
+  const circ = 2*Math.PI*r;
+  let offset = 0;
+  const arcs = segments.map(seg=>{
+    const pct = (seg.value||0)/total;
+    const len = pct*circ;
+    const arc = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${seg.color}" stroke-width="${stroke}" stroke-dasharray="${len} ${circ}" stroke-dashoffset="${-offset*circ}" transform="rotate(-90 ${cx} ${cy})" opacity=".9"/>`;
+    offset += pct;
+    return arc;
+  });
+  const legend = segments.map(s=>`<div class="legend-item"><div class="legend-dot" style="background:${s.color}"></div>${s.label}: ${fmt(s.value)}</div>`).join('');
+  return `
+    <div class="donut-chart" style="position:relative;width:${size}px;height:${size}px;margin:0 auto">
+      <svg width="${size}" height="${size}">${arcs.join('')}</svg>
+      <div class="donut-center">
+        <div class="donut-center-val">${fmt(total,0)}</div>
+        <div class="donut-center-lbl">Gesamt</div>
+      </div>
+    </div>
+    <div class="chart-legend" style="justify-content:center;margin-top:10px">${legend}</div>`;
+}
+
+// =====================================================================
+//  DASHBOARD
+// =====================================================================
+const MONTHS_DE = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+
+function getTransactionsByMonth() {
+  const now = new Date();
+  const result = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const m = d.getMonth(); const y = d.getFullYear();
+    const txns = (state.transactions||[]).filter(t=>{
+      const td = new Date(t.date);
+      return td.getMonth()===m && td.getFullYear()===y;
+    });
+    const income = txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const expense = txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    result.push({ label:MONTHS_DE[m], income, expense });
+  }
+  return result;
+}
+
+function renderDashboard() {
+  const now = new Date();
+  const h = now.getHours();
+  const greeting = h<12?'Guten Morgen':h<18?'Guten Tag':'Guten Abend';
+  document.getElementById('dash-greeting').textContent = greeting + ' 👋';
+  document.getElementById('dash-date').textContent = now.toLocaleDateString('de-DE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  const txns = state.transactions||[];
+  const totalIncome = txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totalExpense = txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const netProfit = totalIncome - totalExpense;
+  const totalCash = (state.accounts||[]).reduce((s,a)=>s+a.balance,0);
+
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-card gold">
+      <div class="kpi-label">Gesamtumsatz</div>
+      <div class="kpi-value">${fmt(totalIncome)}</div>
+      <div class="kpi-sub">📈 Alle Einnahmen</div>
+      <div class="kpi-icon">💰</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Gesamtausgaben</div>
+      <div class="kpi-value">${fmt(totalExpense)}</div>
+      <div class="kpi-sub">📉 Alle Kosten</div>
+      <div class="kpi-icon">📤</div>
+    </div>
+    <div class="kpi-card ${netProfit>=0?'green':'red'}">
+      <div class="kpi-label">Nettoprofit</div>
+      <div class="kpi-value" style="color:${netProfit>=0?'var(--green)':'var(--red)'}">${fmt(netProfit)}</div>
+      <div class="kpi-sub">${netProfit>=0?'✅ Im Plus':'⚠️ Im Minus'}</div>
+      <div class="kpi-icon">📊</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Liquidität</div>
+      <div class="kpi-value">${fmt(totalCash)}</div>
+      <div class="kpi-sub">🏦 ${(state.accounts||[]).length} Konten</div>
+      <div class="kpi-icon">🏦</div>
+    </div>
+  `;
+
+  // Alerts
+  const alerts = [];
+  const lowStock = (state.inventory||[]).filter(i=>i.qty<=i.minQty);
+  if(lowStock.length) alerts.push(`<div class="alert-banner warning">⚠️ ${lowStock.length} Artikel unter Mindestbestand</div>`);
+  const overdueInv = (state.invoices||[]).filter(i=>i.status==='overdue');
+  if(overdueInv.length) alerts.push(`<div class="alert-banner danger">🚨 ${overdueInv.length} überfällige Rechnung(en)</div>`);
+  const expiringC = (state.contracts||[]).filter(c=>{ const d=daysUntil(c.end); return c.status==='active'&&d>=0&&d<=60; });
+  if(expiringC.length) alerts.push(`<div class="alert-banner warning">📋 ${expiringC.length} Vertrag/Verträge läuft/laufen in <60 Tagen ab</div>`);
+  document.getElementById('dash-alerts').innerHTML = alerts.join('');
+
+  // Revenue Chart
+  const monthData = getTransactionsByMonth();
+  document.getElementById('chart-revenue').innerHTML = svgBarChart(
+    monthData.map(d=>({label:d.label, values:[d.income, d.expense]})),
+    {colors:['var(--green)','var(--red)']}
+  );
+  document.getElementById('revenue-legend').innerHTML = `
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Einnahmen</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Ausgaben</div>
+  `;
+
+  // Expense Donut
+  const expCats = {};
+  txns.filter(t=>t.type==='expense').forEach(t=>{ expCats[t.cat]=(expCats[t.cat]||0)+t.amount; });
+  const catColors = ['#4a8fff','#18d8a0','#e8a020','#a78bfa','#ff4d6a','#fb923c'];
+  const catSegments = Object.entries(expCats).map(([k,v],i)=>({label:k,value:v,color:catColors[i%catColors.length]}));
+  document.getElementById('chart-expenses').innerHTML = svgDonutChart(catSegments, {size:150,stroke:24});
+
+  // Recent transactions
+  const recent = [...txns].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  document.getElementById('dash-transactions').innerHTML = recent.length ? recent.map(t=>`
+    <div class="activity-item">
+      <div class="activity-icon" style="background:${t.type==='income'?'var(--green-dim)':'var(--red-dim)'}">
+        ${t.type==='income'?'📥':'📤'}
+      </div>
+      <div style="flex:1">
+        <div class="activity-text">${t.desc}</div>
+        <div class="activity-sub">${fmtDate(t.date)} · ${t.cat}</div>
+      </div>
+      <div style="font-family:var(--mono);font-weight:700;color:${t.type==='income'?'var(--green)':'var(--red)'}">
+        ${t.type==='income'?'+':'-'}${fmt(t.amount)}
+      </div>
+    </div>
+  `).join('') : '<div class="empty-state"><div class="empty-state-icon">💸</div><div>Keine Transaktionen</div></div>';
+
+  // Events
+  const today = new Date();
+  const events = [];
+  (state.contracts||[]).filter(c=>{ const d=daysUntil(c.end); return d>=0&&d<=90; }).slice(0,3).forEach(c=>{
+    events.push({icon:'📋',text:`Vertrag: ${c.title}`,sub:`Endet in ${daysUntil(c.end)} Tagen`,color:'var(--accent-dim)'});
+  });
+  (state.taxEvents||[]).filter(te=>!te.done).slice(0,3).forEach(te=>{
+    const d=daysUntil(te.date);
+    if(d>=0&&d<=90) events.push({icon:'🏛️',text:te.name,sub:`Fällig in ${d} Tagen`,color:'var(--blue-dim)'});
+  });
+  (state.invoices||[]).filter(i=>i.status==='overdue').slice(0,2).forEach(i=>{
+    events.push({icon:'🧾',text:`Überfällig: ${i.num}`,sub:`Seit ${fmtDate(i.dueDate)}`,color:'var(--red-dim)'});
+  });
+  document.getElementById('dash-events').innerHTML = events.length ? events.map(e=>`
+    <div class="activity-item">
+      <div class="activity-icon" style="background:${e.color}">${e.icon}</div>
+      <div><div class="activity-text">${e.text}</div><div class="activity-sub">${e.sub}</div></div>
+    </div>
+  `).join('') : '<div class="empty-state" style="padding:30px">✅ Keine anstehenden Ereignisse</div>';
+}
+
+// =====================================================================
+//  FINANZEN
+// =====================================================================
+function renderFinanzen() {
+  renderAccounts();
+  renderTransactions();
+}
+
+function renderAccounts() {
+  const accounts = state.accounts||[];
+  const totalBalance = accounts.reduce((s,a)=>s+a.balance,0);
+  const typeIcons = {bank:'🏦',savings:'💎',cash:'💵',invest:'📈'};
+  document.getElementById('accounts-row').innerHTML = accounts.map(a=>`
+    <div class="kpi-card ${['gold','blue','green','purple'][accounts.indexOf(a)%4]}">
+      <div class="kpi-label">${a.name}</div>
+      <div class="kpi-value">${fmt(a.balance)}</div>
+      <div class="kpi-sub">${a.iban?'IBAN: '+a.iban.slice(-8):'Kein IBAN'}</div>
+      <div class="kpi-icon">${typeIcons[a.type]||'🏦'}</div>
+    </div>
+  `).join('') + `
+    <div class="kpi-card" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;border-style:dashed;cursor:pointer" onclick="openModal('modal-account')">
+      <div style="font-size:28px;opacity:.3">+</div>
+      <div style="font-size:12px;color:var(--text3)">Konto hinzufügen</div>
+    </div>
+  `;
+}
+
+function renderTransactions() {
+  const search = document.getElementById('txn-search')?.value?.toLowerCase()||'';
+  const typeFilter = document.getElementById('txn-filter-type')?.value||'';
+  const catFilter = document.getElementById('txn-filter-cat')?.value||'';
+
+  // populate categories
+  const cats = [...new Set((state.transactions||[]).map(t=>t.cat))].sort();
+  const catSel = document.getElementById('txn-filter-cat');
+  if(catSel && catSel.options.length <= 1) {
+    cats.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; catSel.appendChild(o); });
+  }
+
+  let txns = [...(state.transactions||[])].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(search) txns=txns.filter(t=>(t.desc+t.cat+t.ref).toLowerCase().includes(search));
+  if(typeFilter) txns=txns.filter(t=>t.type===typeFilter);
+  if(catFilter) txns=txns.filter(t=>t.cat===catFilter);
+
+  const acc = (id)=> (state.accounts||[]).find(a=>a.id===id)?.name||'–';
+  document.getElementById('transactions-tbody').innerHTML = txns.length ? txns.map(t=>`
+    <tr>
+      <td class="td-mono">${fmtDate(t.date)}</td>
+      <td class="td-bold">${t.desc}</td>
+      <td><span class="badge badge-gray">${t.cat}</span></td>
+      <td>${acc(t.accountId)}</td>
+      <td class="td-mono td-bold" style="color:${t.type==='income'?'var(--green)':'var(--red)'}">
+        ${t.type==='income'?'+':'-'}${fmt(t.amount)}
+      </td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="deleteItem('transactions',${t.id})">🗑️</button>
+      </td>
+    </tr>
+  `).join('') : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">Keine Transaktionen gefunden</td></tr>';
+}
+
+function renderPnL() {
+  const txns = state.transactions||[];
+  const income = txns.filter(t=>t.type==='income');
+  const expense = txns.filter(t=>t.type==='expense');
+  const totalIn = income.reduce((s,t)=>s+t.amount,0);
+  const totalEx = expense.reduce((s,t)=>s+t.amount,0);
+  const profit = totalIn-totalEx;
+
+  // by category
+  const inCats = {};
+  income.forEach(t=>{ inCats[t.cat]=(inCats[t.cat]||0)+t.amount; });
+  const exCats = {};
+  expense.forEach(t=>{ exCats[t.cat]=(exCats[t.cat]||0)+t.amount; });
+
+  document.getElementById('pnl-kpi').innerHTML = `
+    <div class="kpi-card green"><div class="kpi-label">Gesamteinnahmen</div><div class="kpi-value">${fmt(totalIn)}</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Gesamtausgaben</div><div class="kpi-value">${fmt(totalEx)}</div></div>
+  `;
+
+  document.getElementById('pnl-table').innerHTML = `
+    <h3 style="margin-bottom:12px;color:var(--green)">📈 Einnahmen</h3>
+    ${Object.entries(inCats).map(([k,v])=>`<div class="stat-row"><span class="stat-label">${k}</span><span class="stat-val" style="color:var(--green)">+${fmt(v)}</span></div>`).join('')}
+    <div class="stat-row" style="margin-top:8px"><span class="stat-label td-bold">Summe Einnahmen</span><span class="stat-val td-bold" style="color:var(--green)">${fmt(totalIn)}</span></div>
+    <hr class="divider">
+    <h3 style="margin-bottom:12px;color:var(--red)">📉 Ausgaben</h3>
+    ${Object.entries(exCats).map(([k,v])=>`<div class="stat-row"><span class="stat-label">${k}</span><span class="stat-val" style="color:var(--red)">-${fmt(v)}</span></div>`).join('')}
+    <div class="stat-row"><span class="stat-label td-bold">Summe Ausgaben</span><span class="stat-val td-bold" style="color:var(--red)">-${fmt(totalEx)}</span></div>
+    <hr class="divider">
+    <div class="stat-row"><span class="stat-label" style="font-size:16px;font-weight:800">Nettoprofit</span>
+      <span class="stat-val" style="font-size:20px;font-weight:800;color:${profit>=0?'var(--green)':'var(--red)'}">${profit>=0?'+':''}${fmt(profit)}</span>
+    </div>
+    <div class="progress-bar" style="height:8px;margin-top:8px">
+      <div class="progress-fill" style="background:${profit>=0?'var(--green)':'var(--red)'};width:${Math.min(100,totalIn>0?Math.abs(profit)/totalIn*100:0)}%"></div>
+    </div>
+  `;
+}
+
+function renderCashflowChart() {
+  const months = [];
+  const now = new Date();
+  for(let i=11;i>=0;i--){
+    const d = new Date(now.getFullYear(),now.getMonth()-i,1);
+    const m=d.getMonth(), y=d.getFullYear();
+    const txns=(state.transactions||[]).filter(t=>{const td=new Date(t.date);return td.getMonth()===m&&td.getFullYear()===y;});
+    const net=txns.reduce((s,t)=>s+(t.type==='income'?t.amount:-t.amount),0);
+    months.push({label:MONTHS_DE[m], value:net});
+  }
+  const el = document.getElementById('chart-cashflow');
+  if(el) el.innerHTML = svgLineChart(months, {color:'var(--accent)',areaColor:'var(--accent)'});
+}
+
+function renderBudget() {
+  const budgets = state.budgets||[];
+  const txns = state.transactions||[];
+  document.getElementById('budget-view').innerHTML = budgets.length ? budgets.map(b=>{
+    const spent = txns.filter(t=>t.type==='expense'&&t.cat===b.cat).reduce((s,t)=>s+t.amount,0);
+    const pct = Math.min(100, b.planned>0?spent/b.planned*100:0);
+    const color = pct>90?'var(--red)':pct>70?'var(--accent)':'var(--green)';
+    return `
+      <div class="stat-row" style="flex-direction:column;align-items:flex-start;padding:12px 0">
+        <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:6px">
+          <span class="stat-label td-bold">${b.cat}</span>
+          <span>${fmt(spent)} / ${fmt(b.planned)} <span class="badge badge-gray">${b.period}</span></span>
+        </div>
+        <div class="progress-bar" style="width:100%"><div class="progress-fill" style="background:${color};width:${pct}%"></div></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">${pct.toFixed(0)}% verbraucht · Noch ${fmt(b.planned-spent)} übrig</div>
+      </div>
+    `;
+  }).join('') : '<div class="empty-state"><div class="empty-state-icon">📊</div><div>Kein Budget erfasst</div></div>';
+}
+
+// =====================================================================
+//  INVOICES
+// =====================================================================
+function renderInvoices() {
+  const invs = state.invoices||[];
+  const total = invs.reduce((s,i)=>s+calcInvTotal(i),0);
+  const paid = invs.filter(i=>i.status==='paid').reduce((s,i)=>s+calcInvTotal(i),0);
+  const outstanding = invs.filter(i=>i.status==='sent').reduce((s,i)=>s+calcInvTotal(i),0);
+  const overdue = invs.filter(i=>i.status==='overdue').reduce((s,i)=>s+calcInvTotal(i),0);
+
+  document.getElementById('invoice-kpis').innerHTML = `
+    <div class="kpi-card blue"><div class="kpi-label">Gesamt</div><div class="kpi-value">${fmt(total)}</div><div class="kpi-sub">${invs.length} Rechnungen</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Bezahlt</div><div class="kpi-value">${fmt(paid)}</div><div class="kpi-sub">✅</div></div>
+    <div class="kpi-card gold"><div class="kpi-label">Ausstehend</div><div class="kpi-value">${fmt(outstanding)}</div><div class="kpi-sub">⏳</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Überfällig</div><div class="kpi-value">${fmt(overdue)}</div><div class="kpi-sub">🚨</div></div>
+  `;
+
+  const search = document.getElementById('inv-search')?.value?.toLowerCase()||'';
+  const filter = document.getElementById('inv-filter')?.value||'';
+  let list = [...invs].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(search) list=list.filter(i=>(i.num+''+getCustomerName(i.customerId)).toLowerCase().includes(search));
+  if(filter) list=list.filter(i=>i.status===filter);
+
+  document.getElementById('invoices-tbody').innerHTML = list.length ? list.map(inv=>{
+    const gross = calcInvTotal(inv);
+    return `<tr>
+      <td class="td-mono td-bold">${inv.num}</td>
+      <td>${getCustomerName(inv.customerId)}</td>
+      <td class="td-mono">${fmtDate(inv.date)}</td>
+      <td class="td-mono" style="color:${daysUntil(inv.dueDate)<0&&inv.status!=='paid'?'var(--red)':'inherit'}">${fmtDate(inv.dueDate)}</td>
+      <td class="td-mono td-bold">${fmt(gross)}</td>
+      <td>${statusBadge(inv.status)}</td>
+      <td style="display:flex;gap:4px">
+        <button class="btn btn-secondary btn-sm" onclick="toggleInvoiceStatus(${inv.id})">✏️</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteItem('invoices',${inv.id})">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">Keine Rechnungen</td></tr>';
+  updateBadges();
+}
+
+function calcInvTotal(inv) {
+  const net = (inv.positions||[]).reduce((s,p)=>s+(p.qty||1)*(p.price||0),0);
+  return net * (1 + (inv.vatRate||0)/100);
+}
+
+function getCustomerName(id) {
+  return (state.customers||[]).find(c=>c.id===id)?.name || 'Unbekannt';
+}
+
+function toggleInvoiceStatus(id) {
+  const inv = (state.invoices||[]).find(i=>i.id===id);
+  if(!inv) return;
+  const cycle = {draft:'sent',sent:'paid',paid:'overdue',overdue:'paid'};
+  inv.status = cycle[inv.status]||'sent';
+  saveState(); renderInvoices();
+}
+
+let invPositions = [];
+function addInvPosition() {
+  const idx = invPositions.length;
+  invPositions.push({desc:'',qty:1,price:0});
+  const cont = document.getElementById('inv-positions');
+  const div = document.createElement('div');
+  div.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:end';
+  div.innerHTML = `
+    <input type="text" class="form-input" placeholder="Beschreibung" oninput="invPositions[${idx}].desc=this.value;calcInvPreview()">
+    <input type="number" class="form-input" placeholder="Menge" value="1" min="1" oninput="invPositions[${idx}].qty=+this.value;calcInvPreview()">
+    <input type="number" class="form-input" placeholder="Preis €" min="0" step="0.01" oninput="invPositions[${idx}].price=+this.value;calcInvPreview()">
+    <button class="btn btn-danger btn-sm btn-icon" onclick="this.parentElement.remove();invPositions.splice(${idx},1);calcInvPreview()">✕</button>
+  `;
+  cont.appendChild(div);
+}
+
+function calcInvPreview() {
+  const net = invPositions.reduce((s,p)=>s+(p.qty||1)*(p.price||0),0);
+  const vatRate = +(document.getElementById('inv-m-vat')?.value||19);
+  const vat = net * vatRate/100;
+  document.getElementById('inv-total-net').textContent = fmt(net);
+  document.getElementById('inv-total-vat').textContent = fmt(vat);
+  document.getElementById('inv-total-gross').textContent = fmt(net+vat);
+}
+
+// =====================================================================
+//  STEUERN
+// =====================================================================
+function renderSteuern() {
+  const txns = state.transactions||[];
+  const incomeWithVat = txns.filter(t=>t.type==='income'&&t.vat>0);
+  const expenseWithVat = txns.filter(t=>t.type==='expense'&&t.vat>0);
+  const vatCollected = incomeWithVat.reduce((s,t)=>s+t.amount*(t.vat/(100+t.vat)),0);
+  const vatPaid = expenseWithVat.reduce((s,t)=>s+t.amount*(t.vat/(100+t.vat)),0);
+  const vatDue = Math.max(0, vatCollected-vatPaid);
+
+  document.getElementById('tax-vat-due').textContent = fmt(vatDue);
+  document.getElementById('tax-vat-collected').textContent = fmt(vatCollected);
+  document.getElementById('tax-vat-paid').textContent = fmt(vatPaid);
+  document.getElementById('tax-vat-period').textContent = `Aktuell (Stand ${fmtDate(new Date())})`;
+
+  // Estimate
+  const totalIncome = txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totalExpense = txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const profit = totalIncome - totalExpense;
+  const corpTaxRate = (state.company?.corpTax||15)/100;
+  const corpTax = Math.max(0, profit * corpTaxRate);
+  const solidaritaet = corpTax * 0.055;
+  document.getElementById('tax-estimate').innerHTML = `
+    <div class="stat-row"><span class="stat-label">Jahresumsatz (netto)</span><span class="stat-val td-mono">${fmt(totalIncome)}</span></div>
+    <div class="stat-row"><span class="stat-label">Betriebsausgaben</span><span class="stat-val td-mono">-${fmt(totalExpense)}</span></div>
+    <div class="stat-row"><span class="stat-label td-bold">Zu versteuernder Gewinn</span><span class="stat-val td-mono td-bold">${fmt(profit)}</span></div>
+    <hr class="divider">
+    <div class="stat-row"><span class="stat-label">Körperschaftsteuer (${state.company?.corpTax||15}%)</span><span class="stat-val td-mono" style="color:var(--red)">${fmt(corpTax)}</span></div>
+    <div class="stat-row"><span class="stat-label">Solidaritätszuschlag (5,5%)</span><span class="stat-val td-mono" style="color:var(--red)">${fmt(solidaritaet)}</span></div>
+    <div class="stat-row"><span class="stat-label">MwSt. Zahllast</span><span class="stat-val td-mono" style="color:var(--red)">${fmt(vatDue)}</span></div>
+    <hr class="divider">
+    <div class="stat-row"><span class="stat-label td-bold">Geschätzte Gesamtsteuerlast</span><span class="stat-val td-mono td-bold" style="color:var(--red)">${fmt(corpTax+solidaritaet+vatDue)}</span></div>
+  `;
+
+  renderTaxCalendar();
+}
+
+function renderTaxCalendar() {
+  const events = [...(state.taxEvents||[])].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  document.getElementById('tax-calendar').innerHTML = events.length ? events.map(e=>{
+    const d = daysUntil(e.date);
+    const cls = e.done?'done':d<0?'done':d<14?'urgent':d<60?'soon':'';
+    return `
+      <div class="tax-cal-item ${cls}">
+        <div class="tax-cal-date">${fmtDate(e.date)}</div>
+        <div class="tax-cal-name">${e.name}</div>
+        <div class="tax-cal-amount">${e.amount>0?fmt(e.amount):'–'}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <span class="badge badge-gray">${e.type}</span>
+          ${!e.done?`<button class="btn btn-ghost btn-sm" onclick="markTaxDone(${e.id})" title="Als erledigt markieren">✅</button>`:'<span style="color:var(--green);font-size:12px">✅ Erledigt</span>'}
+        </div>
+      </div>
+    `;
+  }).join('') : '<div style="color:var(--text3);text-align:center;padding:40px">Keine Steuertermine</div>';
+}
+
+function markTaxDone(id) {
+  const e=(state.taxEvents||[]).find(x=>x.id===id);
+  if(e) { e.done=true; saveState(); renderTaxCalendar(); }
+}
+
+function calcVat() {
+  const net = +document.getElementById('vat-net').value||0;
+  const rate = +document.getElementById('vat-rate').value||19;
+  if(!net) { document.getElementById('vat-res-net').textContent='–'; document.getElementById('vat-res-vat').textContent='–'; document.getElementById('vat-res-gross').textContent='–'; return; }
+  const vat = net*rate/100;
+  const gross = net+vat;
+  document.getElementById('vat-res-net').textContent = fmt(net);
+  document.getElementById('vat-res-vat').textContent = fmt(vat);
+  document.getElementById('vat-res-gross').textContent = fmt(gross);
+  document.getElementById('vat-gross').value = gross.toFixed(2);
+}
+
+function calcVatFromGross() {
+  const gross = +document.getElementById('vat-gross').value||0;
+  const rate = +document.getElementById('vat-rate').value||19;
+  if(!gross) return;
+  const net = gross/(1+rate/100);
+  const vat = gross-net;
+  document.getElementById('vat-res-net').textContent = fmt(net);
+  document.getElementById('vat-res-vat').textContent = fmt(vat);
+  document.getElementById('vat-res-gross').textContent = fmt(gross);
+  document.getElementById('vat-net').value = net.toFixed(2);
+}
+
+// =====================================================================
+//  LAGER
+// =====================================================================
+function renderLager() {
+  renderFloorPlan();
+  renderInventory();
+  renderInventoryAlerts();
+  renderFloorStats();
+}
+
+function renderFloorPlan() {
+  const fp = state.floorPlan||{rows:6,cols:10,units:[]};
+  const container = document.getElementById('floor-plan-container');
+  container.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'floor-plan-grid';
+  grid.style.gridTemplateColumns = `repeat(${fp.cols}, 52px)`;
+
+  for(let r=0;r<fp.rows;r++){
+    for(let c=0;c<fp.cols;c++){
+      const cellId=`${r}-${c}`;
+      const unit=(fp.units||[]).find(u=>u.cellId===cellId);
+      const cell=document.createElement('div');
+      cell.className='floor-cell'+(unit?' occupied '+unit.cat:'');
+      cell.dataset.cellId=cellId;
+      if(unit){
+        const items=(state.inventory||[]).filter(i=>i.warehouseUnit===unit.name);
+        cell.innerHTML=`<div><div class="cell-label">${unit.name}</div><div class="cell-stock">${items.length} Art.</div></div>`;
+      } else {
+        cell.innerHTML=`<span style="font-size:16px;opacity:.15">+</span>`;
+      }
+      cell.onclick=()=>openFloorCellEditor(cellId, unit);
+      grid.appendChild(cell);
+    }
+  }
+  container.appendChild(grid);
+}
+
+function openFloorCellEditor(cellId, unit) {
+  document.getElementById('fu-cell-id').value = cellId;
+  document.getElementById('fu-name').value = unit?.name||'';
+  document.getElementById('fu-cat').value = unit?.cat||'cat-a';
+  document.getElementById('fu-cap').value = unit?.cap||100;
+  document.getElementById('fu-desc').value = unit?.desc||'';
+  openModal('modal-floor-unit');
+}
+
+function openFloorModal() {
+  document.getElementById('fu-cell-id').value='';
+  document.getElementById('fu-name').value='';
+  document.getElementById('fu-cap').value=100;
+  document.getElementById('fu-desc').value='';
+  openModal('modal-floor-unit');
+}
+
+function saveFloorUnit() {
+  const cellId=document.getElementById('fu-cell-id').value;
+  const unit={
+    cellId, name:document.getElementById('fu-name').value,
+    cat:document.getElementById('fu-cat').value,
+    cap:+document.getElementById('fu-cap').value,
+    desc:document.getElementById('fu-desc').value
+  };
+  if(!unit.name) { alert('Bitte Namen eingeben'); return; }
+  if(!state.floorPlan.units) state.floorPlan.units=[];
+  const idx=state.floorPlan.units.findIndex(u=>u.cellId===cellId);
+  if(idx>=0) state.floorPlan.units[idx]=unit;
+  else state.floorPlan.units.push(unit);
+  saveState(); closeModal('modal-floor-unit'); renderFloorPlan(); renderFloorStats();
+  // update warehouse unit options in inventory modal
+  populateWarehouseUnits();
+}
+
+function removeFloorUnit() {
+  const cellId=document.getElementById('fu-cell-id').value;
+  state.floorPlan.units=(state.floorPlan.units||[]).filter(u=>u.cellId!==cellId);
+  saveState(); closeModal('modal-floor-unit'); renderFloorPlan(); renderFloorStats();
+}
+
+function clearFloor() {
+  if(confirm('Grundriss leeren?')) { state.floorPlan.units=[]; saveState(); renderFloorPlan(); renderFloorStats(); }
+}
+
+function renderFloorStats() {
+  const units = state.floorPlan.units||[];
+  const totalCap = units.reduce((s,u)=>s+(u.cap||0),0);
+  const items = state.inventory||[];
+  const totalQty = items.reduce((s,i)=>s+(i.qty||0),0);
+  const catCounts = {};
+  units.forEach(u=>{ catCounts[u.cat]=(catCounts[u.cat]||0)+1; });
+  const catNames={  'cat-a':'Zone A','cat-b':'Zone B','cat-c':'Zone C','cat-d':'Zone D','cat-e':'Zone E'};
+  const catColors={'cat-a':'var(--blue)','cat-b':'var(--green)','cat-c':'var(--accent)','cat-d':'var(--purple)','cat-e':'var(--red)'};
+  document.getElementById('floor-stats').innerHTML = `
+    <div class="stat-row"><span class="stat-label">Einheiten gesamt</span><span class="stat-val">${units.length}</span></div>
+    <div class="stat-row"><span class="stat-label">Gesamtkapazität</span><span class="stat-val">${fmtNum(totalCap)}</span></div>
+    <div class="stat-row"><span class="stat-label">Artikel im Lager</span><span class="stat-val">${items.length}</span></div>
+    <hr class="divider">
+    ${Object.entries(catCounts).map(([k,v])=>`
+      <div class="stat-row">
+        <span class="stat-label" style="color:${catColors[k]||'inherit'}">${catNames[k]||k}</span>
+        <span class="stat-val">${v} Einh.</span>
+      </div>
+    `).join('')}
+  `;
+}
+
+function renderInventory() {
+  const items = state.inventory||[];
+  document.getElementById('inventory-tbody').innerHTML = items.length ? items.map(item=>{
+    const isLow = item.qty<=item.minQty;
+    const val = (item.qty||0)*(item.price||0);
+    return `<tr>
+      <td class="td-bold">${item.name}</td>
+      <td class="td-mono">${item.sku||'–'}</td>
+      <td><span class="badge badge-blue">${item.warehouseUnit||'–'}</span></td>
+      <td class="td-mono td-bold" style="color:${isLow?'var(--red)':'inherit'}">${fmtNum(item.qty)} ${item.unit||''}</td>
+      <td class="td-mono">${fmtNum(item.minQty)} ${item.unit||''}</td>
+      <td class="td-mono">${fmt(val)}</td>
+      <td>${isLow?'<span class="badge badge-red">⚠️ Niedrig</span>':'<span class="badge badge-green">OK</span>'}</td>
+      <td style="display:flex;gap:4px">
+        <button class="btn btn-secondary btn-sm" onclick="openStockMove(${item.id})">📥</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteItem('inventory',${item.id})">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">Kein Inventar</td></tr>';
+
+  renderInventoryAlerts();
+}
+
+function renderInventoryAlerts() {
+  const low = (state.inventory||[]).filter(i=>i.qty<=i.minQty);
+  document.getElementById('inventory-alerts').innerHTML = low.length
+    ? low.map(i=>`<div class="alert-banner warning">⚠️ <b>${i.name}</b> — Nur noch ${i.qty} ${i.unit} (Mindest: ${i.minQty})</div>`).join('')
+    : '';
+}
+
+function renderStockMoves() {
+  const moves = [...(state.stockMoves||[])].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const getItem = id=>(state.inventory||[]).find(i=>i.id===id)?.name||'Unbekannt';
+  document.getElementById('stockmove-tbody').innerHTML = moves.length ? moves.map(m=>`
+    <tr>
+      <td class="td-mono">${fmtDate(m.date)}</td>
+      <td>${getItem(m.itemId)}</td>
+      <td>${m.type==='in'?'<span class="badge badge-green">Eingang</span>':m.type==='out'?'<span class="badge badge-red">Ausgang</span>':'<span class="badge badge-blue">Korrektur</span>'}</td>
+      <td class="td-mono td-bold" style="color:${m.type==='in'?'var(--green)':'var(--red)'}">${m.type==='in'?'+':''}${m.qty}</td>
+      <td>${m.note||'–'}</td>
+    </tr>
+  `).join('') : '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text3)">Keine Buchungen</td></tr>';
+}
+
+function renderStockStats() {
+  const items = state.inventory||[];
+  const totalValue = items.reduce((s,i)=>s+(i.qty||0)*(i.price||0),0);
+  const byCat = {};
+  items.forEach(i=>{ byCat[i.cat]=(byCat[i.cat]||0)+(i.qty||0)*(i.price||0); });
+  document.getElementById('stock-stats-grid').innerHTML = `
+    <div class="card">
+      <div class="card-header"><span class="card-title">📊 Lagerwert nach Kategorie</span></div>
+      ${Object.entries(byCat).map(([k,v])=>`
+        <div class="stat-row">
+          <span class="stat-label">${k}</span>
+          <span class="stat-val">${fmt(v)}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="background:var(--accent);width:${totalValue>0?v/totalValue*100:0}%"></div></div>
+      `).join('')}
+      <div class="stat-row" style="margin-top:8px"><span class="stat-label td-bold">Gesamtwert</span><span class="stat-val td-bold">${fmt(totalValue)}</span></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">📦 Bestandsübersicht</span></div>
+      <div id="stock-donut">${svgDonutChart(Object.entries(byCat).map(([k,v],i)=>({label:k,value:v,color:['#4a8fff','#18d8a0','#e8a020','#a78bfa','#ff4d6a'][i%5]})),{size:160,stroke:26})}</div>
+    </div>
+  `;
+}
+
+function openStockMove(itemId) {
+  const sel = document.getElementById('sm-item');
+  if(sel) { populateSmItems(); sel.value = itemId; }
+  openModal('modal-stockmove');
+}
+
+function populateSmItems() {
+  const sel = document.getElementById('sm-item');
+  if(!sel) return;
+  sel.innerHTML = (state.inventory||[]).map(i=>`<option value="${i.id}">${i.name}</option>`).join('');
+}
+
+function populateWarehouseUnits() {
+  const sel = document.getElementById('inv-warehouse-unit');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Keine</option>' + (state.floorPlan?.units||[]).map(u=>`<option value="${u.name}">${u.name}</option>`).join('');
+}
+
+// =====================================================================
+//  CONTRACTS
+// =====================================================================
+function renderContracts() {
+  const contracts = state.contracts||[];
+  const active=contracts.filter(c=>c.status==='active').length;
+  const expiring=contracts.filter(c=>{const d=daysUntil(c.end);return c.status==='active'&&d>=0&&d<=60;}).length;
+  const totalValue=contracts.filter(c=>c.status==='active').reduce((s,c)=>s+(c.value||0),0);
+
+  document.getElementById('contract-kpis').innerHTML = `
+    <div class="kpi-card green"><div class="kpi-label">Aktive Verträge</div><div class="kpi-value">${active}</div></div>
+    <div class="kpi-card gold"><div class="kpi-label">Läuft bald ab</div><div class="kpi-value">${expiring}</div></div>
+    <div class="kpi-card blue"><div class="kpi-label">Jahreswert aktiver</div><div class="kpi-value">${fmt(totalValue)}</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Abgelaufen</div><div class="kpi-value">${contracts.filter(c=>c.status==='expired').length}</div></div>
+  `;
+
+  const expAlerts = contracts.filter(c=>{const d=daysUntil(c.end);return c.status==='active'&&d>=0&&d<=60;});
+  const alertWrap = document.getElementById('contract-alerts-wrap');
+  if(expAlerts.length) {
+    alertWrap.style.display='block';
+    alertWrap.innerHTML = expAlerts.map(c=>`<div class="alert-banner warning">📋 <b>${c.title}</b> — Läuft in <b>${daysUntil(c.end)} Tagen</b> ab (${fmtDate(c.end)})</div>`).join('');
+  } else alertWrap.style.display='none';
+
+  const search = document.getElementById('contract-search')?.value?.toLowerCase()||'';
+  const filter = document.getElementById('contract-filter')?.value||'';
+  let list = [...contracts].sort((a,b)=>new Date(a.end||'9999')-new Date(b.end||'9999'));
+  if(search) list=list.filter(c=>(c.title+c.partner).toLowerCase().includes(search));
+  if(filter) {
+    if(filter==='expiring') list=list.filter(c=>{const d=daysUntil(c.end);return c.status==='active'&&d>=0&&d<=60;});
+    else list=list.filter(c=>c.status===filter);
+  }
+
+  document.getElementById('contracts-tbody').innerHTML = list.length ? list.map(c=>{
+    const d=daysUntil(c.end);
+    const status = c.status==='active'&&d>=0&&d<=60?'expiring':c.status==='active'&&d<0?'expired':c.status;
+    return `<tr>
+      <td class="td-bold">${c.title}</td>
+      <td>${c.partner}</td>
+      <td><span class="badge badge-gray">${c.type}</span></td>
+      <td class="td-mono">${c.value>0?fmt(c.value)+'/Jahr':'–'}</td>
+      <td class="td-mono">${fmtDate(c.start)}</td>
+      <td class="td-mono" style="color:${d<0?'var(--red)':d<60?'var(--accent)':'inherit'}">${fmtDate(c.end)}</td>
+      <td>${statusBadge(status)}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="deleteItem('contracts',${c.id})">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">Keine Verträge</td></tr>';
+  updateBadges();
+}
+
+// =====================================================================
+//  CRM
+// =====================================================================
+function renderCRM() {
+  const customers = state.customers||[];
+  const deals = state.deals||[];
+  const totalRevenue = customers.reduce((s,c)=>s+(c.revenue||0),0);
+  const active = customers.filter(c=>c.status==='active').length;
+
+  document.getElementById('crm-kpis').innerHTML = `
+    <div class="kpi-card gold"><div class="kpi-label">Kunden</div><div class="kpi-value">${customers.length}</div><div class="kpi-sub">${active} aktiv</div></div>
+    <div class="kpi-card blue"><div class="kpi-label">Gesamtumsatz</div><div class="kpi-value">${fmt(totalRevenue)}</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Deals gesamt</div><div class="kpi-value">${deals.length}</div></div>
+    <div class="kpi-card purple"><div class="kpi-label">Pipeline-Wert</div><div class="kpi-value">${fmt(deals.filter(d=>!['won','lost'].includes(d.stage)).reduce((s,d)=>s+(d.value||0),0))}</div></div>
+  `;
+
+  // Pipeline
+  const stages = [
+    {key:'lead',label:'Lead'},{key:'qualified',label:'Qualifiziert'},{key:'proposal',label:'Angebot'},
+    {key:'negotiation',label:'Verhandlung'},{key:'won',label:'Gewonnen'}
+  ];
+  document.getElementById('crm-pipeline').innerHTML = stages.map((st,i)=>`
+    ${i>0?'<div class="pipeline-arrow">›</div>':''}
+    <div class="pipeline-stage">
+      <div class="pipeline-stage-name">${st.label}</div>
+      <div class="pipeline-count">${deals.filter(d=>d.stage===st.key).length}</div>
+      <div class="pipeline-val">${fmt(deals.filter(d=>d.stage===st.key).reduce((s,d)=>s+(d.value||0),0))}</div>
+    </div>
+  `).join('');
+
+  renderCustomers();
+  renderDeals();
+}
+
+function renderCustomers() {
+  const list = state.customers||[];
+  document.getElementById('customers-tbody').innerHTML = list.length ? list.map(c=>`
+    <tr>
+      <td class="td-bold">${c.name}</td>
+      <td>${c.contact||'–'}</td>
+      <td>${statusBadge(c.type)}</td>
+      <td class="td-mono">${fmt(c.revenue)}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td class="td-mono">${fmtDate(c.lastContact)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="deleteItem('customers',${c.id})">🗑️</button></td>
+    </tr>
+  `).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">Keine Kunden</td></tr>';
+}
+
+function renderDeals() {
+  const deals = state.deals||[];
+  document.getElementById('leads-tbody').innerHTML = deals.length ? deals.map(d=>`
+    <tr>
+      <td class="td-bold">${d.title}</td>
+      <td>${getCustomerName(d.customerId)}</td>
+      <td class="td-mono td-bold">${fmt(d.value)}</td>
+      <td>${statusBadge(d.stage)}</td>
+      <td class="td-mono">${fmtDate(d.closeDate)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="deleteItem('deals',${d.id})">🗑️</button></td>
+    </tr>
+  `).join('') : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">Keine Deals</td></tr>';
+}
+
+// =====================================================================
+//  HR
+// =====================================================================
+function renderHR() {
+  const emps = state.employees||[];
+  const active = emps.filter(e=>e.status==='active');
+  const totalSalary = active.reduce((s,e)=>s+(e.salary||0),0);
+  const depts = [...new Set(emps.map(e=>e.dept))];
+
+  document.getElementById('hr-kpis').innerHTML = `
+    <div class="kpi-card blue"><div class="kpi-label">Mitarbeiter</div><div class="kpi-value">${active.length}</div><div class="kpi-sub">${emps.length} gesamt</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Lohnkosten/Mo.</div><div class="kpi-value">${fmt(totalSalary)}</div><div class="kpi-sub">Brutto</div></div>
+    <div class="kpi-card gold"><div class="kpi-label">Abteilungen</div><div class="kpi-value">${depts.length}</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Ø Gehalt</div><div class="kpi-value">${fmt(active.length?totalSalary/active.length:0)}</div></div>
+  `;
+
+  renderTeamGrid();
+}
+
+function renderTeamGrid() {
+  const emps = state.employees||[];
+  const deptColors={Entwicklung:'var(--blue)',Marketing:'var(--green)',Vertrieb:'var(--accent)',Finanzen:'var(--purple)',Logistik:'var(--orange)',HR:'var(--red)',Management:'var(--text2)',Sonstiges:'var(--text3)'};
+  document.getElementById('team-grid').innerHTML = emps.length ? emps.map(e=>`
+    <div class="card" style="text-align:center;padding:24px">
+      <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;margin:0 auto 12px">${e.first[0]}${e.last[0]}</div>
+      <div style="font-size:15px;font-weight:700">${e.first} ${e.last}</div>
+      <div style="font-size:12px;color:var(--text2);margin:4px 0">${e.role}</div>
+      <span class="badge" style="background:${deptColors[e.dept]||'var(--surface3)'}22;color:${deptColors[e.dept]||'var(--text2)'}">${e.dept}</span>
+      <div style="margin-top:12px;font-family:var(--mono);font-size:14px;font-weight:700">${fmt(e.salary)}<span style="font-size:11px;color:var(--text3)">/Mo.</span></div>
+      <div style="margin-top:8px;display:flex;justify-content:space-between">
+        ${statusBadge(e.status)}
+        <button class="btn btn-ghost btn-sm" onclick="deleteItem('employees',${e.id})">🗑️</button>
+      </div>
+    </div>
+  `).join('') : '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">👥</div><div>Keine Mitarbeiter</div></div>';
+}
+
+function renderPayroll() {
+  const emps = state.employees||[];
+  const total = emps.filter(e=>e.status==='active').reduce((s,e)=>s+(e.salary||0),0);
+  document.getElementById('payroll-view').innerHTML = `
+    <table><thead><tr><th>Name</th><th>Position</th><th>Abteilung</th><th>Brutto/Mo.</th><th>Brutto/Jahr</th></tr></thead>
+    <tbody>${emps.map(e=>`<tr>
+      <td class="td-bold">${e.first} ${e.last}</td>
+      <td>${e.role}</td><td>${e.dept}</td>
+      <td class="td-mono">${fmt(e.salary)}</td>
+      <td class="td-mono">${fmt(e.salary*12)}</td>
+    </tr>`).join('')}
+    </tbody><tfoot><tr style="font-weight:700;border-top:2px solid var(--border)">
+      <td colspan="3">Gesamt</td>
+      <td class="td-mono">${fmt(total)}</td>
+      <td class="td-mono">${fmt(total*12)}</td>
+    </tr></tfoot></table>
+  `;
+}
+
+function renderLeave() {
+  const emps = state.employees||[];
+  document.getElementById('leave-view').innerHTML = `
+    <table><thead><tr><th>Mitarbeiter</th><th>Urlaub/Jahr</th><th>Genommen</th><th>Rest</th></tr></thead>
+    <tbody>${emps.map(e=>{
+      const taken = Math.floor(Math.random()*e.vacation);
+      const left = e.vacation - taken;
+      return `<tr>
+        <td class="td-bold">${e.first} ${e.last}</td>
+        <td>${e.vacation} Tage</td>
+        <td>${taken} Tage</td>
+        <td style="color:${left<5?'var(--red)':left<10?'var(--accent)':'var(--green)'}">${left} Tage</td>
+      </tr>`;
+    }).join('')}</tbody></table>
+  `;
+}
+
+// =====================================================================
+//  PROJEKTE
+// =====================================================================
+function renderProjekte() {
+  const projects = state.projects||[];
+  const tasks = state.tasks||[];
+  const active = projects.filter(p=>p.status==='active').length;
+  const done = projects.filter(p=>p.status==='done').length;
+  const totalBudget = projects.reduce((s,p)=>s+(p.budget||0),0);
+
+  document.getElementById('project-kpis').innerHTML = `
+    <div class="kpi-card blue"><div class="kpi-label">Projekte</div><div class="kpi-value">${projects.length}</div><div class="kpi-sub">${active} aktiv</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Abgeschlossen</div><div class="kpi-value">${done}</div></div>
+    <div class="kpi-card gold"><div class="kpi-label">Aufgaben</div><div class="kpi-value">${tasks.length}</div><div class="kpi-sub">${tasks.filter(t=>t.status==='done').length} erledigt</div></div>
+    <div class="kpi-card purple"><div class="kpi-label">Gesamt-Budget</div><div class="kpi-value">${fmt(totalBudget)}</div></div>
+  `;
+
+  renderKanban();
+}
+
+function renderKanban() {
+  const cols = [
+    {key:'backlog',label:'Backlog',color:'var(--text3)'},
+    {key:'active',label:'In Arbeit',color:'var(--blue)'},
+    {key:'review',label:'Review',color:'var(--accent)'},
+    {key:'done',label:'Fertig',color:'var(--green)'}
+  ];
+  const tasks = state.tasks||[];
+  const projects = state.projects||[];
+  const getProjName = id => projects.find(p=>p.id===id)?.name||'Kein Projekt';
+
+  document.getElementById('kanban-board').innerHTML = cols.map(col=>{
+    const colTasks = tasks.filter(t=>t.status===col.key);
+    return `
+      <div class="kanban-col">
+        <div class="kanban-col-header">
+          <span class="kanban-col-title" style="color:${col.color}">${col.label}</span>
+          <span class="kanban-count">${colTasks.length}</span>
+        </div>
+        ${colTasks.map(t=>`
+          <div class="kanban-card" onclick="moveTask(${t.id})">
+            <div class="kanban-card-title">${t.title}</div>
+            <div class="kanban-card-meta" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+              ${priorityBadge(t.priority)}
+              <span class="badge badge-gray">${getProjName(t.projectId)}</span>
+            </div>
+            ${t.due?`<div style="font-size:10px;color:${daysUntil(t.due)<0?'var(--red)':daysUntil(t.due)<3?'var(--accent)':'var(--text3)'};margin-top:6px">📅 ${fmtDate(t.due)}</div>`:''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+function moveTask(id) {
+  const task=(state.tasks||[]).find(t=>t.id===id);
+  if(!task) return;
+  const cycle={backlog:'active',active:'review',review:'done',done:'backlog'};
+  task.status=cycle[task.status]||'backlog';
+  saveState(); renderKanban();
+}
+
+// =====================================================================
+//  EINSTELLUNGEN
+// =====================================================================
+function renderEinstellungen() {
+  const c = state.company||{};
+  const setVal = (id,v) => { const el=document.getElementById(id); if(el) el.value=v||''; };
+  setVal('s-company', c.name);
+  setVal('s-legal', c.legal||'GmbH');
+  setVal('s-taxid', c.taxId);
+  setVal('s-vatid', c.vatId);
+  setVal('s-address', c.address);
+  setVal('s-founded', c.founded||new Date().getFullYear());
+  setVal('s-currency', c.currency||'EUR');
+  setVal('s-vat', c.vatRate||19);
+  setVal('s-fiscal', c.fiscalStart||1);
+  setVal('s-corptax', c.corpTax||15);
+}
+
+function saveSettings() {
+  if(!state.company) state.company={};
+  state.company.name = document.getElementById('s-company')?.value||'';
+  state.company.legal = document.getElementById('s-legal')?.value||'GmbH';
+  state.company.taxId = document.getElementById('s-taxid')?.value||'';
+  state.company.vatId = document.getElementById('s-vatid')?.value||'';
+  state.company.address = document.getElementById('s-address')?.value||'';
+  state.company.founded = +document.getElementById('s-founded')?.value||2024;
+  state.company.currency = document.getElementById('s-currency')?.value||'EUR';
+  state.company.vatRate = +document.getElementById('s-vat')?.value||19;
+  state.company.fiscalStart = +document.getElementById('s-fiscal')?.value||1;
+  state.company.corpTax = +document.getElementById('s-corptax')?.value||15;
+  saveState();
+  document.getElementById('sb-company-name').textContent = state.company.name;
+  const av = document.getElementById('user-avatar');
+  if(av) av.textContent = state.company.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+}
+
+// =====================================================================
+//  MODALS - SAVE FUNCTIONS
+// =====================================================================
+function openModal(id) {
+  const m = document.getElementById(id);
+  if(m) { m.classList.add('open'); populateModalDropdowns(id); }
+}
+
+function closeModal(id) {
+  const m = document.getElementById(id);
+  if(m) m.classList.remove('open');
+}
+
+function populateModalDropdowns(id) {
+  const customers = state.customers||[];
+  const projects = state.projects||[];
+  const accounts = state.accounts||[];
+
+  if(id==='modal-transaction') {
+    const sel=document.getElementById('txn-account');
+    if(sel) sel.innerHTML=accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+    if(!document.getElementById('txn-date').value) document.getElementById('txn-date').value=new Date().toISOString().split('T')[0];
+  }
+  if(id==='modal-invoice') {
+    const sel=document.getElementById('inv-m-customer');
+    if(sel) sel.innerHTML='<option value="">Kunde wählen</option>'+customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    if(!document.getElementById('inv-m-date').value) document.getElementById('inv-m-date').value=new Date().toISOString().split('T')[0];
+    if(invPositions.length===0) { invPositions=[]; document.getElementById('inv-positions').innerHTML=''; addInvPosition(); }
+  }
+  if(id==='modal-deal') {
+    const sel=document.getElementById('deal-customer');
+    if(sel) sel.innerHTML='<option value="">Kein Kunde</option>'+customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  }
+  if(id==='modal-project') {
+    const sel=document.getElementById('proj-customer');
+    if(sel) sel.innerHTML='<option value="0">Intern</option>'+customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  }
+  if(id==='modal-task') {
+    const sel=document.getElementById('task-project');
+    if(sel) sel.innerHTML='<option value="0">Kein Projekt</option>'+projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  }
+  if(id==='modal-stockmove') populateSmItems();
+  if(id==='modal-inventory') populateWarehouseUnits();
+}
+
+function saveTransaction() {
+  const type=document.getElementById('txn-type').value;
+  const amount=+document.getElementById('txn-amount').value;
+  if(!amount||amount<=0) { alert('Bitte gültigen Betrag eingeben'); return; }
+  const desc=document.getElementById('txn-desc').value;
+  if(!desc) { alert('Bitte Beschreibung eingeben'); return; }
+  const accId = +document.getElementById('txn-account').value;
+  const vat = +document.getElementById('txn-vat').value||0;
+  const t = {
+    id:nextId(), type, amount, desc,
+    cat:document.getElementById('txn-cat').value,
+    accountId:accId,
+    date:document.getElementById('txn-date').value||new Date().toISOString().split('T')[0],
+    ref:document.getElementById('txn-ref').value,
+    vat
+  };
+  if(!state.transactions) state.transactions=[];
+  state.transactions.push(t);
+  // update account balance
+  const acc=(state.accounts||[]).find(a=>a.id===accId);
+  if(acc) acc.balance += type==='income'?amount:-amount;
+  saveState(); closeModal('modal-transaction');
+  if(currentSection==='finanzen') { renderFinanzen(); }
+  else if(currentSection==='dashboard') renderDashboard();
+}
+
+function saveAccount() {
+  const name=document.getElementById('acc-name').value;
+  if(!name) { alert('Bitte Name eingeben'); return; }
+  const acc={id:nextId(),name,type:document.getElementById('acc-type').value,balance:+document.getElementById('acc-balance').value||0,iban:document.getElementById('acc-iban').value};
+  if(!state.accounts) state.accounts=[];
+  state.accounts.push(acc); saveState(); closeModal('modal-account'); renderAccounts();
+}
+
+function saveContract() {
+  const title=document.getElementById('c-title').value;
+  if(!title) { alert('Bitte Titel eingeben'); return; }
+  const c={id:nextId(),title,partner:document.getElementById('c-partner').value,type:document.getElementById('c-type').value,value:+document.getElementById('c-value').value||0,status:document.getElementById('c-status').value,start:document.getElementById('c-start').value,end:document.getElementById('c-end').value,notice:+document.getElementById('c-notice').value||30,notes:document.getElementById('c-notes').value};
+  if(!state.contracts) state.contracts=[];
+  state.contracts.push(c); saveState(); closeModal('modal-contract'); renderContracts();
+}
+
+function saveInventoryItem() {
+  const name=document.getElementById('inv-name').value;
+  if(!name) { alert('Bitte Artikelname eingeben'); return; }
+  const item={id:nextId(),name,sku:document.getElementById('inv-sku').value,qty:+document.getElementById('inv-qty').value||0,minQty:+document.getElementById('inv-min').value||0,price:+document.getElementById('inv-price').value||0,unit:document.getElementById('inv-unit').value,warehouseUnit:document.getElementById('inv-warehouse-unit').value,cat:document.getElementById('inv-cat').value};
+  if(!state.inventory) state.inventory=[];
+  state.inventory.push(item); saveState(); closeModal('modal-inventory'); renderInventory();
+}
+
+function saveStockMove() {
+  const itemId=+document.getElementById('sm-item').value;
+  const qty=+document.getElementById('sm-qty').value||1;
+  const type=document.getElementById('sm-type').value;
+  const move={id:nextId(),itemId,qty,type,note:document.getElementById('sm-note').value,date:new Date().toISOString().split('T')[0]};
+  if(!state.stockMoves) state.stockMoves=[];
+  state.stockMoves.push(move);
+  const item=(state.inventory||[]).find(i=>i.id===itemId);
+  if(item) { if(type==='in') item.qty+=qty; else if(type==='out') item.qty=Math.max(0,item.qty-qty); else item.qty=qty; }
+  saveState(); closeModal('modal-stockmove'); renderInventory(); renderStockMoves();
+}
+
+function saveCustomer() {
+  const name=document.getElementById('cust-name').value;
+  if(!name) { alert('Bitte Name eingeben'); return; }
+  const c={id:nextId(),name,contact:document.getElementById('cust-contact').value,email:document.getElementById('cust-email').value,phone:document.getElementById('cust-phone').value,type:document.getElementById('cust-type').value,revenue:+document.getElementById('cust-revenue').value||0,status:document.getElementById('cust-status').value,lastContact:new Date().toISOString().split('T')[0]};
+  if(!state.customers) state.customers=[];
+  state.customers.push(c); saveState(); closeModal('modal-customer'); renderCRM();
+}
+
+function saveDeal() {
+  const title=document.getElementById('deal-title').value;
+  if(!title) { alert('Bitte Titel eingeben'); return; }
+  const d={id:nextId(),title,customerId:+document.getElementById('deal-customer').value||0,value:+document.getElementById('deal-value').value||0,stage:document.getElementById('deal-stage').value,closeDate:document.getElementById('deal-close').value};
+  if(!state.deals) state.deals=[];
+  state.deals.push(d); saveState(); closeModal('modal-deal'); renderCRM();
+}
+
+function saveEmployee() {
+  const first=document.getElementById('emp-first').value;
+  const last=document.getElementById('emp-last').value;
+  if(!first||!last) { alert('Vor- und Nachname eingeben'); return; }
+  const e={id:nextId(),first,last,role:document.getElementById('emp-role').value,dept:document.getElementById('emp-dept').value,salary:+document.getElementById('emp-salary').value||0,vacation:+document.getElementById('emp-vacation').value||28,email:document.getElementById('emp-email').value,start:document.getElementById('emp-start').value,status:document.getElementById('emp-status').value};
+  if(!state.employees) state.employees=[];
+  state.employees.push(e); saveState(); closeModal('modal-employee'); renderHR();
+}
+
+function saveProject() {
+  const name=document.getElementById('proj-name').value;
+  if(!name) { alert('Bitte Namen eingeben'); return; }
+  const p={id:nextId(),name,customerId:+document.getElementById('proj-customer').value||0,status:document.getElementById('proj-status').value,budget:+document.getElementById('proj-budget').value||0,deadline:document.getElementById('proj-deadline').value,desc:document.getElementById('proj-desc').value};
+  if(!state.projects) state.projects=[];
+  state.projects.push(p); saveState(); closeModal('modal-project'); renderProjekte();
+}
+
+function saveTask() {
+  const title=document.getElementById('task-title').value;
+  if(!title) { alert('Bitte Titel eingeben'); return; }
+  const t={id:nextId(),title,projectId:+document.getElementById('task-project').value||0,status:document.getElementById('task-status').value,priority:document.getElementById('task-priority').value,due:document.getElementById('task-due').value};
+  if(!state.tasks) state.tasks=[];
+  state.tasks.push(t); saveState(); closeModal('modal-task'); renderKanban();
+}
+
+function saveInvoice() {
+  const custId=+document.getElementById('inv-m-customer').value;
+  if(!custId) { alert('Bitte Kunden wählen'); return; }
+  if(!invPositions.length||!invPositions[0].desc) { alert('Mindestens eine Position'); return; }
+  const date=document.getElementById('inv-m-date').value;
+  const days=+document.getElementById('inv-m-days').value||14;
+  const due=new Date(date); due.setDate(due.getDate()+days);
+  const num='RE-'+new Date().getFullYear()+'-'+String(nextId()).padStart(3,'0');
+  const inv={id:nextId(),num,customerId:custId,date,dueDate:due.toISOString().split('T')[0],vatRate:+document.getElementById('inv-m-vat').value||19,status:'draft',positions:[...invPositions],notes:document.getElementById('inv-m-notes').value};
+  if(!state.invoices) state.invoices=[];
+  state.invoices.push(inv); invPositions=[];
+  saveState(); closeModal('modal-invoice'); renderInvoices();
+}
+
+function saveBudget() {
+  const planned=+document.getElementById('bud-planned').value;
+  if(!planned) { alert('Bitte Betrag eingeben'); return; }
+  const b={id:nextId(),cat:document.getElementById('bud-cat').value,planned,period:document.getElementById('bud-period').value};
+  if(!state.budgets) state.budgets=[];
+  state.budgets.push(b); saveState(); closeModal('modal-budget'); renderBudget();
+}
+
+function saveTaxEvent() {
+  const name=document.getElementById('te-name').value;
+  if(!name) { alert('Bitte Namen eingeben'); return; }
+  const e={id:nextId(),name,date:document.getElementById('te-date').value,amount:+document.getElementById('te-amount').value||0,type:document.getElementById('te-type').value,done:false};
+  if(!state.taxEvents) state.taxEvents=[];
+  state.taxEvents.push(e); saveState(); closeModal('modal-taxevent'); renderTaxCalendar();
+}
+
+// =====================================================================
+//  DELETE
+// =====================================================================
+function deleteItem(collection, id) {
+  if(!confirm('Wirklich löschen?')) return;
+  if(state[collection]) state[collection]=state[collection].filter(x=>x.id!==id);
+  saveState();
+  const renderers={transactions:renderTransactions,accounts:renderAccounts,contracts:renderContracts,inventory:renderInventory,customers:renderCustomers,deals:renderDeals,employees:()=>{renderHR();renderTeamGrid();},projects:renderProjekte,tasks:renderKanban,invoices:renderInvoices};
+  if(renderers[collection]) renderers[collection]();
+}
+
+// =====================================================================
+//  DATA MANAGEMENT
+// =====================================================================
+function exportData() {
+  const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='nexus-backup-'+new Date().toISOString().split('T')[0]+'.json';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function importData() { document.getElementById('import-file').click(); }
+
+function handleImport(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try {
+      state=JSON.parse(e.target.result);
+      saveState(); navigate(currentSection); alert('Daten erfolgreich importiert!');
+    } catch(err) { alert('Fehler beim Importieren: '+err.message); }
+  };
+  reader.readAsText(file);
+}
+
+function resetData() {
+  state = JSON.parse(JSON.stringify(DEMO_DATA));
+  saveState(); navigate('dashboard');
+}
+
+// =====================================================================
+//  SEARCH
+// =====================================================================
+function globalSearch(query) {
+  if(!query) return;
+  query = query.toLowerCase();
+  // simple: show result count in topbar
+}
+
+function showNotifications() {
+  const msgs = [];
+  const overdueInv = (state.invoices||[]).filter(i=>i.status==='overdue');
+  if(overdueInv.length) msgs.push(`🚨 ${overdueInv.length} überfällige Rechnung(en)`);
+  const expiring = (state.contracts||[]).filter(c=>{const d=daysUntil(c.end);return c.status==='active'&&d>=0&&d<=30;});
+  if(expiring.length) msgs.push(`📋 ${expiring.length} Vertrag/Verträge läuft in 30 Tagen ab`);
+  const low = (state.inventory||[]).filter(i=>i.qty<=i.minQty);
+  if(low.length) msgs.push(`📦 ${low.length} Artikel unter Mindestbestand`);
+  alert(msgs.length?msgs.join('\n'):'✅ Keine neuen Benachrichtigungen');
+}
+
+// =====================================================================
+//  INIT
+// =====================================================================
+document.addEventListener('DOMContentLoaded', ()=>{
+  loadState();
+  // set initial values
+  document.getElementById('sb-company-name').textContent = state.company?.name||'Mein Startup';
+  const av=document.getElementById('user-avatar');
+  if(av&&state.company?.name) av.textContent=(state.company.name.split(' ').map(w=>w[0]).join('').slice(0,2)||'ME').toUpperCase();
+  // close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(o=>{
+    o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+  });
+  // render dashboard
+  navigate('dashboard');
+  updateBadges();
+  // watch stock moves tab
+  document.addEventListener('click', e=>{
+    if(e.target.getAttribute('onclick')&&e.target.getAttribute('onclick').includes('tab-stockmove')) { setTimeout(renderStockMoves,50); }
+  });
+});
+</script>
+</body>
+</html>
