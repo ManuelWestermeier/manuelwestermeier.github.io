@@ -770,15 +770,15 @@ tr:hover td { background:var(--surface2); }
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px">
             <div class="card" style="padding:12px;text-align:center">
               <div class="kpi-label">Netto</div>
-              <div class="kpi-value" style="font-size:18px" id="vat-res-net">–</div>
+              <div class="kpi-value" style="font-size:18px" id="vat-res-net">€ 0,00</div>
             </div>
             <div class="card" style="padding:12px;text-align:center;border-color:var(--accent)">
               <div class="kpi-label">MwSt.</div>
-              <div class="kpi-value" style="font-size:18px;color:var(--accent)" id="vat-res-vat">–</div>
+              <div class="kpi-value" style="font-size:18px;color:var(--accent)" id="vat-res-vat">€ 0,00</div>
             </div>
             <div class="card" style="padding:12px;text-align:center">
               <div class="kpi-label">Brutto</div>
-              <div class="kpi-value" style="font-size:18px" id="vat-res-gross">–</div>
+              <div class="kpi-value" style="font-size:18px" id="vat-res-gross">€ 0,00</div>
             </div>
           </div>
         </div>
@@ -1437,6 +1437,110 @@ tr:hover td { background:var(--surface2); }
   </div>
 </div>
 
+<!-- =================== SETUP WIZARD =================== -->
+<div class="modal-overlay" id="modal-setup" style="z-index:2000;background:rgba(0,0,0,.85)">
+  <div class="modal modal-lg" style="max-width:580px;border-color:var(--accent);box-shadow:0 0 60px var(--accent-glow)">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="width:56px;height:56px;background:linear-gradient(135deg,var(--accent),#c07010);border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:#000;margin:0 auto 14px;box-shadow:0 0 30px var(--accent-glow)">NX</div>
+      <div style="font-size:22px;font-weight:800;letter-spacing:-.5px">Willkommen bei NEXUS</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:6px">Richte dein Unternehmen in wenigen Schritten ein. Alle Daten werden <b style="color:var(--green)">nur lokal</b> in deinem Browser gespeichert.</div>
+    </div>
+
+    <!-- Steps indicator -->
+    <div id="setup-steps-indicator" style="display:flex;gap:8px;margin-bottom:24px;justify-content:center">
+      <div class="setup-step-dot active" data-step="1">1</div>
+      <div style="flex:1;height:2px;background:var(--border);margin-top:10px;border-radius:2px"><div id="setup-progress-bar" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:.3s"></div></div>
+      <div class="setup-step-dot" data-step="2">2</div>
+      <div style="flex:1;height:2px;background:var(--border);margin-top:10px;border-radius:2px"></div>
+      <div class="setup-step-dot" data-step="3">3</div>
+    </div>
+
+    <!-- Step 1: Firma -->
+    <div id="setup-step-1" class="setup-step-content">
+      <div style="font-size:15px;font-weight:700;margin-bottom:16px">🏢 Dein Unternehmen</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Firmenname *</label><input type="text" class="form-input" id="sw-name" placeholder="z.B. Meine GmbH"></div>
+        <div class="form-group"><label class="form-label">Rechtsform</label>
+          <select class="form-select" id="sw-legal">
+            <option>GmbH</option><option>UG (haftungsbeschränkt)</option><option>AG</option><option>GbR</option><option>Einzelunternehmen</option><option>OHG</option><option>KG</option><option>Freiberufler</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Gründungsjahr</label><input type="number" class="form-input" id="sw-founded" placeholder="2024" min="1900" max="2100"></div>
+        <div class="form-group"><label class="form-label">Währung</label>
+          <select class="form-select" id="sw-currency">
+            <option value="EUR">EUR €</option><option value="USD">USD $</option><option value="CHF">CHF</option><option value="GBP">GBP £</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Adresse</label><textarea class="form-textarea" id="sw-address" placeholder="Straße, PLZ Ort" rows="2"></textarea></div>
+    </div>
+
+    <!-- Step 2: Steuer -->
+    <div id="setup-step-2" class="setup-step-content" style="display:none">
+      <div style="font-size:15px;font-weight:700;margin-bottom:16px">🏛️ Steuer & Finanzen</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Steuernummer</label><input type="text" class="form-input" id="sw-taxid" placeholder="123/456/78901"></div>
+        <div class="form-group"><label class="form-label">USt-IdNr.</label><input type="text" class="form-input" id="sw-vatid" placeholder="DE123456789"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Standard MwSt-Satz</label>
+          <select class="form-select" id="sw-vat">
+            <option value="19">19% (Standard DE)</option><option value="7">7% (Ermäßigt DE)</option><option value="8.1">8,1% (CH)</option><option value="20">20% (AT)</option><option value="0">0%</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Körperschaftsteuersatz (%)</label><input type="number" class="form-input" id="sw-corptax" placeholder="15" value="15" min="0" max="50"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Geschäftsjahr beginnt im</label>
+        <select class="form-select" id="sw-fiscal">
+          <option value="1">Januar</option><option value="4">April</option><option value="7">Juli</option><option value="10">Oktober</option>
+        </select>
+      </div>
+      <div class="alert-banner info" style="margin-top:8px">💡 Diese Angaben können jederzeit unter Einstellungen geändert werden.</div>
+    </div>
+
+    <!-- Step 3: Erstes Konto -->
+    <div id="setup-step-3" class="setup-step-content" style="display:none">
+      <div style="font-size:15px;font-weight:700;margin-bottom:16px">🏦 Erstes Bankkonto</div>
+      <div class="alert-banner info" style="margin-bottom:16px">Füge dein Hauptgeschäftskonto hinzu. Du kannst auch jederzeit später Konten anlegen.</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Kontoname</label><input type="text" class="form-input" id="sw-acc-name" placeholder="z.B. Geschäftskonto"></div>
+        <div class="form-group"><label class="form-label">Kontotyp</label>
+          <select class="form-select" id="sw-acc-type">
+            <option value="bank">Girokonto</option><option value="savings">Sparkonto</option><option value="cash">Kasse</option><option value="invest">Investitionskonto</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Aktueller Kontostand (€)</label><input type="number" class="form-input" id="sw-acc-balance" placeholder="0.00" min="0" step="0.01" value="0"></div>
+        <div class="form-group"><label class="form-label">IBAN (optional)</label><input type="text" class="form-input" id="sw-acc-iban" placeholder="DE…"></div>
+      </div>
+      <div style="margin-top:8px;font-size:12px;color:var(--text3)">⚡ Du kannst diesen Schritt überspringen und Konten später manuell anlegen.</div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost" id="setup-btn-back" onclick="setupPrev()" style="display:none">← Zurück</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-secondary" id="setup-btn-skip3" onclick="finishSetup(false)" style="display:none">Überspringen</button>
+      <button class="btn btn-primary" id="setup-btn-next" onclick="setupNext()">Weiter →</button>
+      <button class="btn btn-primary" id="setup-btn-finish" onclick="finishSetup(true)" style="display:none">🚀 Loslegen</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.setup-step-dot {
+  width:22px;height:22px;border-radius:50%;
+  background:var(--surface3);color:var(--text3);
+  font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--border);transition:.2s;flex-shrink:0;
+}
+.setup-step-dot.active { background:var(--accent);color:#000;border-color:var(--accent); }
+.setup-step-dot.done { background:var(--green);color:#000;border-color:var(--green); }
+</style>
+
 <!-- Tax Event Modal -->
 <div class="modal-overlay" id="modal-taxevent">
   <div class="modal">
@@ -1464,109 +1568,63 @@ tr:hover td { background:var(--surface2); }
 // =====================================================================
 const STORAGE_KEY = 'nexus_business_v1';
 
-const DEMO_DATA = {
-  company: { name:'Tech Startup GmbH', legal:'GmbH', taxId:'123/456/78901', vatId:'DE123456789', address:'Musterstraße 1\n10115 Berlin', founded:2023, currency:'EUR', vatRate:19, fiscalStart:1, corpTax:15 },
-  accounts: [
-    {id:1,name:'Geschäftskonto',type:'bank',balance:87500,iban:'DE89 3704 0044 0532 0130 00'},
-    {id:2,name:'Rücklagen',type:'savings',balance:25000,iban:''},
-    {id:3,name:'Kasse',type:'cash',balance:850,iban:''}
-  ],
-  transactions: [
-    {id:1,type:'income',amount:12500,desc:'Kundenrechnung RE-2024-001',cat:'Umsatz',accountId:1,date:'2024-11-05',ref:'RE-2024-001',vat:19},
-    {id:2,type:'income',amount:8900,desc:'Kundenrechnung RE-2024-002',cat:'Umsatz',accountId:1,date:'2024-11-12',ref:'RE-2024-002',vat:19},
-    {id:3,type:'expense',amount:2200,desc:'Büroraum Miete',cat:'Miete',accountId:1,date:'2024-11-01',ref:'',vat:0},
-    {id:4,type:'expense',amount:650,desc:'AWS Server Kosten',cat:'Software/Lizenzen',accountId:1,date:'2024-11-03',ref:'',vat:19},
-    {id:5,type:'income',amount:5400,desc:'Beratungsleistung',cat:'Umsatz',accountId:1,date:'2024-10-28',ref:'RE-2024-003',vat:19},
-    {id:6,type:'expense',amount:4800,desc:'Mitarbeitergehalt Oktober',cat:'Personal',accountId:1,date:'2024-10-31',ref:'',vat:0},
-    {id:7,type:'income',amount:9200,desc:'Lizenzgebühren Q3',cat:'Umsatz',accountId:1,date:'2024-10-15',ref:'',vat:19},
-    {id:8,type:'expense',amount:320,desc:'Google Ads',cat:'Marketing',accountId:1,date:'2024-10-10',ref:'',vat:19},
-    {id:9,type:'income',amount:15800,desc:'Großauftrag Kunde X',cat:'Umsatz',accountId:1,date:'2024-09-20',ref:'RE-2024-004',vat:19},
-    {id:10,type:'expense',amount:1200,desc:'Versicherungen',cat:'Versicherungen',accountId:1,date:'2024-09-01',ref:'',vat:0},
-  ],
-  contracts: [
-    {id:1,title:'Büromietvertrag Berlin',partner:'Immobilien AG',type:'Mietvertrag',value:26400,status:'active',start:'2023-01-01',end:'2025-12-31',notice:90,notes:'Inkl. Nebenkosten'},
-    {id:2,title:'AWS Enterprise Support',partner:'Amazon Web Services',type:'Lizenzvertrag',value:7800,status:'active',start:'2024-01-01',end:'2024-12-31',notice:30,notes:'Läuft bald ab!'},
-    {id:3,title:'NDA Entwicklungspartner',partner:'Devshop GmbH',type:'NDA',value:0,status:'active',start:'2023-06-01',end:'2026-06-01',notice:30,notes:''},
-    {id:4,title:'Liefervertrag Bürobedarf',partner:'Büro Plus',type:'Liefervertrag',value:3600,status:'active',start:'2024-03-01',end:'2025-03-01',notice:60,notes:''},
-  ],
-  inventory: [
-    {id:1,name:'Verpackungsmaterial',sku:'VPM-001',qty:450,minQty:100,price:0.30,unit:'Stück',warehouseUnit:'WH-A1',cat:'Verpackung'},
-    {id:2,name:'Elektronikbauteile Set',sku:'ELK-002',qty:85,minQty:50,price:12.50,unit:'Stück',warehouseUnit:'WH-B1',cat:'Rohstoffe'},
-    {id:3,name:'Produkt Demo-Einheit',sku:'PRD-001',qty:12,minQty:5,price:349.00,unit:'Stück',warehouseUnit:'WH-C1',cat:'Fertigwaren'},
-    {id:4,name:'Druckpapier A4',sku:'BRO-001',qty:8,minQty:20,price:5.50,unit:'Paket',warehouseUnit:'WH-A2',cat:'Betriebsmittel'},
-    {id:5,name:'Platinen Rohware',sku:'PLT-001',qty:200,minQty:80,price:3.20,unit:'Stück',warehouseUnit:'WH-B2',cat:'Rohstoffe'},
-  ],
-  floorPlan: {
-    rows:6, cols:10,
-    units: [
-      {cellId:'2-1',name:'Regal A1',cat:'cat-a',cap:500,desc:'Verpackungen'},
-      {cellId:'2-2',name:'Regal A2',cat:'cat-a',cap:300,desc:'Bürobedarf'},
-      {cellId:'3-1',name:'Regal B1',cat:'cat-b',cap:200,desc:'Elektronik'},
-      {cellId:'3-2',name:'Regal B2',cat:'cat-b',cap:200,desc:'Platinen'},
-      {cellId:'4-3',name:'Regal C1',cat:'cat-c',cap:100,desc:'Fertigwaren'},
-      {cellId:'5-5',name:'Sonderzone',cat:'cat-e',cap:50,desc:'Retouren'},
-    ]
-  },
-  stockMoves: [
-    {id:1,itemId:1,type:'in',qty:200,note:'Lieferung Musterpack',date:'2024-11-01'},
-    {id:2,itemId:2,type:'out',qty:15,note:'Produktion',date:'2024-11-08'},
-    {id:3,itemId:4,type:'out',qty:12,note:'Verbrauch Büro',date:'2024-11-10'},
-  ],
-  customers: [
-    {id:1,name:'Digital Solutions AG',contact:'Maria Schmidt',email:'m.schmidt@digisol.de',phone:'+49 30 1234567',type:'B2B',revenue:28700,status:'active',lastContact:'2024-11-10'},
-    {id:2,name:'Startup Hub GmbH',contact:'Jan Müller',email:'j.mueller@shub.de',phone:'+49 89 7654321',type:'B2B',revenue:12500,status:'active',lastContact:'2024-11-05'},
-    {id:3,name:'Max Privat',contact:'Max Privat',email:'max@mail.de',phone:'',type:'B2C',revenue:1200,status:'active',lastContact:'2024-10-20'},
-  ],
-  deals: [
-    {id:1,title:'ERP Integration Projekt',customerId:1,value:45000,stage:'proposal',closeDate:'2024-12-15'},
-    {id:2,title:'Jahresvertrag 2025',customerId:2,value:18000,stage:'negotiation',closeDate:'2024-12-31'},
-    {id:3,title:'Web-Shop Relaunch',customerId:3,value:5500,stage:'qualified',closeDate:'2025-01-31'},
-  ],
-  employees: [
-    {id:1,first:'Anna',last:'Weber',role:'CTO',dept:'Entwicklung',salary:6500,vacation:28,email:'a.weber@company.de',start:'2023-01-15',status:'active'},
-    {id:2,first:'Tom',last:'Fischer',role:'Full-Stack Dev',dept:'Entwicklung',salary:5200,vacation:28,email:'t.fischer@company.de',start:'2023-04-01',status:'active'},
-    {id:3,first:'Lisa',last:'Koch',role:'Marketing Lead',dept:'Marketing',salary:4800,vacation:28,email:'l.koch@company.de',start:'2023-07-01',status:'active'},
-  ],
-  projects: [
-    {id:1,name:'Produktlaunch v2.0',customerId:1,status:'active',budget:25000,deadline:'2024-12-20',desc:'Neues Feature-Set'},
-    {id:2,name:'Website Redesign',customerId:2,status:'review',budget:8000,deadline:'2024-11-30',desc:'Kompletter Neuauftritt'},
-    {id:3,name:'Datenbank Migration',customerId:0,status:'done',budget:5000,deadline:'2024-10-31',desc:'Internes Projekt'},
-  ],
-  tasks: [
-    {id:1,title:'API Dokumentation schreiben',projectId:1,status:'backlog',priority:'medium',due:'2024-12-01'},
-    {id:2,title:'Frontend Tests',projectId:1,status:'active',priority:'high',due:'2024-11-25'},
-    {id:3,title:'Design Review',projectId:2,status:'review',priority:'high',due:'2024-11-20'},
-    {id:4,title:'Server Setup',projectId:3,status:'done',priority:'critical',due:'2024-10-15'},
-    {id:5,title:'Security Audit',projectId:1,status:'backlog',priority:'critical',due:'2024-12-10'},
-  ],
-  invoices: [
-    {id:1,num:'RE-2024-001',customerId:1,date:'2024-11-01',dueDate:'2024-11-15',vatRate:19,status:'paid',positions:[{desc:'Entwicklungsleistung Nov',qty:1,price:12500}],notes:''},
-    {id:2,num:'RE-2024-002',customerId:2,date:'2024-11-10',dueDate:'2024-11-24',vatRate:19,status:'sent',positions:[{desc:'Monatliche Lizenz',qty:1,price:8900}],notes:'Zahlbar innerhalb 14 Tagen'},
-    {id:3,num:'RE-2024-003',customerId:1,date:'2024-10-20',dueDate:'2024-11-03',vatRate:19,status:'overdue',positions:[{desc:'Beratung Q4',qty:4,price:1350}],notes:''},
-  ],
-  budgets: [
-    {id:1,cat:'Personal',planned:15000,period:'monthly'},
-    {id:2,cat:'Marketing',planned:2000,period:'monthly'},
-    {id:3,cat:'Software/Lizenzen',planned:1500,period:'monthly'},
-    {id:4,cat:'Miete',planned:2200,period:'monthly'},
-  ],
-  taxEvents: [
-    {id:1,name:'MwSt-Voranmeldung Q3',date:'2024-11-10',amount:3420,type:'MwSt-Voranmeldung',done:true},
-    {id:2,name:'MwSt-Voranmeldung Q4',date:'2025-02-10',amount:3800,type:'MwSt-Voranmeldung',done:false},
-    {id:3,name:'Körperschaftsteuer 2024',date:'2025-05-31',amount:0,type:'Körperschaftsteuer',done:false},
-    {id:4,name:'Gewerbesteuer 2024',date:'2025-05-15',amount:0,type:'Gewerbesteuer',done:false},
-  ],
-  _nextId: 100
-};
+// Leerer Startzustand — keine Demo-Daten
+function emptyState() {
+  return {
+    company: {
+      name: '', legal: 'GmbH', taxId: '', vatId: '',
+      address: '', founded: new Date().getFullYear(),
+      currency: 'EUR', vatRate: 19, fiscalStart: 1, corpTax: 15
+    },
+    accounts: [],
+    transactions: [],
+    contracts: [],
+    inventory: [],
+    floorPlan: { rows: 6, cols: 10, units: [] },
+    stockMoves: [],
+    customers: [],
+    deals: [],
+    employees: [],
+    projects: [],
+    tasks: [],
+    invoices: [],
+    budgets: [],
+    taxEvents: [],
+    _nextId: 1,
+    _setupDone: false
+  };
+}
 
 let state = {};
 
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) { state = JSON.parse(raw); }
-    else { state = JSON.parse(JSON.stringify(DEMO_DATA)); saveState(); }
-  } catch(e) { state = JSON.parse(JSON.stringify(DEMO_DATA)); }
+    if (raw) {
+      state = JSON.parse(raw);
+      // Fehlende Felder aus alten Versionen auffüllen
+      if (!state.company)     state.company     = emptyState().company;
+      if (!state.floorPlan)   state.floorPlan   = emptyState().floorPlan;
+      if (!state.accounts)    state.accounts    = [];
+      if (!state.transactions) state.transactions = [];
+      if (!state.contracts)   state.contracts   = [];
+      if (!state.inventory)   state.inventory   = [];
+      if (!state.stockMoves)  state.stockMoves  = [];
+      if (!state.customers)   state.customers   = [];
+      if (!state.deals)       state.deals       = [];
+      if (!state.employees)   state.employees   = [];
+      if (!state.projects)    state.projects    = [];
+      if (!state.tasks)       state.tasks       = [];
+      if (!state.invoices)    state.invoices    = [];
+      if (!state.budgets)     state.budgets     = [];
+      if (!state.taxEvents)   state.taxEvents   = [];
+    } else {
+      state = emptyState();
+      saveState();
+    }
+  } catch(e) {
+    state = emptyState();
+  }
 }
 
 function saveState() {
@@ -2196,7 +2254,7 @@ function renderTaxCalendar() {
       <div class="tax-cal-item ${cls}">
         <div class="tax-cal-date">${fmtDate(e.date)}</div>
         <div class="tax-cal-name">${e.name}</div>
-        <div class="tax-cal-amount">${e.amount>0?fmt(e.amount):'–'}</div>
+        <div class="tax-cal-amount">${fmt(e.amount)}</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
           <span class="badge badge-gray">${e.type}</span>
           ${!e.done?`<button class="btn btn-ghost btn-sm" onclick="markTaxDone(${e.id})" title="Als erledigt markieren">✅</button>`:'<span style="color:var(--green);font-size:12px">✅ Erledigt</span>'}
@@ -2214,7 +2272,12 @@ function markTaxDone(id) {
 function calcVat() {
   const net = +document.getElementById('vat-net').value||0;
   const rate = +document.getElementById('vat-rate').value||19;
-  if(!net) { document.getElementById('vat-res-net').textContent='–'; document.getElementById('vat-res-vat').textContent='–'; document.getElementById('vat-res-gross').textContent='–'; return; }
+  if(!net) {
+    document.getElementById('vat-res-net').textContent='€ 0,00';
+    document.getElementById('vat-res-vat').textContent='€ 0,00';
+    document.getElementById('vat-res-gross').textContent='€ 0,00';
+    return;
+  }
   const vat = net*rate/100;
   const gross = net+vat;
   document.getElementById('vat-res-net').textContent = fmt(net);
@@ -2466,7 +2529,7 @@ function renderContracts() {
       <td class="td-bold">${c.title}</td>
       <td>${c.partner}</td>
       <td><span class="badge badge-gray">${c.type}</span></td>
-      <td class="td-mono">${c.value>0?fmt(c.value)+'/Jahr':'–'}</td>
+      <td class="td-mono">${fmt(c.value)}/Jahr</td>
       <td class="td-mono">${fmtDate(c.start)}</td>
       <td class="td-mono" style="color:${d<0?'var(--red)':d<60?'var(--accent)':'inherit'}">${fmtDate(c.end)}</td>
       <td>${statusBadge(status)}</td>
@@ -2928,8 +2991,18 @@ function handleImport(event) {
 }
 
 function resetData() {
-  state = JSON.parse(JSON.stringify(DEMO_DATA));
-  saveState(); navigate('dashboard');
+  state = emptyState();
+  saveState();
+  document.getElementById('sw-founded').value = new Date().getFullYear();
+  document.getElementById('sw-name').value='';
+  document.getElementById('sw-taxid').value='';
+  document.getElementById('sw-vatid').value='';
+  document.getElementById('sw-address').value='';
+  document.getElementById('sw-acc-name').value='';
+  document.getElementById('sw-acc-balance').value='0';
+  document.getElementById('sw-acc-iban').value='';
+  navigate('dashboard');
+  showSetupWizard();
 }
 
 // =====================================================================
@@ -2953,25 +3026,127 @@ function showNotifications() {
 }
 
 // =====================================================================
+//  SETUP WIZARD
+// =====================================================================
+let setupCurrentStep = 1;
+const setupTotalSteps = 3;
+
+function showSetupWizard() {
+  setupCurrentStep = 1;
+  renderSetupStep(1);
+  document.getElementById('modal-setup').classList.add('open');
+}
+
+function renderSetupStep(step) {
+  for(let i=1;i<=setupTotalSteps;i++){
+    const el=document.getElementById('setup-step-'+i);
+    if(el) el.style.display=(i===step)?'block':'none';
+  }
+  // dots
+  document.querySelectorAll('.setup-step-dot').forEach(d=>{
+    const s=+d.dataset.step;
+    d.classList.remove('active','done');
+    if(s===step) d.classList.add('active');
+    else if(s<step) d.classList.add('done');
+  });
+  // progress bar
+  const bar=document.getElementById('setup-progress-bar');
+  if(bar) bar.style.width=((step-1)/(setupTotalSteps-1)*100)+'%';
+
+  // buttons
+  const btnBack=document.getElementById('setup-btn-back');
+  const btnNext=document.getElementById('setup-btn-next');
+  const btnFinish=document.getElementById('setup-btn-finish');
+  const btnSkip3=document.getElementById('setup-btn-skip3');
+  if(btnBack) btnBack.style.display=step>1?'':'none';
+  if(btnNext) btnNext.style.display=step<setupTotalSteps?'':'none';
+  if(btnFinish) btnFinish.style.display=step===setupTotalSteps?'':'none';
+  if(btnSkip3) btnSkip3.style.display=step===3?'':'none';
+}
+
+function setupNext() {
+  if(setupCurrentStep===1){
+    const name=document.getElementById('sw-name').value.trim();
+    if(!name){ document.getElementById('sw-name').focus(); document.getElementById('sw-name').style.borderColor='var(--red)'; return; }
+    document.getElementById('sw-name').style.borderColor='';
+  }
+  if(setupCurrentStep < setupTotalSteps){
+    setupCurrentStep++;
+    renderSetupStep(setupCurrentStep);
+  }
+}
+
+function setupPrev() {
+  if(setupCurrentStep>1){ setupCurrentStep--; renderSetupStep(setupCurrentStep); }
+}
+
+function finishSetup(withAccount) {
+  // Save company
+  state.company.name    = document.getElementById('sw-name').value.trim() || 'Mein Unternehmen';
+  state.company.legal   = document.getElementById('sw-legal').value;
+  state.company.founded = +document.getElementById('sw-founded').value || new Date().getFullYear();
+  state.company.currency= document.getElementById('sw-currency').value;
+  state.company.address = document.getElementById('sw-address').value;
+  state.company.taxId   = document.getElementById('sw-taxid').value;
+  state.company.vatId   = document.getElementById('sw-vatid').value;
+  state.company.vatRate = +document.getElementById('sw-vat').value||19;
+  state.company.corpTax = +document.getElementById('sw-corptax').value||15;
+  state.company.fiscalStart = +document.getElementById('sw-fiscal').value||1;
+
+  // Save account if filled
+  if(withAccount){
+    const accName=document.getElementById('sw-acc-name').value.trim();
+    if(accName){
+      const acc={id:nextId(),name:accName,type:document.getElementById('sw-acc-type').value,balance:+document.getElementById('sw-acc-balance').value||0,iban:document.getElementById('sw-acc-iban').value};
+      state.accounts.push(acc);
+    }
+  }
+
+  state._setupDone = true;
+  saveState();
+  document.getElementById('modal-setup').classList.remove('open');
+
+  // Update UI
+  document.getElementById('sb-company-name').textContent = state.company.name;
+  const av=document.getElementById('user-avatar');
+  if(av) av.textContent=(state.company.name.split(' ').map(w=>w[0]).join('').slice(0,2)||'ME').toUpperCase();
+
+  navigate('dashboard');
+}
+
+// =====================================================================
 //  INIT
 // =====================================================================
 document.addEventListener('DOMContentLoaded', ()=>{
   loadState();
-  // set initial values
-  document.getElementById('sb-company-name').textContent = state.company?.name||'Mein Startup';
+
+  // Update sidebar company name
+  document.getElementById('sb-company-name').textContent = state.company?.name || 'Mein Unternehmen';
   const av=document.getElementById('user-avatar');
-  if(av&&state.company?.name) av.textContent=(state.company.name.split(' ').map(w=>w[0]).join('').slice(0,2)||'ME').toUpperCase();
-  // close modals on overlay click
+  if(av && state.company?.name) av.textContent=(state.company.name.split(' ').map(w=>w[0]).join('').slice(0,2)||'ME').toUpperCase();
+
+  // Close modals on overlay click
   document.querySelectorAll('.modal-overlay').forEach(o=>{
-    o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+    o.addEventListener('click',e=>{ if(e.target===o && o.id!=='modal-setup') o.classList.remove('open'); });
   });
-  // render dashboard
-  navigate('dashboard');
-  updateBadges();
-  // watch stock moves tab
+
+  // Watch stock moves tab
   document.addEventListener('click', e=>{
-    if(e.target.getAttribute('onclick')&&e.target.getAttribute('onclick').includes('tab-stockmove')) { setTimeout(renderStockMoves,50); }
+    if(e.target.getAttribute('onclick')&&e.target.getAttribute('onclick').includes('tab-stockmove')){ setTimeout(renderStockMoves,50); }
   });
+
+  // First launch: show setup wizard; otherwise go to dashboard
+  if(!state._setupDone) {
+    // Pre-fill year
+    document.getElementById('sw-founded').value = new Date().getFullYear();
+    showSetupWizard();
+    // Render dashboard in background so layout is ready
+    navigate('dashboard');
+  } else {
+    navigate('dashboard');
+  }
+
+  updateBadges();
 });
 </script>
 </body>
