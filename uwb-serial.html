@@ -1,588 +1,1079 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>UWB Web Serial Parser</title>
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #0b1020;
-      --panel: #11182d;
-      --panel-2: #0f172a;
-      --border: #26304a;
-      --text: #e5e7eb;
-      --muted: #94a3b8;
-      --accent: #60a5fa;
-      --good: #34d399;
-      --warn: #f59e0b;
-      --bad: #f87171;
-      --chip: #1e293b;
-      --shadow: 0 10px 30px rgba(0,0,0,.25);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(1200px 800px at 20% 0%, #111c39 0%, var(--bg) 55%);
-      color: var(--text);
-    }
-    header {
-      padding: 24px 20px 12px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      background: rgba(3, 7, 18, .35);
-      backdrop-filter: blur(8px);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    h1 { margin: 0 0 8px; font-size: 24px; }
-    .sub { color: var(--muted); font-size: 14px; line-height: 1.4; }
-    .wrap { max-width: 1400px; margin: 0 auto; padding: 18px 20px 28px; }
-    .grid { display: grid; grid-template-columns: 360px 1fr; gap: 16px; align-items: start; }
-    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
-    .card {
-      background: linear-gradient(180deg, rgba(17,24,45,.98), rgba(12,18,35,.98));
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    .card h2 {
-      margin: 0;
-      padding: 14px 16px;
-      font-size: 16px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      background: rgba(255,255,255,.02);
-    }
-    .card .body { padding: 16px; }
-    .row { display: grid; gap: 10px; }
-    .two { grid-template-columns: 1fr 1fr; }
-    .three { grid-template-columns: 1fr 1fr 1fr; }
-    @media (max-width: 700px) { .two, .three { grid-template-columns: 1fr; } }
-    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
-    input, select, textarea, button {
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      color: var(--text);
-      padding: 10px 12px;
-      font: inherit;
-      outline: none;
-    }
-    textarea { min-height: 92px; resize: vertical; }
-    input:focus, select:focus, textarea:focus { border-color: rgba(96,165,250,.8); box-shadow: 0 0 0 3px rgba(96,165,250,.12); }
-    button { cursor: pointer; background: linear-gradient(180deg, #1f3b73, #17315f); border-color: #335d9f; font-weight: 600; }
-    button.secondary { background: var(--panel-2); border-color: var(--border); }
-    button.danger { background: linear-gradient(180deg, #7f1d1d, #5f1515); border-color: #9f2d2d; }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    .status {
-      display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; border-top: 1px solid rgba(255,255,255,.06);
-      background: rgba(255,255,255,.01);
-    }
-    .chip {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 10px; border-radius: 999px; background: var(--chip);
-      border: 1px solid rgba(255,255,255,.06); font-size: 12px; color: var(--text);
-    }
-    .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-    .dot.good { background: var(--good); }
-    .dot.warn { background: var(--warn); }
-    .dot.bad { background: var(--bad); }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .table {
-      width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 12px; border: 1px solid rgba(255,255,255,.06);
-    }
-    .table th, .table td {
-      text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 13px;
-    }
-    .table th { color: #cbd5e1; background: rgba(255,255,255,.03); font-weight: 600; }
-    .table tr:last-child td { border-bottom: 0; }
-    .pill {
-      display: inline-block; padding: 3px 8px; border-radius: 999px; background: rgba(96,165,250,.15); color: #bfdbfe; border: 1px solid rgba(96,165,250,.25);
-      margin-right: 6px; margin-bottom: 6px; font-size: 12px;
-    }
-    .small { font-size: 12px; color: var(--muted); }
-    .scroll { max-height: 420px; overflow: auto; }
-    pre {
-      margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; line-height: 1.45;
-      background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.06); padding: 12px; border-radius: 12px;
-    }
-    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
-    .muted { color: var(--muted); }
-    .footer-note { margin-top: 10px; font-size: 12px; color: var(--muted); }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UWB Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #0e1117;
+    --panel: #13171f;
+    --border: #1e2530;
+    --border-bright: #2a3545;
+    --accent: #00d4ff;
+    --accent2: #00ff9d;
+    --accent3: #ff6b35;
+    --warn: #ffc107;
+    --text: #c8d8e8;
+    --text-dim: #5a7090;
+    --text-bright: #e8f4ff;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Rajdhani', sans-serif;
+    --glow: 0 0 12px rgba(0, 212, 255, 0.3);
+    --glow2: 0 0 12px rgba(0, 255, 157, 0.3);
+    --glow3: 0 0 12px rgba(255, 107, 53, 0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,17,26,0.9);
+    backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 100;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--glow), inset 0 0 8px rgba(0,212,255,0.1);
+    animation: pulse-ring 2s ease-in-out infinite;
+  }
+  @keyframes pulse-ring {
+    0%,100% { box-shadow: var(--glow), inset 0 0 8px rgba(0,212,255,0.1); }
+    50% { box-shadow: 0 0 20px rgba(0,212,255,0.5), inset 0 0 12px rgba(0,212,255,0.15); }
+  }
+  .logo-icon svg { width:16px; height:16px; fill: var(--accent); }
+  .logo-title { font-family: var(--sans); font-weight: 700; font-size: 18px; letter-spacing: 3px; color: var(--text-bright); text-transform: uppercase; }
+  .logo-sub { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: 2px; }
+
+  .header-status { display: flex; align-items: center; gap: 20px; }
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 14px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+  }
+  .status-pill .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-dim);
+    transition: all 0.3s;
+  }
+  .status-pill.connected { border-color: var(--accent2); color: var(--accent2); }
+  .status-pill.connected .dot { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); animation: blink 1s ease-in-out infinite; }
+  .status-pill.error { border-color: var(--accent3); color: var(--accent3); }
+  .status-pill.error .dot { background: var(--accent3); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .pkt-rate { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+  .pkt-rate span { color: var(--accent); }
+
+  /* ── CONNECT BAR ── */
+  .connect-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  select, input[type=number] {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  select:focus, input:focus { border-color: var(--accent); }
+  select { cursor: pointer; min-width: 80px; }
+  label { font-size: 11px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+
+  .btn {
+    padding: 7px 18px;
+    border: 1px solid;
+    border-radius: 2px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+  }
+  .btn-connect { border-color: var(--accent); color: var(--accent); }
+  .btn-connect:hover { background: rgba(0,212,255,0.1); box-shadow: var(--glow); }
+  .btn-disconnect { border-color: var(--accent3); color: var(--accent3); display:none; }
+  .btn-disconnect:hover { background: rgba(255,107,53,0.1); }
+  .btn-clear { border-color: var(--border-bright); color: var(--text-dim); }
+  .btn-clear:hover { border-color: var(--text-dim); color: var(--text); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .connect-bar .sep { width: 1px; height: 20px; background: var(--border); }
+  .no-serial-warn { font-family: var(--mono); font-size: 11px; color: var(--accent3); display: none; }
+
+  /* ── MAIN LAYOUT ── */
+  .main { display: grid; grid-template-columns: 1fr 1fr 320px; grid-template-rows: auto 1fr; gap: 1px; background: var(--border); flex: 1; }
+
+  .panel {
+    background: var(--surface);
+    display: flex; flex-direction: column;
+  }
+  .panel-header {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--panel);
+  }
+  .panel-title {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim); font-family: var(--mono);
+  }
+  .panel-title span { color: var(--accent); }
+  .panel-body { padding: 16px; flex: 1; overflow: hidden; }
+
+  /* ── COORDINATE DISPLAY ── */
+  .coords-panel { grid-column: 1; grid-row: 1; }
+
+  .coord-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  .coord-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 14px;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .coord-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    transition: opacity 0.3s;
+    opacity: 0;
+  }
+  .coord-card.x::before { background: var(--accent); }
+  .coord-card.y::before { background: var(--accent2); }
+  .coord-card.z::before { background: var(--accent3); }
+  .coord-card.active::before { opacity: 1; }
+  .coord-card.x.active { border-color: rgba(0,212,255,0.3); }
+  .coord-card.y.active { border-color: rgba(0,255,157,0.3); }
+  .coord-card.z.active { border-color: rgba(255,107,53,0.3); }
+
+  .coord-axis {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+  .coord-card.x .coord-axis { color: var(--accent); }
+  .coord-card.y .coord-axis { color: var(--accent2); }
+  .coord-card.z .coord-axis { color: var(--accent3); }
+
+  .coord-value {
+    font-family: var(--mono); font-size: 28px; font-weight: 400;
+    color: var(--text-bright); line-height: 1;
+    transition: color 0.2s;
+  }
+  .coord-value.flash { animation: flash-val 0.15s ease; }
+  @keyframes flash-val { 0%{opacity:0.4} 100%{opacity:1} }
+
+  .coord-unit { font-size: 10px; color: var(--text-dim); letter-spacing: 1px; margin-top: 2px; }
+  .coord-m { font-family: var(--mono); font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  .meta-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+    margin-top: 10px;
+  }
+  .meta-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    border-radius: 2px;
+  }
+  .meta-label { font-size: 9px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 3px; font-family: var(--mono); }
+  .meta-value { font-family: var(--mono); font-size: 16px; color: var(--text); }
+  .meta-value.ok { color: var(--accent2); }
+  .meta-value.warn { color: var(--warn); }
+
+  /* ── VISUALIZER ── */
+  .vis-panel { grid-column: 2; grid-row: 1 / 3; }
+  .vis-panel .panel-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+  .canvas-wrap {
+    flex: 1;
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    min-height: 260px;
+  }
+  canvas { width: 100%; height: 100%; display: block; }
+
+  .view-tabs {
+    display: flex; gap: 4px;
+  }
+  .view-tab {
+    padding: 4px 12px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 2px;
+    color: var(--text-dim); background: transparent;
+    transition: all 0.2s;
+  }
+  .view-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
+
+  .canvas-overlay {
+    position: absolute; top: 8px; left: 8px;
+    font-family: var(--mono); font-size: 9px; color: var(--text-dim);
+    letter-spacing: 1px; pointer-events: none;
+    line-height: 1.6;
+  }
+
+  /* ── INFO PANEL ── */
+  .info-panel { grid-column: 3; grid-row: 1 / 3; display: flex; flex-direction: column; gap: 1px; background: var(--border); }
+
+  .proto-panel, .raw-panel { background: var(--surface); display: flex; flex-direction: column; }
+  .proto-panel { flex: 0 0 auto; }
+  .raw-panel { flex: 1; min-height: 0; }
+  .raw-panel .panel-body { padding: 0; flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+  .proto-fields { display: flex; flex-direction: column; gap: 2px; }
+  .proto-field {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 12px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+  .proto-field:last-child { border-bottom: none; }
+  .proto-field:hover { background: rgba(255,255,255,0.02); }
+  .proto-key { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: 1px; }
+  .proto-val { font-family: var(--mono); font-size: 11px; color: var(--text); }
+  .proto-val.hl { color: var(--accent); }
+
+  /* ── TABLE ── */
+  .table-panel { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; }
+  .table-panel .panel-body { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+
+  .data-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; }
+  .data-table th {
+    padding: 6px 12px; text-align: left;
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim); border-bottom: 1px solid var(--border);
+    background: var(--panel); position: sticky; top: 0; z-index: 1;
+    font-family: var(--sans); font-weight: 600;
+  }
+  .data-table td { padding: 5px 12px; border-bottom: 1px solid rgba(30,37,48,0.5); }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .data-table tr.new-row td { animation: row-in 0.3s ease; }
+  @keyframes row-in { from { background: rgba(0,212,255,0.08); } to { background: transparent; } }
+  .data-table td.x { color: var(--accent); }
+  .data-table td.y { color: var(--accent2); }
+  .data-table td.z { color: var(--accent3); }
+  .data-table td.seq { color: var(--text-dim); }
+  .table-scroll { overflow-y: auto; flex: 1; }
+  .table-scroll::-webkit-scrollbar { width: 4px; }
+  .table-scroll::-webkit-scrollbar-track { background: transparent; }
+  .table-scroll::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+  /* ── RAW HEX LOG ── */
+  .hex-log {
+    font-family: var(--mono); font-size: 10px; line-height: 1.7;
+    overflow-y: auto; flex: 1; padding: 10px 12px;
+    color: var(--text-dim);
+  }
+  .hex-log::-webkit-scrollbar { width: 4px; }
+  .hex-log::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+  .hex-line { margin-bottom: 2px; word-break: break-all; }
+  .hex-line .hdr { color: var(--warn); }
+  .hex-line .pos { color: var(--accent); }
+  .hex-line .sep { color: var(--border-bright); }
+  .hex-line .chk { color: var(--accent2); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; gap: 10px; padding: 20px;
+    color: var(--text-dim); text-align: center;
+  }
+  .empty-state .icon { font-size: 32px; opacity: 0.3; }
+  .empty-state p { font-family: var(--mono); font-size: 11px; letter-spacing: 1px; }
+
+  /* ── BARS ── */
+  .range-bars { display: flex; flex-direction: column; gap: 6px; }
+  .range-bar-row { display: flex; align-items: center; gap: 8px; }
+  .range-bar-label { font-family: var(--mono); font-size: 9px; color: var(--text-dim); width: 10px; letter-spacing: 1px; }
+  .range-bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 1px; overflow: hidden; }
+  .range-bar-fill { height: 100%; border-radius: 1px; transition: width 0.2s ease; width: 0%; }
+  .range-bar-row.x .range-bar-fill { background: var(--accent); }
+  .range-bar-row.y .range-bar-fill { background: var(--accent2); }
+  .range-bar-row.z .range-bar-fill { background: var(--accent3); }
+  .range-bar-val { font-family: var(--mono); font-size: 9px; color: var(--text-dim); width: 52px; text-align: right; }
+
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto 1fr; }
+    .vis-panel { grid-column: 1 / 3; grid-row: 2; }
+    .info-panel { grid-column: 1 / 3; grid-row: 3; flex-direction: row; }
+    .table-panel { grid-column: 1 / 3; }
+  }
+</style>
 </head>
 <body>
-<header>
-  <h1>UWB Web Serial Parser</h1>
-  <div class="sub">Connect to a serial device, stream raw bytes, and parse frames that begin with <span class="mono">CmdM:4[</span> and end with <span class="mono">CRLF</span>.</div>
-</header>
+<div class="app">
 
-<div class="wrap">
-  <div class="grid">
-    <section class="card">
-      <h2>Connection</h2>
-      <div class="body">
-        <div class="row two">
-          <div>
-            <label for="baudRate">Baud rate</label>
-            <input id="baudRate" type="number" value="115200" min="1200" step="1" />
-          </div>
-          <div>
-            <label for="autoScroll">Auto scroll log</label>
-            <select id="autoScroll">
-              <option value="yes" selected>Yes</option>
-              <option value="no">No</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="row two" style="margin-top: 10px;">
-          <button id="connectBtn">Connect</button>
-          <button id="disconnectBtn" class="secondary" disabled>Disconnect</button>
-        </div>
-
-        <div class="row three" style="margin-top: 10px;">
-          <button id="clearBtn" class="secondary">Clear</button>
-          <button id="pauseBtn" class="secondary">Pause</button>
-          <button id="exportBtn" class="secondary">Export JSON</button>
-        </div>
-
-        <div style="margin-top: 14px;">
-          <label for="sendText">Send text</label>
-          <textarea id="sendText" placeholder="Type text or hex bytes here"></textarea>
-        </div>
-
-        <div class="row two" style="margin-top: 10px;">
-          <button id="sendAsciiBtn" class="secondary" disabled>Send ASCII</button>
-          <button id="sendHexBtn" class="secondary" disabled>Send HEX</button>
-        </div>
-
-        <div class="footer-note">Web Serial requires a secure context: HTTPS or <span class="mono">localhost</span>.</div>
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2"/><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.4"/></svg>
       </div>
-      <div class="status">
-        <span class="chip"><span id="connDot" class="dot bad"></span><span id="connState">Disconnected</span></span>
-        <span class="chip"><span id="framesDot" class="dot warn"></span><span>Frames: <span id="frameCount">0</span></span></span>
-        <span class="chip"><span class="dot"></span><span>Bytes: <span id="byteCount">0</span></span></span>
-        <span class="chip"><span class="dot"></span><span>Buffered: <span id="bufferCount">0</span></span></span>
+      <div>
+        <div class="logo-title">UWB Monitor</div>
+        <div class="logo-sub">ULTRA-WIDEBAND POSITION DECODER</div>
       </div>
-    </section>
+    </div>
+    <div class="header-status">
+      <span class="pkt-rate">PKT/S <span id="pktRate">0</span></span>
+      <div class="status-pill" id="statusPill">
+        <div class="dot"></div>
+        <span id="statusText">DISCONNECTED</span>
+      </div>
+    </div>
+  </header>
 
-    <section class="card">
-      <h2>Parsed frame</h2>
-      <div class="body split">
-        <div>
-          <div class="small" style="margin-bottom: 8px;">Latest decoded frame</div>
-          <table class="table" id="summaryTable">
-            <tbody>
-              <tr><th>Field</th><th>Value</th></tr>
-              <tr><td colspan="2" class="muted">No frame yet.</td></tr>
-            </tbody>
-          </table>
-          <div style="margin-top: 14px;">
-            <div class="small" style="margin-bottom: 8px;">Heuristic decoded numbers</div>
-            <div id="decodedPills" class="mono"></div>
-          </div>
-        </div>
-        <div>
-          <div class="small" style="margin-bottom: 8px;">Frame hex</div>
-          <pre id="frameHex">—</pre>
-          <div style="height: 12px"></div>
-          <div class="small" style="margin-bottom: 8px;">Raw ASCII preview</div>
-          <pre id="frameAscii">—</pre>
-        </div>
-      </div>
-    </section>
+  <!-- CONNECT BAR -->
+  <div class="connect-bar">
+    <label>BAUD</label>
+    <select id="baudSelect">
+      <option value="9600">9600</option>
+      <option value="19200">19200</option>
+      <option value="38400">38400</option>
+      <option value="57600">57600</option>
+      <option value="115200" selected>115200</option>
+      <option value="230400">230400</option>
+      <option value="460800">460800</option>
+      <option value="921600">921600</option>
+    </select>
+    <label>DATA BITS</label>
+    <select id="dataBitsSelect">
+      <option value="8" selected>8</option>
+      <option value="7">7</option>
+    </select>
+    <label>PARITY</label>
+    <select id="paritySelect">
+      <option value="none" selected>None</option>
+      <option value="even">Even</option>
+      <option value="odd">Odd</option>
+    </select>
+    <label>STOP BITS</label>
+    <select id="stopBitsSelect">
+      <option value="1" selected>1</option>
+      <option value="2">2</option>
+    </select>
+    <div class="sep"></div>
+    <button class="btn btn-connect" id="btnConnect">⚡ Connect</button>
+    <button class="btn btn-disconnect" id="btnDisconnect">✕ Disconnect</button>
+    <button class="btn btn-clear" id="btnClear">Clear</button>
+    <div class="sep"></div>
+    <label style="font-size:10px;color:var(--text-dim);">SCALE</label>
+    <input type="number" id="scaleMax" value="5000" style="width:80px;" title="Max range (mm) for visualization">
+    <label style="font-size:9px;color:var(--text-dim);">mm MAX</label>
+    <span class="no-serial-warn" id="noSerialWarn">⚠ Web Serial not supported — use Chrome/Edge</span>
   </div>
 
-  <div style="height: 16px"></div>
+  <!-- MAIN -->
+  <div class="main">
 
-  <section class="card">
-    <h2>Live log</h2>
-    <div class="body scroll">
-      <table class="table" id="logTable">
-        <thead>
-          <tr>
-            <th style="width: 90px;">Time</th>
-            <th style="width: 110px;">Type</th>
-            <th>Message</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <!-- COORDINATES -->
+    <div class="panel coords-panel">
+      <div class="panel-header">
+        <span class="panel-title"><span>■</span> POSITION</span>
+        <span class="panel-title" id="lastTs">—</span>
+      </div>
+      <div class="panel-body">
+        <div class="coord-grid">
+          <div class="coord-card x" id="cardX">
+            <div class="coord-axis">X-AXIS</div>
+            <div class="coord-value" id="valX">—</div>
+            <div class="coord-unit">MILLIMETERS</div>
+            <div class="coord-m" id="valXm">— m</div>
+          </div>
+          <div class="coord-card y" id="cardY">
+            <div class="coord-axis">Y-AXIS</div>
+            <div class="coord-value" id="valY">—</div>
+            <div class="coord-unit">MILLIMETERS</div>
+            <div class="coord-m" id="valYm">— m</div>
+          </div>
+          <div class="coord-card z" id="cardZ">
+            <div class="coord-axis">Z-AXIS</div>
+            <div class="coord-value" id="valZ">—</div>
+            <div class="coord-unit">MILLIMETERS</div>
+            <div class="coord-m" id="valZm">— m</div>
+          </div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-card">
+            <div class="meta-label">Anchors</div>
+            <div class="meta-value ok" id="metaAnchors">—</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-label">Sequence</div>
+            <div class="meta-value" id="metaSeq">—</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-label">Quality</div>
+            <div class="meta-value" id="metaQual">—</div>
+          </div>
+        </div>
+        <div class="range-bars" style="margin-top:10px;">
+          <div class="range-bar-row x">
+            <span class="range-bar-label">X</span>
+            <div class="range-bar-track"><div class="range-bar-fill" id="barX"></div></div>
+            <span class="range-bar-val" id="barXval">—</span>
+          </div>
+          <div class="range-bar-row y">
+            <span class="range-bar-label">Y</span>
+            <div class="range-bar-track"><div class="range-bar-fill" id="barY"></div></div>
+            <span class="range-bar-val" id="barYval">—</span>
+          </div>
+          <div class="range-bar-row z">
+            <span class="range-bar-label">Z</span>
+            <div class="range-bar-track"><div class="range-bar-fill" id="barZ"></div></div>
+            <span class="range-bar-val" id="barZval">—</span>
+          </div>
+        </div>
+      </div>
     </div>
-  </section>
+
+    <!-- VISUALIZER -->
+    <div class="panel vis-panel">
+      <div class="panel-header">
+        <span class="panel-title"><span>■</span> SPATIAL VIEW</span>
+        <div class="view-tabs">
+          <button class="view-tab active" onclick="setView('xy')">XY</button>
+          <button class="view-tab" onclick="setView('xz')">XZ</button>
+          <button class="view-tab" onclick="setView('yz')">YZ</button>
+          <button class="view-tab" onclick="setView('3d')">TRAIL</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="visCanvas"></canvas>
+          <div class="canvas-overlay" id="canvasOverlay">XY PLANE — TOP VIEW</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFO PANEL -->
+    <div class="info-panel">
+      <div class="proto-panel panel">
+        <div class="panel-header">
+          <span class="panel-title"><span>■</span> PACKET STRUCTURE</span>
+        </div>
+        <div class="proto-fields" id="protoFields">
+          <div class="proto-field"><span class="proto-key">HEADER</span><span class="proto-val hdr">CmdM:4[</span></div>
+          <div class="proto-field"><span class="proto-key">TIMESTAMP</span><span class="proto-val hl" id="pfSeq">—</span></div>
+          <div class="proto-field"><span class="proto-key">ANCHOR_CNT</span><span class="proto-val" id="pfAnc">—</span></div>
+          <div class="proto-field"><span class="proto-key">QUALITY</span><span class="proto-val" id="pfQual">—</span></div>
+          <div class="proto-field"><span class="proto-key">X (mm)</span><span class="proto-val" id="pfX">—</span></div>
+          <div class="proto-field"><span class="proto-key">Y (mm)</span><span class="proto-val" id="pfY">—</span></div>
+          <div class="proto-field"><span class="proto-key">Z (mm)</span><span class="proto-val" id="pfZ">—</span></div>
+          <div class="proto-field"><span class="proto-key">CHECKSUM</span><span class="proto-val" id="pfChk">—</span></div>
+          <div class="proto-field"><span class="proto-key">FRAME LEN</span><span class="proto-val" id="pfLen">—</span></div>
+          <div class="proto-field"><span class="proto-key">PACKETS RX</span><span class="proto-val hl" id="pfTotal">0</span></div>
+        </div>
+      </div>
+      <div class="raw-panel panel" style="flex:1;min-height:0;">
+        <div class="panel-header">
+          <span class="panel-title"><span>■</span> RAW HEX</span>
+          <span class="panel-title" id="hexCount">0 frames</span>
+        </div>
+        <div class="panel-body">
+          <div class="hex-log" id="hexLog">
+            <div class="empty-state">
+              <div class="icon">⬡</div>
+              <p>NO DATA</p>
+              <p style="margin-top:4px;font-size:9px;">Connect to serial port</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="panel table-panel">
+      <div class="panel-header">
+        <span class="panel-title"><span>■</span> HISTORY</span>
+        <span class="panel-title" id="rowCount">0 records</span>
+      </div>
+      <div class="panel-body">
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>TIME</th>
+                <th>SEQ</th>
+                <th>X mm</th>
+                <th>Y mm</th>
+                <th>Z mm</th>
+                <th>ANC</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-dim);font-family:var(--mono);font-size:10px;">Waiting for data…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <script>
-(() => {
-  const marker = asciiToBytes('CmdM:4[');
-  const cr = 0x0D, lf = 0x0A;
+// ─── GLOBALS ──────────────────────────────────────────────────────────────────
+let port = null, reader = null, readableStreamClosed = null;
+let buffer = new Uint8Array(0);
+let packets = [];
+let pktCount = 0, pktCountLast = 0, pktRateTimer = null;
+let currentView = 'xy';
+let trail = []; // {x,y,z}
+const MAX_TRAIL = 80;
+const MAX_TABLE_ROWS = 200;
+const MAX_HEX_ENTRIES = 100;
+let hexEntries = 0;
 
-  const els = {
-    baudRate: document.getElementById('baudRate'),
-    autoScroll: document.getElementById('autoScroll'),
-    connectBtn: document.getElementById('connectBtn'),
-    disconnectBtn: document.getElementById('disconnectBtn'),
-    clearBtn: document.getElementById('clearBtn'),
-    pauseBtn: document.getElementById('pauseBtn'),
-    exportBtn: document.getElementById('exportBtn'),
-    sendText: document.getElementById('sendText'),
-    sendAsciiBtn: document.getElementById('sendAsciiBtn'),
-    sendHexBtn: document.getElementById('sendHexBtn'),
-    connDot: document.getElementById('connDot'),
-    connState: document.getElementById('connState'),
-    framesDot: document.getElementById('framesDot'),
-    frameCount: document.getElementById('frameCount'),
-    byteCount: document.getElementById('byteCount'),
-    bufferCount: document.getElementById('bufferCount'),
-    summaryTable: document.getElementById('summaryTable').querySelector('tbody'),
-    decodedPills: document.getElementById('decodedPills'),
-    frameHex: document.getElementById('frameHex'),
-    frameAscii: document.getElementById('frameAscii'),
-    logBody: document.getElementById('logTable').querySelector('tbody')
-  };
+// Packet header bytes: "CmdM:4["
+const HEADER = [0x43, 0x6D, 0x64, 0x4D, 0x3A, 0x34, 0x5B];
+const PKT_MIN_LEN = 103; // 7 header + 93 data + 1 checksum + 2 CRLF
 
-  let port = null;
-  let reader = null;
-  let writer = null;
-  let keepReading = false;
-  let paused = false;
-  let buffer = new Uint8Array(0);
-  let totalBytes = 0;
-  let frameCount = 0;
-  let frames = [];
-  let latest = null;
+// ─── SERIAL ───────────────────────────────────────────────────────────────────
+const hasSerial = 'serial' in navigator;
+if (!hasSerial) document.getElementById('noSerialWarn').style.display = 'flex';
 
-  function setConnection(connected) {
-    els.connDot.className = 'dot ' + (connected ? 'good' : 'bad');
-    els.connState.textContent = connected ? 'Connected' : 'Disconnected';
-    els.connectBtn.disabled = connected;
-    els.disconnectBtn.disabled = !connected;
-    els.sendAsciiBtn.disabled = !connected;
-    els.sendHexBtn.disabled = !connected;
+document.getElementById('btnConnect').addEventListener('click', connect);
+document.getElementById('btnDisconnect').addEventListener('click', disconnect);
+document.getElementById('btnClear').addEventListener('click', clearData);
+
+async function connect() {
+  if (!hasSerial) { alert('Web Serial API not supported.\nPlease use Chrome or Edge browser.'); return; }
+  try {
+    port = await navigator.serial.requestPort();
+    const baud = +document.getElementById('baudSelect').value;
+    const dataBits = +document.getElementById('dataBitsSelect').value;
+    const parity = document.getElementById('paritySelect').value;
+    const stopBits = +document.getElementById('stopBitsSelect').value;
+    await port.open({ baudRate: baud, dataBits, parity, stopBits });
+    setStatus('connected');
+    document.getElementById('btnConnect').style.display = 'none';
+    document.getElementById('btnDisconnect').style.display = 'inline-block';
+    startRead();
+    startRateTimer();
+  } catch(e) {
+    console.error(e);
+    setStatus('error', e.message || 'Failed to connect');
   }
+}
 
-  function setPaused(value) {
-    paused = value;
-    els.pauseBtn.textContent = value ? 'Resume' : 'Pause';
-  }
+async function disconnect() {
+  try {
+    if (reader) { await reader.cancel(); reader = null; }
+    if (port) { await port.close(); port = null; }
+  } catch(e) { console.error(e); }
+  setStatus('disconnected');
+  document.getElementById('btnConnect').style.display = 'inline-block';
+  document.getElementById('btnDisconnect').style.display = 'none';
+  stopRateTimer();
+}
 
-  function nowTime() {
-    const d = new Date();
-    return d.toLocaleTimeString([], { hour12: false });
-  }
-
-  function log(type, message) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="mono">${nowTime()}</td><td class="mono">${escapeHtml(type)}</td><td>${escapeHtml(message)}</td>`;
-    els.logBody.appendChild(tr);
-    if (els.autoScroll.value === 'yes') tr.scrollIntoView({ block: 'end' });
-  }
-
-  function escapeHtml(str) {
-    return String(str)
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;');
-  }
-
-  function asciiToBytes(text) {
-    return new TextEncoder().encode(text);
-  }
-
-  function bytesToHex(bytes) {
-    return Array.from(bytes, b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
-  }
-
-  function bytesToAscii(bytes) {
-    let s = '';
-    for (const b of bytes) s += (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.';
-    return s;
-  }
-
-  function u16le(bytes, offset) {
-    return bytes[offset] | (bytes[offset + 1] << 8);
-  }
-
-  function u32le(bytes, offset) {
-    return (bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24)) >>> 0;
-  }
-
-  function u64leBigInt(bytes, offset) {
-    let v = 0n;
-    for (let i = 7; i >= 0; i--) v = (v << 8n) | BigInt(bytes[offset + i]);
-    return v;
-  }
-
-  function concatBytes(a, b) {
-    const out = new Uint8Array(a.length + b.length);
-    out.set(a, 0);
-    out.set(b, a.length);
-    return out;
-  }
-
-  function indexOfSubarray(haystack, needle, start = 0) {
-    outer: for (let i = start; i <= haystack.length - needle.length; i++) {
-      for (let j = 0; j < needle.length; j++) {
-        if (haystack[i + j] !== needle[j]) continue outer;
-      }
-      return i;
-    }
-    return -1;
-  }
-
-  function indexOfCRLF(haystack, start = 0) {
-    for (let i = start; i < haystack.length - 1; i++) {
-      if (haystack[i] === cr && haystack[i + 1] === lf) return i;
-    }
-    return -1;
-  }
-
-  function updateStats() {
-    els.frameCount.textContent = String(frameCount);
-    els.byteCount.textContent = String(totalBytes);
-    els.bufferCount.textContent = String(buffer.length);
-    els.framesDot.className = 'dot ' + (frameCount ? 'good' : 'warn');
-  }
-
-  function renderFrame(frame) {
-    latest = frame;
-    const rows = [];
-    rows.push(['Marker', 'CmdM:4[']);
-    rows.push(['Frame length', `${frame.bytes.length} bytes`]);
-    rows.push(['Payload length', `${frame.payload.length} bytes`]);
-    rows.push(['Checksum byte', `0x${frame.checksum.toString(16).padStart(2, '0').toUpperCase()}`]);
-    rows.push(['Raw u64 @ +0', frame.u64.toString()]);
-    rows.push(['Raw u16 @ +8', String(frame.u16)]);
-    rows.push(['Decoded u32 values', frame.u32s.length ? frame.u32s.map(n => String(n)).join(', ') : '—']);
-    rows.push(['Non-zero u32 values', frame.nonZeroU32s.length ? frame.nonZeroU32s.map(n => String(n)).join(', ') : '—']);
-    rows.push(['ASCII preview', frame.asciiPreview]);
-    els.summaryTable.innerHTML = rows.map(([a, b]) => `<tr><td>${escapeHtml(a)}</td><td class="mono">${escapeHtml(b)}</td></tr>`).join('');
-
-    els.decodedPills.innerHTML = frame.nonZeroU32s.length
-      ? frame.nonZeroU32s.map((n, i) => `<span class="pill">${i + 1}: ${n}</span>`).join('')
-      : '<span class="muted">No non-zero u32 values found.</span>';
-
-    els.frameHex.textContent = bytesToHex(frame.bytes);
-    els.frameAscii.textContent = frame.asciiPreview;
-  }
-
-  function pushFrame(bytes) {
-    frameCount += 1;
-
-    const headerLen = marker.length;
-    const endLen = 2;
-    const payloadPlusChecksum = bytes.slice(headerLen, bytes.length - endLen);
-    const checksum = payloadPlusChecksum.length ? payloadPlusChecksum[payloadPlusChecksum.length - 1] : 0;
-    const payload = payloadPlusChecksum.slice(0, Math.max(0, payloadPlusChecksum.length - 1));
-
-    const u64 = payload.length >= 8 ? u64leBigInt(payload, 0) : 0n;
-    const u16 = payload.length >= 10 ? u16le(payload, 8) : 0;
-
-    const u32s = [];
-    for (let off = 10; off + 3 < payload.length; off += 4) {
-      u32s.push(u32le(payload, off));
-    }
-
-    const nonZeroU32s = [];
-    for (const n of u32s) if (n !== 0) nonZeroU32s.push(n);
-
-    const asciiPreview = bytesToAscii(bytes);
-    const frame = {
-      bytes: new Uint8Array(bytes),
-      payload,
-      checksum,
-      u64,
-      u16,
-      u32s,
-      nonZeroU32s,
-      asciiPreview,
-      timestamp: Date.now()
-    };
-
-    frames.unshift(frame);
-    if (frames.length > 200) frames.pop();
-    renderFrame(frame);
-    log('FRAME', `Parsed ${bytes.length} bytes, ${nonZeroU32s.length} non-zero u32 values.`);
-    updateStats();
-  }
-
-  function processBuffer() {
+async function startRead() {
+  try {
+    const streamReader = port.readable.getReader();
+    reader = streamReader;
     while (true) {
-      const start = indexOfSubarray(buffer, marker);
-      if (start < 0) {
-        // Keep only a tail in case the marker is split across chunks.
-        if (buffer.length > marker.length) buffer = buffer.slice(buffer.length - marker.length + 1);
-        break;
-      }
-
-      if (start > 0) buffer = buffer.slice(start);
-
-      const end = indexOfCRLF(buffer, marker.length);
-      if (end < 0) break;
-
-      const frameBytes = buffer.slice(0, end);
-      buffer = buffer.slice(end + 2);
-      pushFrame(frameBytes);
+      const { value, done } = await streamReader.read();
+      if (done) break;
+      if (value) processBytes(value);
     }
-    updateStats();
+  } catch(e) {
+    if (e.name !== 'AbortError') { setStatus('error', 'Read error'); console.error(e); }
   }
+}
 
-  async function connect() {
-    if (!('serial' in navigator)) {
-      alert('Web Serial API is not available in this browser. Use Chrome or Edge on HTTPS/localhost.');
-      return;
+function processBytes(bytes) {
+  // Append to buffer
+  const newBuf = new Uint8Array(buffer.length + bytes.length);
+  newBuf.set(buffer); newBuf.set(bytes, buffer.length);
+  buffer = newBuf;
+
+  // Scan for complete packets
+  let i = 0;
+  while (i < buffer.length) {
+    // Find header
+    const hdrIdx = findHeader(buffer, i);
+    if (hdrIdx === -1) { buffer = new Uint8Array(0); break; }
+
+    // Check if we have enough bytes for a minimum packet
+    if (hdrIdx + PKT_MIN_LEN > buffer.length) {
+      buffer = buffer.slice(hdrIdx);
+      break;
     }
-    try {
-      port = await navigator.serial.requestPort();
-      const baudRate = Number(els.baudRate.value) || 115200;
-      await port.open({ baudRate });
-      writer = port.writable?.getWriter ? port.writable.getWriter() : null;
-      reader = port.readable.getReader();
-      keepReading = true;
-      setConnection(true);
-      log('INFO', `Connected at ${baudRate} baud.`);
-      readLoop();
-    } catch (err) {
-      log('ERROR', String(err?.message || err));
-      cleanup();
+
+    // Find CRLF terminator starting from header
+    let crlfIdx = -1;
+    for (let j = hdrIdx + 50; j < Math.min(hdrIdx + 200, buffer.length - 1); j++) {
+      if (buffer[j] === 0x0D && buffer[j+1] === 0x0A) { crlfIdx = j; break; }
     }
-  }
-
-  async function readLoop() {
-    const decoder = new TextDecoder();
-    try {
-      while (keepReading && reader) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        if (!value || !value.length) continue;
-        totalBytes += value.length;
-        buffer = concatBytes(buffer, value);
-        log('RX', `${value.length} bytes`);
-        if (!paused) processBuffer();
-        else updateStats();
-      }
-    } catch (err) {
-      log('ERROR', String(err?.message || err));
-    } finally {
-      cleanup();
+    if (crlfIdx === -1) {
+      if (buffer.length - hdrIdx > 200) { i = hdrIdx + 1; continue; }
+      buffer = buffer.slice(hdrIdx);
+      break;
     }
-  }
 
-  async function cleanup() {
-    keepReading = false;
-    try { if (reader) await reader.cancel(); } catch (_) {}
-    try { if (reader) reader.releaseLock(); } catch (_) {}
-    try { if (writer) writer.releaseLock(); } catch (_) {}
-    try { if (port) await port.close(); } catch (_) {}
-    reader = null;
-    writer = null;
-    port = null;
-    setConnection(false);
-    updateStats();
+    const pktBytes = buffer.slice(hdrIdx, crlfIdx + 2);
+    parsePacket(pktBytes);
+    i = crlfIdx + 2;
   }
+  if (i > 0 && i <= buffer.length) buffer = buffer.slice(i);
+  if (buffer.length > 2048) buffer = buffer.slice(buffer.length - 512);
+}
 
-  async function disconnect() {
-    keepReading = false;
-    await cleanup();
-    log('INFO', 'Disconnected.');
-  }
-
-  async function sendAscii() {
-    if (!writer) return;
-    const text = els.sendText.value ?? '';
-    const data = new TextEncoder().encode(text);
-    await writer.write(data);
-    log('TX', `ASCII ${data.length} bytes`);
-  }
-
-  function parseHexInput(text) {
-    const cleaned = text
-      .replace(/0x/gi, ' ')
-      .replace(/[^0-9a-fA-F]/g, ' ')
-      .trim();
-    if (!cleaned) return new Uint8Array();
-    const parts = cleaned.split(/\s+/).filter(Boolean);
-    const bytes = [];
-    for (const part of parts) {
-      if (part.length > 2) {
-        for (let i = 0; i < part.length; i += 2) {
-          const chunk = part.slice(i, i + 2);
-          if (chunk.length === 2) bytes.push(parseInt(chunk, 16));
-        }
-      } else {
-        bytes.push(parseInt(part, 16));
-      }
+function findHeader(buf, start) {
+  for (let i = start; i <= buf.length - HEADER.length; i++) {
+    let match = true;
+    for (let j = 0; j < HEADER.length; j++) {
+      if (buf[i+j] !== HEADER[j]) { match = false; break; }
     }
-    return new Uint8Array(bytes.filter(n => Number.isFinite(n) && n >= 0 && n <= 255));
+    if (match) return i;
   }
+  return -1;
+}
 
-  async function sendHex() {
-    if (!writer) return;
-    const data = parseHexInput(els.sendText.value ?? '');
-    if (!data.length) {
-      log('WARN', 'No valid hex bytes found.');
-      return;
-    }
-    await writer.write(data);
-    log('TX', `HEX ${data.length} bytes`);
-  }
+// ─── PACKET PARSING ───────────────────────────────────────────────────────────
+/*
+  Packet layout (relative to start of packet):
+  [0:7]   = "CmdM:4[" header
+  [7:9]   = timestamp/sequence (LE uint16)
+  [9]     = anchor count
+  [10:15] = reserved (5 bytes)
+  [15:17] = quality metric (LE uint16)
+  [17:21] = X position (LE int32, mm)
+  [21:25] = Y position (LE int32, mm)
+  [25:29] = Z position (LE int32, mm)
+  [29:50] = anchor data / reserved
+  [50:54] = X (duplicate)
+  [54:58] = Y (duplicate)
+  [58:62] = Z (duplicate)
+  [62:100]= extended data
+  [100]   = checksum
+  [101:103]= CRLF
+*/
+function parsePacket(bytes) {
+  if (bytes.length < 30) return;
 
-  function clearAll() {
-    buffer = new Uint8Array(0);
-    totalBytes = 0;
-    frameCount = 0;
-    frames = [];
-    latest = null;
-    els.summaryTable.innerHTML = '<tr><td colspan="2" class="muted">No frame yet.</td></tr>';
-    els.decodedPills.innerHTML = '';
-    els.frameHex.textContent = '—';
-    els.frameAscii.textContent = '—';
-    els.logBody.innerHTML = '';
-    updateStats();
-    log('INFO', 'Cleared.');
-  }
+  const view = new DataView(bytes.buffer, bytes.byteOffset);
 
-  function exportJson() {
-    const data = JSON.stringify(frames, (key, value) => {
-      if (typeof value === 'bigint') return value.toString();
-      if (value instanceof Uint8Array) return Array.from(value);
-      return value;
-    }, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'uwb-frames.json';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
+  const seq    = view.getUint16(7, true);
+  const anc    = bytes[9];
+  const qual   = bytes.length > 16 ? view.getUint16(15, true) : 0;
+  const x      = bytes.length > 21 ? view.getInt32(17, true) : 0;
+  const y      = bytes.length > 25 ? view.getInt32(21, true) : 0;
+  const z      = bytes.length > 29 ? view.getInt32(25, true) : 0;
+  const chk    = bytes.length > 101 ? bytes[bytes.length - 3] : bytes[bytes.length - 3];
 
-  els.connectBtn.addEventListener('click', connect);
-  els.disconnectBtn.addEventListener('click', disconnect);
-  els.clearBtn.addEventListener('click', clearAll);
-  els.pauseBtn.addEventListener('click', () => setPaused(!paused));
-  els.exportBtn.addEventListener('click', exportJson);
-  els.sendAsciiBtn.addEventListener('click', sendAscii);
-  els.sendHexBtn.addEventListener('click', sendHex);
+  // Validate: skip all-zero positions (likely invalid)
+  if (x === 0 && y === 0 && z === 0 && anc === 0) return;
 
-  window.addEventListener('beforeunload', () => {
-    keepReading = false;
-    try { reader?.cancel(); } catch (_) {}
-    try { writer?.releaseLock(); } catch (_) {}
-    try { port?.close(); } catch (_) {}
+  // Validate checksum (simple sum of data bytes, optional - log if mismatch)
+  const expectedChk = bytes.length >= 3 ? bytes[bytes.length - 3] : 0;
+
+  const record = { seq, anc, qual, x, y, z, chk: expectedChk, raw: bytes, ts: Date.now() };
+  packets.push(record);
+  pktCount++;
+
+  updateUI(record);
+  updateTable(record);
+  addHexEntry(record);
+  updateTrail(record);
+}
+
+// ─── UI UPDATE ────────────────────────────────────────────────────────────────
+function updateUI(r) {
+  const fmt = v => v.toLocaleString('en');
+  const fmtM = v => (v / 1000).toFixed(3) + ' m';
+
+  ['X','Y','Z'].forEach(ax => {
+    const val = r[ax.toLowerCase()];
+    const el = document.getElementById('val'+ax);
+    el.textContent = fmt(val);
+    el.classList.remove('flash');
+    void el.offsetWidth;
+    el.classList.add('flash');
+    document.getElementById('val'+ax+'m').textContent = fmtM(val);
+    document.getElementById('card'+ax).classList.add('active');
   });
 
-  updateStats();
-  setConnection(false);
-  setPaused(false);
-  log('INFO', 'Ready. Connect a serial device to begin parsing.');
-})();
+  document.getElementById('metaAnchors').textContent = r.anc;
+  document.getElementById('metaAnchors').className = 'meta-value ' + (r.anc >= 3 ? 'ok' : 'warn');
+  document.getElementById('metaSeq').textContent = r.seq;
+  document.getElementById('metaQual').textContent = r.qual;
+
+  // Protocol fields
+  document.getElementById('pfSeq').textContent = r.seq + ' (0x' + r.seq.toString(16).toUpperCase().padStart(4,'0') + ')';
+  document.getElementById('pfAnc').textContent = r.anc + ' anchors';
+  document.getElementById('pfQual').textContent = r.qual;
+  document.getElementById('pfX').textContent = r.x + ' mm';
+  document.getElementById('pfY').textContent = r.y + ' mm';
+  document.getElementById('pfZ').textContent = r.z + ' mm';
+  document.getElementById('pfChk').textContent = '0x' + r.chk.toString(16).toUpperCase().padStart(2,'0');
+  document.getElementById('pfLen').textContent = r.raw.length + ' bytes';
+  document.getElementById('pfTotal').textContent = pktCount;
+
+  document.getElementById('lastTs').textContent = new Date(r.ts).toLocaleTimeString();
+
+  // Range bars
+  const maxRange = +document.getElementById('scaleMax').value || 5000;
+  const clamp = v => Math.max(0, Math.min(100, (Math.abs(v) / maxRange) * 100));
+  ['x','y','z'].forEach(ax => {
+    const val = r[ax];
+    document.getElementById('bar'+ax.toUpperCase()).style.width = clamp(val) + '%';
+    document.getElementById('bar'+ax.toUpperCase()+'val').textContent = Math.abs(val) + ' mm';
+  });
+}
+
+// ─── TABLE ────────────────────────────────────────────────────────────────────
+let rowIdx = 0;
+function updateTable(r) {
+  const tbody = document.getElementById('tableBody');
+  // Remove placeholder
+  if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) tbody.innerHTML = '';
+
+  rowIdx++;
+  const tr = document.createElement('tr');
+  tr.className = 'new-row';
+  const t = new Date(r.ts);
+  const time = t.toLocaleTimeString('en', {hour12:false}) + '.' + String(t.getMilliseconds()).padStart(3,'0');
+  tr.innerHTML = `
+    <td class="seq">${rowIdx}</td>
+    <td>${time}</td>
+    <td class="seq">${r.seq}</td>
+    <td class="x">${r.x}</td>
+    <td class="y">${r.y}</td>
+    <td class="z">${r.z}</td>
+    <td>${r.anc}</td>
+  `;
+  tbody.insertBefore(tr, tbody.firstChild);
+
+  while (tbody.rows.length > MAX_TABLE_ROWS) tbody.removeChild(tbody.lastChild);
+  document.getElementById('rowCount').textContent = Math.min(rowIdx, MAX_TABLE_ROWS) + ' records';
+}
+
+// ─── HEX LOG ──────────────────────────────────────────────────────────────────
+function toHex(bytes) {
+  return Array.from(bytes).map(b => b.toString(16).toUpperCase().padStart(2,'0')).join(' ');
+}
+
+function addHexEntry(r) {
+  const log = document.getElementById('hexLog');
+  const bs = r.raw;
+  hexEntries++;
+  document.getElementById('hexCount').textContent = hexEntries + ' frames';
+
+  // Remove empty state
+  if (log.querySelector('.empty-state')) log.innerHTML = '';
+
+  const div = document.createElement('div');
+  div.className = 'hex-line';
+
+  // Header (0-6), seq+flags (7-16), position (17-28), rest, checksum
+  const hdrHex = toHex(bs.slice(0,7));
+  const seqHex = toHex(bs.slice(7,17));
+  const posHex = toHex(bs.slice(17,29));
+  const midHex = toHex(bs.slice(29, bs.length-3));
+  const chkHex = toHex(bs.slice(bs.length-3));
+
+  div.innerHTML = `<span style="color:var(--text-dim);font-size:9px;">#${hexEntries} </span><span class="hdr">${hdrHex}</span> <span style="color:var(--warn)">${seqHex}</span> <span class="pos">${posHex}</span> <span class="sep">${midHex}</span> <span class="chk">${chkHex}</span>`;
+  log.insertBefore(div, log.firstChild);
+
+  while (log.children.length > MAX_HEX_ENTRIES) log.removeChild(log.lastChild);
+}
+
+// ─── VISUALIZATION ────────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  const labels = {xy:'XY PLANE — TOP VIEW', xz:'XZ PLANE — SIDE VIEW', yz:'YZ PLANE — FRONT VIEW', '3d':'POSITION TRAIL'};
+  document.getElementById('canvasOverlay').textContent = labels[v];
+  drawCanvas();
+}
+
+function updateTrail(r) {
+  trail.push({x: r.x, y: r.y, z: r.z});
+  if (trail.length > MAX_TRAIL) trail.shift();
+  drawCanvas();
+}
+
+const canvas = document.getElementById('visCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const wrap = document.getElementById('canvasWrap');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = wrap.clientWidth * dpr;
+  canvas.height = wrap.clientHeight * dpr;
+  ctx.scale(dpr, dpr);
+  canvas.style.width = wrap.clientWidth + 'px';
+  canvas.style.height = wrap.clientHeight + 'px';
+  drawCanvas();
+}
+
+function drawCanvas() {
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  if (W === 0 || H === 0) return;
+  ctx.clearRect(0, 0, W, H);
+
+  const maxRange = +document.getElementById('scaleMax').value || 5000;
+  const pad = 36;
+  const plotW = W - pad*2, plotH = H - pad*2;
+
+  // Background grid
+  ctx.strokeStyle = 'rgba(30,37,48,0.8)';
+  ctx.lineWidth = 1;
+  const gridN = 5;
+  for (let i = 0; i <= gridN; i++) {
+    const x = pad + (i/gridN)*plotW;
+    const y = pad + (i/gridN)*plotH;
+    ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, pad+plotH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(pad+plotW, y); ctx.stroke();
+  }
+
+  // Axes labels
+  ctx.fillStyle = '#3a4a5a';
+  ctx.font = '9px "Share Tech Mono"';
+  ctx.textAlign = 'center';
+
+  const getLabelAxes = () => {
+    switch(currentView) {
+      case 'xy': return {ha:'X', va:'Y'};
+      case 'xz': return {ha:'X', va:'Z'};
+      case 'yz': return {ha:'Y', va:'Z'};
+      default: return {ha:'X', va:'Y'};
+    }
+  };
+  const axes = getLabelAxes();
+
+  for (let i = 0; i <= gridN; i++) {
+    const v = Math.round((i/gridN)*maxRange);
+    ctx.fillText(v, pad + (i/gridN)*plotW, pad + plotH + 12);
+    ctx.fillText(v, pad - 12, pad + plotH - (i/gridN)*plotH + 3);
+  }
+  ctx.fillStyle = '#4a6080';
+  ctx.fillText(axes.ha, pad + plotW/2, H - 2);
+  ctx.save(); ctx.translate(10, pad + plotH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText(axes.va, 0, 0); ctx.restore();
+
+  if (trail.length === 0) return;
+
+  // Map point
+  const mapPt = (pt) => {
+    let hv, vv;
+    switch(currentView) {
+      case 'xy': hv = pt.x; vv = pt.y; break;
+      case 'xz': hv = pt.x; vv = pt.z; break;
+      case 'yz': hv = pt.y; vv = pt.z; break;
+      default: hv = pt.x; vv = pt.y;
+    }
+    return {
+      cx: pad + Math.max(0, Math.min(1, hv / maxRange)) * plotW,
+      cy: pad + plotH - Math.max(0, Math.min(1, vv / maxRange)) * plotH
+    };
+  };
+
+  // Draw trail
+  if (trail.length > 1) {
+    for (let i = 1; i < trail.length; i++) {
+      const prev = mapPt(trail[i-1]);
+      const curr = mapPt(trail[i]);
+      const alpha = i / trail.length;
+      ctx.beginPath();
+      ctx.moveTo(prev.cx, prev.cy);
+      ctx.lineTo(curr.cx, curr.cy);
+      ctx.strokeStyle = `rgba(0,212,255,${alpha * 0.5})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  // Draw trail dots (fading)
+  for (let i = 0; i < trail.length - 1; i++) {
+    const pt = mapPt(trail[i]);
+    const alpha = (i / trail.length) * 0.5;
+    ctx.beginPath();
+    ctx.arc(pt.cx, pt.cy, 2, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(0,212,255,${alpha})`;
+    ctx.fill();
+  }
+
+  // Current position — prominent dot
+  const cur = mapPt(trail[trail.length-1]);
+
+  // Crosshair
+  ctx.strokeStyle = 'rgba(0,212,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(cur.cx, pad); ctx.lineTo(cur.cx, pad+plotH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad, cur.cy); ctx.lineTo(pad+plotW, cur.cy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Glow rings
+  const rg = ctx.createRadialGradient(cur.cx, cur.cy, 0, cur.cx, cur.cy, 18);
+  rg.addColorStop(0, 'rgba(0,212,255,0.4)');
+  rg.addColorStop(1, 'rgba(0,212,255,0)');
+  ctx.beginPath(); ctx.arc(cur.cx, cur.cy, 18, 0, Math.PI*2);
+  ctx.fillStyle = rg; ctx.fill();
+
+  ctx.beginPath(); ctx.arc(cur.cx, cur.cy, 5, 0, Math.PI*2);
+  ctx.fillStyle = '#00d4ff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cur.cx, cur.cy, 3, 0, Math.PI*2);
+  ctx.fillStyle = '#ffffff'; ctx.fill();
+
+  // Coordinate readout at cursor
+  const last = trail[trail.length-1];
+  let label;
+  switch(currentView) {
+    case 'xy': label = `(${last.x}, ${last.y})`; break;
+    case 'xz': label = `(${last.x}, ${last.z})`; break;
+    case 'yz': label = `(${last.y}, ${last.z})`; break;
+    default: label = `(${last.x}, ${last.y})`;
+  }
+  ctx.font = '10px "Share Tech Mono"';
+  ctx.fillStyle = '#00d4ff';
+  ctx.textAlign = cur.cx > W/2 ? 'right' : 'left';
+  const lx = cur.cx > W/2 ? cur.cx - 10 : cur.cx + 10;
+  ctx.fillText(label + ' mm', lx, cur.cy - 10);
+}
+
+// ─── RATE TIMER ───────────────────────────────────────────────────────────────
+function startRateTimer() {
+  pktRateTimer = setInterval(() => {
+    const rate = pktCount - pktCountLast;
+    pktCountLast = pktCount;
+    document.getElementById('pktRate').textContent = rate;
+  }, 1000);
+}
+function stopRateTimer() {
+  clearInterval(pktRateTimer);
+  document.getElementById('pktRate').textContent = '0';
+}
+
+// ─── STATUS ───────────────────────────────────────────────────────────────────
+function setStatus(state, msg) {
+  const pill = document.getElementById('statusPill');
+  const txt = document.getElementById('statusText');
+  pill.className = 'status-pill';
+  if (state === 'connected') { pill.classList.add('connected'); txt.textContent = 'CONNECTED'; }
+  else if (state === 'error') { pill.classList.add('error'); txt.textContent = 'ERROR'; console.warn(msg); }
+  else { txt.textContent = 'DISCONNECTED'; }
+}
+
+function clearData() {
+  packets = []; trail = []; pktCount = 0; pktCountLast = 0; rowIdx = 0; hexEntries = 0;
+  document.getElementById('tableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-dim);font-family:var(--mono);font-size:10px;">Waiting for data…</td></tr>';
+  document.getElementById('hexLog').innerHTML = '<div class="empty-state"><div class="icon">⬡</div><p>NO DATA</p></div>';
+  document.getElementById('hexCount').textContent = '0 frames';
+  document.getElementById('rowCount').textContent = '0 records';
+  document.getElementById('pfTotal').textContent = '0';
+  ['X','Y','Z'].forEach(ax => {
+    document.getElementById('val'+ax).textContent = '—';
+    document.getElementById('val'+ax+'m').textContent = '— m';
+    document.getElementById('card'+ax).classList.remove('active');
+    document.getElementById('bar'+ax).style.width = '0%';
+  });
+  drawCanvas();
+}
+
+// ─── DEMO / SIMULATION ────────────────────────────────────────────────────────
+// Demo button for testing without hardware
+function injectDemo() {
+  const demoHex = '43 6D 64 4D 3A 34 5B 68 06 03 00 00 00 00 00 AD 07 42 04 00 00 92 04 00 00 8E 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 42 04 00 00 92 04 00 00 8E 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 9C 0D 0A';
+  const bytes = new Uint8Array(demoHex.split(' ').map(h => parseInt(h, 16)));
+  processBytes(bytes);
+}
+
+// Add demo button to connect bar
+const demoBtn = document.createElement('button');
+demoBtn.className = 'btn btn-clear';
+demoBtn.textContent = '▶ Demo';
+demoBtn.title = 'Inject sample packet for testing';
+demoBtn.addEventListener('click', () => {
+  // Simulate a series of slightly varied packets
+  const base = [
+    '43 6D 64 4D 3A 34 5B 68 06 03 00 00 00 00 00 AD 07 42 04 00 00 92 04 00 00 8E 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 42 04 00 00 92 04 00 00 8E 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 9C 0D 0A',
+    '43 6D 64 4D 3A 34 5B CC 06 03 00 00 00 00 00 AE 07 56 04 00 00 BA 04 00 00 A2 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 56 04 00 00 BA 04 00 00 A2 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3B 0D 0A',
+    '43 6D 64 4D 3A 34 5B 30 07 03 00 00 00 00 00 AF 07 4C 04 00 00 F6 04 00 00 84 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 4C 04 00 00 F6 04 00 00 84 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 C7 0D 0A',
+    '43 6D 64 4D 3A 34 5B 94 07 03 00 00 00 00 00 B0 07 6A 04 00 00 D8 04 00 00 5C 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 6A 04 00 00 D8 04 00 00 5C 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 7C 0D 0A',
+    '43 6D 64 4D 3A 34 5B F8 07 03 00 00 00 00 00 B1 07 60 04 00 00 B0 04 00 00 8E 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 60 04 00 00 B0 04 00 00 8E 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 11 0D 0A',
+    '43 6D 64 4D 3A 34 5B 5C 08 03 00 00 00 00 00 B2 06 00 00 00 00 F6 04 00 00 8E 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 F6 04 00 00 8E 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 B8 0D 0A',
+  ];
+  let i = 0;
+  const iv = setInterval(() => {
+    const bytes = new Uint8Array(base[i].split(' ').map(h => parseInt(h,16)));
+    processBytes(bytes);
+    i++;
+    if (i >= base.length) clearInterval(iv);
+  }, 200);
+});
+document.querySelector('.connect-bar').appendChild(demoBtn);
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('resize', resizeCanvas);
+const ro = new ResizeObserver(resizeCanvas);
+ro.observe(document.getElementById('canvasWrap'));
+setTimeout(resizeCanvas, 100);
 </script>
 </body>
 </html>
