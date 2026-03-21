@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UWB Web Serial Parser</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #11182d;
+      --panel-2: #0f172a;
+      --border: #26304a;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #60a5fa;
+      --good: #34d399;
+      --warn: #f59e0b;
+      --bad: #f87171;
+      --chip: #1e293b;
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(1200px 800px at 20% 0%, #111c39 0%, var(--bg) 55%);
+      color: var(--text);
+    }
+    header {
+      padding: 24px 20px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: rgba(3, 7, 18, .35);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    .sub { color: var(--muted); font-size: 14px; line-height: 1.4; }
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 18px 20px 28px; }
+    .grid { display: grid; grid-template-columns: 360px 1fr; gap: 16px; align-items: start; }
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: linear-gradient(180deg, rgba(17,24,45,.98), rgba(12,18,35,.98));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card h2 {
+      margin: 0;
+      padding: 14px 16px;
+      font-size: 16px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.02);
+    }
+    .card .body { padding: 16px; }
+    .row { display: grid; gap: 10px; }
+    .two { grid-template-columns: 1fr 1fr; }
+    .three { grid-template-columns: 1fr 1fr 1fr; }
+    @media (max-width: 700px) { .two, .three { grid-template-columns: 1fr; } }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+    input, select, textarea, button {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 10px 12px;
+      font: inherit;
+      outline: none;
+    }
+    textarea { min-height: 92px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { border-color: rgba(96,165,250,.8); box-shadow: 0 0 0 3px rgba(96,165,250,.12); }
+    button { cursor: pointer; background: linear-gradient(180deg, #1f3b73, #17315f); border-color: #335d9f; font-weight: 600; }
+    button.secondary { background: var(--panel-2); border-color: var(--border); }
+    button.danger { background: linear-gradient(180deg, #7f1d1d, #5f1515); border-color: #9f2d2d; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .status {
+      display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; border-top: 1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.01);
+    }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 10px; border-radius: 999px; background: var(--chip);
+      border: 1px solid rgba(255,255,255,.06); font-size: 12px; color: var(--text);
+    }
+    .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+    .dot.good { background: var(--good); }
+    .dot.warn { background: var(--warn); }
+    .dot.bad { background: var(--bad); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .table {
+      width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 12px; border: 1px solid rgba(255,255,255,.06);
+    }
+    .table th, .table td {
+      text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 13px;
+    }
+    .table th { color: #cbd5e1; background: rgba(255,255,255,.03); font-weight: 600; }
+    .table tr:last-child td { border-bottom: 0; }
+    .pill {
+      display: inline-block; padding: 3px 8px; border-radius: 999px; background: rgba(96,165,250,.15); color: #bfdbfe; border: 1px solid rgba(96,165,250,.25);
+      margin-right: 6px; margin-bottom: 6px; font-size: 12px;
+    }
+    .small { font-size: 12px; color: var(--muted); }
+    .scroll { max-height: 420px; overflow: auto; }
+    pre {
+      margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; line-height: 1.45;
+      background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.06); padding: 12px; border-radius: 12px;
+    }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+    .muted { color: var(--muted); }
+    .footer-note { margin-top: 10px; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+<header>
+  <h1>UWB Web Serial Parser</h1>
+  <div class="sub">Connect to a serial device, stream raw bytes, and parse frames that begin with <span class="mono">CmdM:4[</span> and end with <span class="mono">CRLF</span>.</div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+    <section class="card">
+      <h2>Connection</h2>
+      <div class="body">
+        <div class="row two">
+          <div>
+            <label for="baudRate">Baud rate</label>
+            <input id="baudRate" type="number" value="115200" min="1200" step="1" />
+          </div>
+          <div>
+            <label for="autoScroll">Auto scroll log</label>
+            <select id="autoScroll">
+              <option value="yes" selected>Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row two" style="margin-top: 10px;">
+          <button id="connectBtn">Connect</button>
+          <button id="disconnectBtn" class="secondary" disabled>Disconnect</button>
+        </div>
+
+        <div class="row three" style="margin-top: 10px;">
+          <button id="clearBtn" class="secondary">Clear</button>
+          <button id="pauseBtn" class="secondary">Pause</button>
+          <button id="exportBtn" class="secondary">Export JSON</button>
+        </div>
+
+        <div style="margin-top: 14px;">
+          <label for="sendText">Send text</label>
+          <textarea id="sendText" placeholder="Type text or hex bytes here"></textarea>
+        </div>
+
+        <div class="row two" style="margin-top: 10px;">
+          <button id="sendAsciiBtn" class="secondary" disabled>Send ASCII</button>
+          <button id="sendHexBtn" class="secondary" disabled>Send HEX</button>
+        </div>
+
+        <div class="footer-note">Web Serial requires a secure context: HTTPS or <span class="mono">localhost</span>.</div>
+      </div>
+      <div class="status">
+        <span class="chip"><span id="connDot" class="dot bad"></span><span id="connState">Disconnected</span></span>
+        <span class="chip"><span id="framesDot" class="dot warn"></span><span>Frames: <span id="frameCount">0</span></span></span>
+        <span class="chip"><span class="dot"></span><span>Bytes: <span id="byteCount">0</span></span></span>
+        <span class="chip"><span class="dot"></span><span>Buffered: <span id="bufferCount">0</span></span></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Parsed frame</h2>
+      <div class="body split">
+        <div>
+          <div class="small" style="margin-bottom: 8px;">Latest decoded frame</div>
+          <table class="table" id="summaryTable">
+            <tbody>
+              <tr><th>Field</th><th>Value</th></tr>
+              <tr><td colspan="2" class="muted">No frame yet.</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top: 14px;">
+            <div class="small" style="margin-bottom: 8px;">Heuristic decoded numbers</div>
+            <div id="decodedPills" class="mono"></div>
+          </div>
+        </div>
+        <div>
+          <div class="small" style="margin-bottom: 8px;">Frame hex</div>
+          <pre id="frameHex">—</pre>
+          <div style="height: 12px"></div>
+          <div class="small" style="margin-bottom: 8px;">Raw ASCII preview</div>
+          <pre id="frameAscii">—</pre>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div style="height: 16px"></div>
+
+  <section class="card">
+    <h2>Live log</h2>
+    <div class="body scroll">
+      <table class="table" id="logTable">
+        <thead>
+          <tr>
+            <th style="width: 90px;">Time</th>
+            <th style="width: 110px;">Type</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const marker = asciiToBytes('CmdM:4[');
+  const cr = 0x0D, lf = 0x0A;
+
+  const els = {
+    baudRate: document.getElementById('baudRate'),
+    autoScroll: document.getElementById('autoScroll'),
+    connectBtn: document.getElementById('connectBtn'),
+    disconnectBtn: document.getElementById('disconnectBtn'),
+    clearBtn: document.getElementById('clearBtn'),
+    pauseBtn: document.getElementById('pauseBtn'),
+    exportBtn: document.getElementById('exportBtn'),
+    sendText: document.getElementById('sendText'),
+    sendAsciiBtn: document.getElementById('sendAsciiBtn'),
+    sendHexBtn: document.getElementById('sendHexBtn'),
+    connDot: document.getElementById('connDot'),
+    connState: document.getElementById('connState'),
+    framesDot: document.getElementById('framesDot'),
+    frameCount: document.getElementById('frameCount'),
+    byteCount: document.getElementById('byteCount'),
+    bufferCount: document.getElementById('bufferCount'),
+    summaryTable: document.getElementById('summaryTable').querySelector('tbody'),
+    decodedPills: document.getElementById('decodedPills'),
+    frameHex: document.getElementById('frameHex'),
+    frameAscii: document.getElementById('frameAscii'),
+    logBody: document.getElementById('logTable').querySelector('tbody')
+  };
+
+  let port = null;
+  let reader = null;
+  let writer = null;
+  let keepReading = false;
+  let paused = false;
+  let buffer = new Uint8Array(0);
+  let totalBytes = 0;
+  let frameCount = 0;
+  let frames = [];
+  let latest = null;
+
+  function setConnection(connected) {
+    els.connDot.className = 'dot ' + (connected ? 'good' : 'bad');
+    els.connState.textContent = connected ? 'Connected' : 'Disconnected';
+    els.connectBtn.disabled = connected;
+    els.disconnectBtn.disabled = !connected;
+    els.sendAsciiBtn.disabled = !connected;
+    els.sendHexBtn.disabled = !connected;
+  }
+
+  function setPaused(value) {
+    paused = value;
+    els.pauseBtn.textContent = value ? 'Resume' : 'Pause';
+  }
+
+  function nowTime() {
+    const d = new Date();
+    return d.toLocaleTimeString([], { hour12: false });
+  }
+
+  function log(type, message) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="mono">${nowTime()}</td><td class="mono">${escapeHtml(type)}</td><td>${escapeHtml(message)}</td>`;
+    els.logBody.appendChild(tr);
+    if (els.autoScroll.value === 'yes') tr.scrollIntoView({ block: 'end' });
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;');
+  }
+
+  function asciiToBytes(text) {
+    return new TextEncoder().encode(text);
+  }
+
+  function bytesToHex(bytes) {
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+  }
+
+  function bytesToAscii(bytes) {
+    let s = '';
+    for (const b of bytes) s += (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.';
+    return s;
+  }
+
+  function u16le(bytes, offset) {
+    return bytes[offset] | (bytes[offset + 1] << 8);
+  }
+
+  function u32le(bytes, offset) {
+    return (bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24)) >>> 0;
+  }
+
+  function u64leBigInt(bytes, offset) {
+    let v = 0n;
+    for (let i = 7; i >= 0; i--) v = (v << 8n) | BigInt(bytes[offset + i]);
+    return v;
+  }
+
+  function concatBytes(a, b) {
+    const out = new Uint8Array(a.length + b.length);
+    out.set(a, 0);
+    out.set(b, a.length);
+    return out;
+  }
+
+  function indexOfSubarray(haystack, needle, start = 0) {
+    outer: for (let i = start; i <= haystack.length - needle.length; i++) {
+      for (let j = 0; j < needle.length; j++) {
+        if (haystack[i + j] !== needle[j]) continue outer;
+      }
+      return i;
+    }
+    return -1;
+  }
+
+  function indexOfCRLF(haystack, start = 0) {
+    for (let i = start; i < haystack.length - 1; i++) {
+      if (haystack[i] === cr && haystack[i + 1] === lf) return i;
+    }
+    return -1;
+  }
+
+  function updateStats() {
+    els.frameCount.textContent = String(frameCount);
+    els.byteCount.textContent = String(totalBytes);
+    els.bufferCount.textContent = String(buffer.length);
+    els.framesDot.className = 'dot ' + (frameCount ? 'good' : 'warn');
+  }
+
+  function renderFrame(frame) {
+    latest = frame;
+    const rows = [];
+    rows.push(['Marker', 'CmdM:4[']);
+    rows.push(['Frame length', `${frame.bytes.length} bytes`]);
+    rows.push(['Payload length', `${frame.payload.length} bytes`]);
+    rows.push(['Checksum byte', `0x${frame.checksum.toString(16).padStart(2, '0').toUpperCase()}`]);
+    rows.push(['Raw u64 @ +0', frame.u64.toString()]);
+    rows.push(['Raw u16 @ +8', String(frame.u16)]);
+    rows.push(['Decoded u32 values', frame.u32s.length ? frame.u32s.map(n => String(n)).join(', ') : '—']);
+    rows.push(['Non-zero u32 values', frame.nonZeroU32s.length ? frame.nonZeroU32s.map(n => String(n)).join(', ') : '—']);
+    rows.push(['ASCII preview', frame.asciiPreview]);
+    els.summaryTable.innerHTML = rows.map(([a, b]) => `<tr><td>${escapeHtml(a)}</td><td class="mono">${escapeHtml(b)}</td></tr>`).join('');
+
+    els.decodedPills.innerHTML = frame.nonZeroU32s.length
+      ? frame.nonZeroU32s.map((n, i) => `<span class="pill">${i + 1}: ${n}</span>`).join('')
+      : '<span class="muted">No non-zero u32 values found.</span>';
+
+    els.frameHex.textContent = bytesToHex(frame.bytes);
+    els.frameAscii.textContent = frame.asciiPreview;
+  }
+
+  function pushFrame(bytes) {
+    frameCount += 1;
+
+    const headerLen = marker.length;
+    const endLen = 2;
+    const payloadPlusChecksum = bytes.slice(headerLen, bytes.length - endLen);
+    const checksum = payloadPlusChecksum.length ? payloadPlusChecksum[payloadPlusChecksum.length - 1] : 0;
+    const payload = payloadPlusChecksum.slice(0, Math.max(0, payloadPlusChecksum.length - 1));
+
+    const u64 = payload.length >= 8 ? u64leBigInt(payload, 0) : 0n;
+    const u16 = payload.length >= 10 ? u16le(payload, 8) : 0;
+
+    const u32s = [];
+    for (let off = 10; off + 3 < payload.length; off += 4) {
+      u32s.push(u32le(payload, off));
+    }
+
+    const nonZeroU32s = [];
+    for (const n of u32s) if (n !== 0) nonZeroU32s.push(n);
+
+    const asciiPreview = bytesToAscii(bytes);
+    const frame = {
+      bytes: new Uint8Array(bytes),
+      payload,
+      checksum,
+      u64,
+      u16,
+      u32s,
+      nonZeroU32s,
+      asciiPreview,
+      timestamp: Date.now()
+    };
+
+    frames.unshift(frame);
+    if (frames.length > 200) frames.pop();
+    renderFrame(frame);
+    log('FRAME', `Parsed ${bytes.length} bytes, ${nonZeroU32s.length} non-zero u32 values.`);
+    updateStats();
+  }
+
+  function processBuffer() {
+    while (true) {
+      const start = indexOfSubarray(buffer, marker);
+      if (start < 0) {
+        // Keep only a tail in case the marker is split across chunks.
+        if (buffer.length > marker.length) buffer = buffer.slice(buffer.length - marker.length + 1);
+        break;
+      }
+
+      if (start > 0) buffer = buffer.slice(start);
+
+      const end = indexOfCRLF(buffer, marker.length);
+      if (end < 0) break;
+
+      const frameBytes = buffer.slice(0, end);
+      buffer = buffer.slice(end + 2);
+      pushFrame(frameBytes);
+    }
+    updateStats();
+  }
+
+  async function connect() {
+    if (!('serial' in navigator)) {
+      alert('Web Serial API is not available in this browser. Use Chrome or Edge on HTTPS/localhost.');
+      return;
+    }
+    try {
+      port = await navigator.serial.requestPort();
+      const baudRate = Number(els.baudRate.value) || 115200;
+      await port.open({ baudRate });
+      writer = port.writable?.getWriter ? port.writable.getWriter() : null;
+      reader = port.readable.getReader();
+      keepReading = true;
+      setConnection(true);
+      log('INFO', `Connected at ${baudRate} baud.`);
+      readLoop();
+    } catch (err) {
+      log('ERROR', String(err?.message || err));
+      cleanup();
+    }
+  }
+
+  async function readLoop() {
+    const decoder = new TextDecoder();
+    try {
+      while (keepReading && reader) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (!value || !value.length) continue;
+        totalBytes += value.length;
+        buffer = concatBytes(buffer, value);
+        log('RX', `${value.length} bytes`);
+        if (!paused) processBuffer();
+        else updateStats();
+      }
+    } catch (err) {
+      log('ERROR', String(err?.message || err));
+    } finally {
+      cleanup();
+    }
+  }
+
+  async function cleanup() {
+    keepReading = false;
+    try { if (reader) await reader.cancel(); } catch (_) {}
+    try { if (reader) reader.releaseLock(); } catch (_) {}
+    try { if (writer) writer.releaseLock(); } catch (_) {}
+    try { if (port) await port.close(); } catch (_) {}
+    reader = null;
+    writer = null;
+    port = null;
+    setConnection(false);
+    updateStats();
+  }
+
+  async function disconnect() {
+    keepReading = false;
+    await cleanup();
+    log('INFO', 'Disconnected.');
+  }
+
+  async function sendAscii() {
+    if (!writer) return;
+    const text = els.sendText.value ?? '';
+    const data = new TextEncoder().encode(text);
+    await writer.write(data);
+    log('TX', `ASCII ${data.length} bytes`);
+  }
+
+  function parseHexInput(text) {
+    const cleaned = text
+      .replace(/0x/gi, ' ')
+      .replace(/[^0-9a-fA-F]/g, ' ')
+      .trim();
+    if (!cleaned) return new Uint8Array();
+    const parts = cleaned.split(/\s+/).filter(Boolean);
+    const bytes = [];
+    for (const part of parts) {
+      if (part.length > 2) {
+        for (let i = 0; i < part.length; i += 2) {
+          const chunk = part.slice(i, i + 2);
+          if (chunk.length === 2) bytes.push(parseInt(chunk, 16));
+        }
+      } else {
+        bytes.push(parseInt(part, 16));
+      }
+    }
+    return new Uint8Array(bytes.filter(n => Number.isFinite(n) && n >= 0 && n <= 255));
+  }
+
+  async function sendHex() {
+    if (!writer) return;
+    const data = parseHexInput(els.sendText.value ?? '');
+    if (!data.length) {
+      log('WARN', 'No valid hex bytes found.');
+      return;
+    }
+    await writer.write(data);
+    log('TX', `HEX ${data.length} bytes`);
+  }
+
+  function clearAll() {
+    buffer = new Uint8Array(0);
+    totalBytes = 0;
+    frameCount = 0;
+    frames = [];
+    latest = null;
+    els.summaryTable.innerHTML = '<tr><td colspan="2" class="muted">No frame yet.</td></tr>';
+    els.decodedPills.innerHTML = '';
+    els.frameHex.textContent = '—';
+    els.frameAscii.textContent = '—';
+    els.logBody.innerHTML = '';
+    updateStats();
+    log('INFO', 'Cleared.');
+  }
+
+  function exportJson() {
+    const data = JSON.stringify(frames, (key, value) => {
+      if (typeof value === 'bigint') return value.toString();
+      if (value instanceof Uint8Array) return Array.from(value);
+      return value;
+    }, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'uwb-frames.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  els.connectBtn.addEventListener('click', connect);
+  els.disconnectBtn.addEventListener('click', disconnect);
+  els.clearBtn.addEventListener('click', clearAll);
+  els.pauseBtn.addEventListener('click', () => setPaused(!paused));
+  els.exportBtn.addEventListener('click', exportJson);
+  els.sendAsciiBtn.addEventListener('click', sendAscii);
+  els.sendHexBtn.addEventListener('click', sendHex);
+
+  window.addEventListener('beforeunload', () => {
+    keepReading = false;
+    try { reader?.cancel(); } catch (_) {}
+    try { writer?.releaseLock(); } catch (_) {}
+    try { port?.close(); } catch (_) {}
+  });
+
+  updateStats();
+  setConnection(false);
+  setPaused(false);
+  log('INFO', 'Ready. Connect a serial device to begin parsing.');
+})();
+</script>
+</body>
+</html>
