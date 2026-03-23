@@ -296,7 +296,7 @@ body::after {
     <div class="hero-meta">
       <span><b>Epoche</b> 18. Jahrhundert</span>
       <span><b>Fach</b> Kunstgeschichte</span>
-      <span><b>Quiz</b> 8 Fragen</span>
+      <span><b>Quiz</b> 6 Fragen</span>
     </div>
   </header>
 
@@ -349,7 +349,7 @@ body::after {
   <div class="quiz-progress-bar">
     <span class="qpb-label">Fortschritt</span>
     <div class="qpb-track"><div class="qpb-fill" id="progress-fill"></div></div>
-    <span class="qpb-count"><strong id="answered-count">0</strong> / 8 beantwortet</span>
+    <span class="qpb-count"><strong id="answered-count">0</strong> / 6 beantwortet</span>
   </div>
 
   <div id="quiz-questions">
@@ -400,18 +400,6 @@ body::after {
       <div class="q-feedback" id="fb-3"></div>
     </div>
 
-    <div class="q-card" data-qid="4" data-type="text" data-correct="universum|weltall|kosmos|natur">
-      <div class="q-top">
-        <div class="q-number" id="qn-4">4</div>
-        <div class="q-info">
-          <span class="q-type txt">Kurzantwort</span>
-          <div class="q-text">Was sollte Boullées kugelförmiges Newton-Denkmal symbolisieren?</div>
-        </div>
-      </div>
-      <textarea class="text-input" id="ti-4" placeholder="Antwort eingeben …" oninput="textChanged(4)"></textarea>
-      <div class="q-feedback" id="fb-4"></div>
-    </div>
-
     <div class="q-card" data-qid="5" data-type="mc-multi" data-correct="a,c">
       <div class="q-top">
         <div class="q-number" id="qn-5">5</div>
@@ -446,18 +434,6 @@ body::after {
       <div class="q-feedback" id="fb-6"></div>
     </div>
 
-    <div class="q-card" data-qid="7" data-type="text" data-correct="schul|museum|museen|verwaltung|offentlich|bibliothe">
-      <div class="q-top">
-        <div class="q-number" id="qn-7">7</div>
-        <div class="q-info">
-          <span class="q-type txt">Kurzantwort</span>
-          <div class="q-text">Welche Art von Gebäuden gewann in der Aufklärung besondere gesellschaftliche Bedeutung?</div>
-        </div>
-      </div>
-      <textarea class="text-input" id="ti-7" placeholder="Antwort eingeben …" oninput="textChanged(7)"></textarea>
-      <div class="q-feedback" id="fb-7"></div>
-    </div>
-
     <div class="q-card" data-qid="8" data-type="mc-multi" data-correct="a,b">
       <div class="q-top">
         <div class="q-number" id="qn-8">8</div>
@@ -479,7 +455,7 @@ body::after {
 
   <!-- SUBMIT -->
   <div class="submit-area">
-    <p class="submit-hint" id="submit-hint">Noch 8 Fragen offen.</p>
+    <p class="submit-hint" id="submit-hint">Noch 6 Fragen offen.</p>
     <button class="btn-submit" id="btn-submit" onclick="submitQuiz()" disabled>Quiz auswerten ›</button>
     <br>
     <button class="btn-reset" id="btn-reset" onclick="resetQuiz()">↺ Neu starten</button>
@@ -501,7 +477,7 @@ body::after {
       <div class="rs-item ok">  <div class="rs-value" id="res-correct">0</div><div class="rs-label">Richtig</div></div>
       <div class="rs-item half"><div class="rs-value" id="res-partial">0</div><div class="rs-label">Teilweise</div></div>
       <div class="rs-item fail"><div class="rs-value" id="res-wrong">0</div>  <div class="rs-label">Falsch</div></div>
-      <div class="rs-item tot"> <div class="rs-value">8</div>                 <div class="rs-label">Gesamt</div></div>
+      <div class="rs-item tot"> <div class="rs-value">6</div>                 <div class="rs-label">Gesamt</div></div>
     </div>
     <div class="grade-bar"><div class="grade-bar-fill" id="grade-bar-fill"></div></div>
     <div class="grade-labels"><span>0 %</span><span>50 %</span><span>100 %</span></div>
@@ -512,7 +488,7 @@ body::after {
 <script>
 const answers  = {};
 const answered = new Set();
-const TOTAL    = 8;
+const TOTAL    = 6;
 
 function pick(el, qid) {
   const card = el.closest('.q-card');
