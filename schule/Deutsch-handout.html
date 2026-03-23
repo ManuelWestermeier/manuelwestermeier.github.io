@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architektur der Aufklärung</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0e;
+    --surface: #1a1916;
+    --surface2: #232220;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dim: rgba(201,168,76,0.15);
+    --text: #e8e4dc;
+    --text-muted: #8a867e;
+    --text-dim: #5a5650;
+    --correct: #5a8a5e;
+    --correct-bg: rgba(90,138,94,0.12);
+    --wrong: #8a4a4a;
+    --wrong-bg: rgba(138,74,74,0.12);
+    --radius: 4px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GEOMETRIC BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(201,168,76,0.04) 0%, transparent 50%),
+      radial-gradient(circle at 85% 80%, rgba(201,168,76,0.03) 0%, transparent 45%),
+      repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(201,168,76,0.025) 59px, rgba(201,168,76,0.025) 60px),
+      repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(201,168,76,0.025) 59px, rgba(201,168,76,0.025) 60px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 60px 40px 80px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    margin-bottom: 64px;
+    animation: fadeDown 0.8s ease both;
+  }
+
+  .header-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 20px;
+  }
+
+  .header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+
+  .header h1 em {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .header-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 24px auto;
+    max-width: 300px;
+  }
+  .header-divider::before, .header-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .header-divider span {
+    font-size: 18px;
+    color: var(--gold);
+  }
+
+  .header-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  /* ── MODE BAR ── */
+  .mode-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin-bottom: 48px;
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+
+  .mode-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .mode-toggles {
+    display: flex;
+    gap: 8px;
+  }
+
+  .mode-btn {
+    padding: 7px 18px;
+    border-radius: var(--radius);
+    border: 1px solid rgba(201,168,76,0.3);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .mode-btn:hover { color: var(--gold); border-color: var(--gold); }
+  .mode-btn.active {
+    background: var(--gold-dim);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .score-display {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: none;
+  }
+  .score-display.visible { display: block; }
+  .score-display strong { color: var(--gold); }
+
+  /* ── SECTIONS ── */
+  .section {
+    margin-bottom: 52px;
+    animation: fadeUp 0.7s ease both;
+  }
+  .section:nth-child(1) { animation-delay: 0.1s; }
+  .section:nth-child(2) { animation-delay: 0.2s; }
+  .section:nth-child(3) { animation-delay: 0.3s; }
+  .section:nth-child(4) { animation-delay: 0.4s; }
+  .section:nth-child(5) { animation-delay: 0.5s; }
+  .section:nth-child(6) { animation-delay: 0.6s; }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(201,168,76,0.18);
+  }
+
+  .section-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-style: italic;
+    color: var(--gold);
+    min-width: 20px;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.3px;
+  }
+
+  .content-text {
+    font-size: 14.5px;
+    line-height: 1.8;
+    color: #b8b4ac;
+    font-weight: 300;
+    margin-bottom: 24px;
+    padding-left: 36px;
+  }
+
+  /* ── QUESTIONS ── */
+  .question-block {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-left: 3px solid var(--gold-dim);
+    border-radius: 6px;
+    padding: 22px 24px;
+    margin-bottom: 14px;
+    transition: border-left-color 0.3s;
+  }
+  .question-block:hover { border-left-color: rgba(201,168,76,0.5); }
+
+  .q-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .q-badge {
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 2px;
+    border: 1px solid;
+  }
+  .q-badge.open { color: #7aaccc; border-color: rgba(122,172,204,0.3); background: rgba(122,172,204,0.08); }
+  .q-badge.mc { color: var(--gold); border-color: rgba(201,168,76,0.3); background: var(--gold-dim); }
+
+  .q-num {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+
+  .q-text {
+    font-size: 14.5px;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+
+  /* Open answer */
+  .answer-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius);
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    resize: vertical;
+    min-height: 56px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .answer-input:focus { border-color: rgba(201,168,76,0.4); }
+  .answer-input::placeholder { color: var(--text-dim); }
+
+  /* Multiple choice */
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+
+  .choice-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13.5px;
+    color: #b8b4ac;
+    user-select: none;
+  }
+  .choice-label:hover { border-color: rgba(201,168,76,0.3); color: var(--text); }
+  .choice-label input { display: none; }
+
+  .choice-box {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--text-dim);
+    border-radius: 3px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .choice-label.selected .choice-box {
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+  .choice-label.selected .choice-box::after {
+    content: '✓';
+    font-size: 10px;
+    color: var(--bg);
+    font-weight: 700;
+  }
+  .choice-label.selected { border-color: rgba(201,168,76,0.4); color: var(--text); }
+
+  /* Review states */
+  .check-mode .choice-label.correct-choice {
+    background: var(--correct-bg);
+    border-color: var(--correct);
+    color: #8fcf94;
+  }
+  .check-mode .choice-label.correct-choice .choice-box {
+    border-color: var(--correct);
+    background: var(--correct);
+  }
+  .check-mode .choice-label.wrong-choice {
+    background: var(--wrong-bg);
+    border-color: var(--wrong);
+    color: #cf8f8f;
+  }
+  .check-mode .choice-label.wrong-choice .choice-box {
+    border-color: var(--wrong);
+    background: var(--wrong);
+  }
+  .check-mode .choice-label.wrong-choice .choice-box::after { content: '✗'; }
+
+  .answer-reveal {
+    display: none;
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: rgba(201,168,76,0.07);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: var(--radius);
+    font-size: 13px;
+  }
+  .answer-reveal .reveal-label {
+    font-size: 9.5px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  .answer-reveal .reveal-text { color: #c8c4bc; line-height: 1.6; }
+  .check-mode .answer-reveal { display: block; }
+  .check-mode .answer-input { pointer-events: none; opacity: 0.7; }
+  .check-mode .choices { pointer-events: none; }
+
+  /* Question status badge */
+  .q-status {
+    display: none;
+    margin-left: auto;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+  .check-mode .q-status { display: inline-block; }
+  .q-status.correct { background: var(--correct-bg); color: #8fcf94; border: 1px solid var(--correct); }
+  .q-status.incorrect { background: var(--wrong-bg); color: #cf8f8f; border: 1px solid var(--wrong); }
+  .q-status.partial { background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(201,168,76,0.12);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 600px) {
+    .wrapper { padding: 40px 24px 60px; }
+    .mode-bar { flex-direction: column; gap: 12px; align-items: flex-start; }
+    .content-text { padding-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-label">Kunstgeschichte · 18. Jahrhundert</div>
+    <h1>Architektur der <em>Aufklärung</em></h1>
+    <div class="header-divider"><span>◆</span></div>
+    <div class="header-sub">Lernhandout mit interaktiven Übungsfragen</div>
+  </header>
+
+  <!-- MODE BAR -->
+  <div class="mode-bar">
+    <span class="mode-label">Modus</span>
+    <div class="mode-toggles">
+      <button class="mode-btn active" id="btn-learn" onclick="setMode('learn')">Lernen</button>
+      <button class="mode-btn" id="btn-check" onclick="setMode('check')">Überprüfen</button>
+    </div>
+    <div class="score-display" id="score-display">Ergebnis: <strong id="score-text">–</strong></div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main id="main-content">
+
+    <!-- 1. Einstieg -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-num">I.</span>
+        <span class="section-title">Einstieg</span>
+      </div>
+      <p class="content-text">Die Epoche der Aufklärung begann im 18. Jahrhundert und stellte Vernunft, Wissenschaft und das Wohl der Gesellschaft in den Mittelpunkt. Diese Ideen beeinflussten Denken, Politik und Architektur gleichermaßen. Gebäude sollten klar aufgebaut sein und ihren Zweck deutlich zeigen.</p>
+
+      <div class="question-block" data-type="open" data-answer="Vernunft, Wissenschaft, Wohl der Gesellschaft">
+        <div class="q-meta">
+          <span class="q-badge open">Offene Frage</span>
+          <span class="q-num">F1</span>
+          <span class="q-status" id="status-q1"></span>
+        </div>
+        <div class="q-text">Welche zentralen Werte prägten die Architektur der Aufklärung?</div>
+        <textarea class="answer-input" placeholder="Antwort eingeben …" id="q1"></textarea>
+        <div class="answer-reveal">
+          <div class="reveal-label">Musterlösung</div>
+          <div class="reveal-text">Vernunft, Wissenschaft, Wohl der Gesellschaft</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Stilmerkmale -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-num">II.</span>
+        <span class="section-title">Stilmerkmale</span>
+      </div>
+      <p class="content-text">Typisch für die Aufklärung sind klare Formen, ausgeprägte Symmetrie und eine starke Orientierung an der antiken Baukunst. Einfache geometrische Formen wie Kugeln, Zylinder oder Rechtecke wurden bevorzugt. Übermäßiger Schmuck wurde bewusst vermieden, damit die Funktion eines Gebäudes in den Vordergrund tritt.</p>
+
+      <div class="question-block" data-type="open" data-answer="Kugel, Zylinder, Rechteck">
+        <div class="q-meta">
+          <span class="q-badge open">Offene Frage</span>
+          <span class="q-num">F2</span>
+          <span class="q-status" id="status-q2"></span>
+        </div>
+        <div class="q-text">Nenne drei geometrische Formen, die in der Architektur der Aufklärung häufig verwendet wurden.</div>
+        <textarea class="answer-input" placeholder="Antwort eingeben …" id="q2"></textarea>
+        <div class="answer-reveal">
+          <div class="reveal-label">Musterlösung</div>
+          <div class="reveal-text">Kugel, Zylinder, Rechteck</div>
+        </div>
+      </div>
+
+      <div class="question-block" data-type="mc" data-correct="b">
+        <div class="q-meta">
+          <span class="q-badge mc">Multiple Choice</span>
+          <span class="q-num">F3</span>
+          <span class="q-status" id="status-q3"></span>
+        </div>
+        <div class="q-text">Welche Aussage trifft auf die Architektur der Aufklärung zu?</div>
+        <div class="choices">
+          <label class="choice-label" onclick="toggleChoice(this, 'q3', false)">
+            <input type="checkbox"><div class="choice-box"></div>
+            a) Gebäude sollten prunkvoll und reich verziert sein.
+          </label>
+          <label class="choice-label" onclick="toggleChoice(this, 'q3', true)">
+            <input type="checkbox"><div class="choice-box"></div>
+            b) Symmetrie und klare Formen waren wichtig.
+          </label>
+          <label class="choice-label" onclick="toggleChoice(this, 'q3', false)">
+            <input type="checkbox"><div class="choice-box"></div>
+            c) Funktionalität stand nicht im Vordergrund.
+          </label>
+          <label class="choice-label" onclick="toggleChoice(this, 'q3', false)">
+            <input type="checkbox"><div class="choice-box"></div>
+            d) Architekten ignorierten antike Vorbilder.
+          </label>
+        </div>
+        <div class="answer-reveal">
+          <div class="reveal-label">Richtige Antwort</div>
+          <div class="reveal-text">b) Symmetrie und klare Formen waren wichtig.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Visionäre Entwürfe -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-num">III.</span>
+        <span class="section-title">Visionäre Entwürfe</span>
+      </div>
+      <p class="content-text">Étienne-Louis Boullée war ein herausragender visionärer Architekt der Aufklärung. Viele seiner kühnen Entwürfe wurden nie realisiert — darunter sein berühmtestes Werk: ein gewaltiges kugelförmiges Denkmal für Isaac Newton, das das Universum selbst symbolisieren sollte.</p>
+
+      <div class="question-block" data-type="open" data-answer="Er sollte das Universum symbolisieren.">
+        <div class="q-meta">
+          <span class="q-badge open">Offene Frage</span>
+          <span class="q-num">F4</span>
+          <span class="q-status" id="status-q4"></span>
+        </div>
+        <div class="q-text">Welche symbolische Funktion hatte Boullées Entwurf für das Newton-Denkmal?</div>
+        <textarea class="answer-input" placeholder="Antwort eingeben …" id="q4"></textarea>
+        <div class="answer-reveal">
+          <div class="reveal-label">Musterlösung</div>
+          <div class="reveal-text">Der Entwurf sollte das Universum symbolisieren.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Gebaute Beispiele -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-num">IV.</span>
+        <span class="section-title">Gebaute Beispiele</span>
+      </div>
+      <p class="content-text">Bekannte realisierte Bauwerke der Aufklärung sind die Saline Royale von Claude-Nicolas Ledoux in Arc-et-Senans (Frankreich) sowie das Brandenburger Tor in Berlin. Beide demonstrieren eindrucksvoll klare Formen, strenge Symmetrie und funktionale Planungsphilosophie.</p>
+
+      <div class="question-block" data-type="open" data-answer="Saline Royale, Brandenburger Tor">
+        <div class="q-meta">
+          <span class="q-badge open">Offene Frage</span>
+          <span class="q-num">F5</span>
+          <span class="q-status" id="status-q5"></span>
+        </div>
+        <div class="q-text">Nenne zwei reale Gebäude, die typische Merkmale der Aufklärungsarchitektur zeigen.</div>
+        <textarea class="answer-input" placeholder="Antwort eingeben …" id="q5"></textarea>
+        <div class="answer-reveal">
+          <div class="reveal-label">Musterlösung</div>
+          <div class="reveal-text">Saline Royale (Ledoux), Brandenburger Tor (Berlin)</div>
+        </div>
+      </div>
+
+      <div class="question-block" data-type="mc" data-correct="a">
+        <div class="q-meta">
+          <span class="q-badge mc">Multiple Choice</span>
+          <span class="q-num">F6</span>
+          <span class="q-status" id="status-q6"></span>
+        </div>
+        <div class="q-text">Welches Merkmal ist typisch für die gebaute Architektur der Aufklärung?</div>
+        <div class="choices">
+          <label class="choice-label" onclick="toggleChoice(this, 'q6', true)">
+            <input type="checkbox"><div class="choice-box"></div>
+            a) Fokus auf Funktionalität und Ordnung
+          </label>
+          <label class="choice-label" onclick="toggleChoice(this, 'q6', false)">
+            <input type="checkbox"><div class="choice-box"></div>
+            b) Übermäßiger dekorativer Schmuck
+          </label>
+          <label class="choice-label" onclick="toggleChoice(this, 'q6', false)">
+            <input type="checkbox"><div class="choice-box"></div>
+            c) Vernachlässigung der Symmetrie
+          </label>
+          <label class="choice-label" onclick="toggleChoice(this, 'q6', false)">
+            <input type="checkbox"><div class="choice-box"></div>
+            d) Zufällige, freie Bauformen
+          </label>
+        </div>
+        <div class="answer-reveal">
+          <div class="reveal-label">Richtige Antwort</div>
+          <div class="reveal-text">a) Fokus auf Funktionalität und Ordnung</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Bedeutung der Architektur -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-num">V.</span>
+        <span class="section-title">Bedeutung der Architektur</span>
+      </div>
+      <p class="content-text">Aufklärungsarchitektur sollte nicht nur ästhetisch ansprechend sein, sondern immer einen klar definierten Zweck erfüllen. Öffentliche Gebäude wie Schulen, Museen oder Verwaltungsgebäude wurden zu Trägern der Werte Wissen, Ordnung und gesellschaftlicher Fortschritt.</p>
+
+      <div class="question-block" data-type="open" data-answer="Öffentliche Gebäude wie Schulen, Museen, Verwaltungsgebäude">
+        <div class="q-meta">
+          <span class="q-badge open">Offene Frage</span>
+          <span class="q-num">F7</span>
+          <span class="q-status" id="status-q7"></span>
+        </div>
+        <div class="q-text">Welche Art von Gebäuden wurde in der Aufklärung besonders bedeutsam, und welche Werte verkörperten sie?</div>
+        <textarea class="answer-input" placeholder="Antwort eingeben …" id="q7"></textarea>
+        <div class="answer-reveal">
+          <div class="reveal-label">Musterlösung</div>
+          <div class="reveal-text">Öffentliche Gebäude wie Schulen, Museen und Verwaltungsgebäude — sie verkörperten Wissen, Ordnung und Fortschritt.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Abschluss -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-num">VI.</span>
+        <span class="section-title">Abschluss & Synthese</span>
+      </div>
+      <p class="content-text">Die Architektur der Aufklärung verbindet klare, geometrische Formen mit praktischer Funktion und gesellschaftlicher Aussagekraft. Visionäre Entwürfe wie Boullées Newton-Denkmal veranschaulichen die Ideale dieser Epoche, während realisierte Bauten wie die Saline Royale den sichtbaren Fortschritt repräsentieren.</p>
+
+      <div class="question-block" data-type="mc-multi" data-correct="a,b">
+        <div class="q-meta">
+          <span class="q-badge mc">Multiple Choice</span>
+          <span class="q-num">F8</span>
+          <span class="q-status" id="status-q8"></span>
+        </div>
+        <div class="q-text">Welche Aussagen treffen auf die Architektur der Aufklärung zu? <em style="color:var(--text-muted);font-size:12px;">(Mehrfachauswahl)</em></div>
+        <div class="choices" id="choices-q8">
+          <label class="choice-label" onclick="toggleChoiceMulti(this, 'q8')">
+            <input type="checkbox" value="a"><div class="choice-box"></div>
+            a) Klare Formen und Symmetrie
+          </label>
+          <label class="choice-label" onclick="toggleChoiceMulti(this, 'q8')">
+            <input type="checkbox" value="b"><div class="choice-box"></div>
+            b) Funktionalität im Vordergrund
+          </label>
+          <label class="choice-label" onclick="toggleChoiceMulti(this, 'q8')">
+            <input type="checkbox" value="c"><div class="choice-box"></div>
+            c) Keine Orientierung an antiken Vorbildern
+          </label>
+          <label class="choice-label" onclick="toggleChoiceMulti(this, 'q8')">
+            <input type="checkbox" value="d"><div class="choice-box"></div>
+            d) Visionäre Entwürfe wurden häufig umgesetzt
+          </label>
+        </div>
+        <div class="answer-reveal">
+          <div class="reveal-label">Richtige Antworten</div>
+          <div class="reveal-text">a) Klare Formen und Symmetrie &nbsp;·&nbsp; b) Funktionalität im Vordergrund</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <span>Architektur der Aufklärung · 18. Jh.</span>
+    <span>Lernhandout</span>
+  </footer>
+</div>
+
+<script>
+  // Track MC single selections
+  const mcSelections = {};
+  // Track MC multi selections
+  const mcMultiSelections = { q8: new Set() };
+
+  function toggleChoice(label, qId, isCorrect) {
+    if (document.getElementById('main-content').classList.contains('check-mode')) return;
+    const siblings = label.parentElement.querySelectorAll('.choice-label');
+    siblings.forEach(s => s.classList.remove('selected'));
+    label.classList.add('selected');
+    mcSelections[qId] = { label, isCorrect };
+  }
+
+  function toggleChoiceMulti(label, qId) {
+    if (document.getElementById('main-content').classList.contains('check-mode')) return;
+    label.classList.toggle('selected');
+    const val = label.querySelector('input').value;
+    if (!mcMultiSelections[qId]) mcMultiSelections[qId] = new Set();
+    if (mcMultiSelections[qId].has(val)) {
+      mcMultiSelections[qId].delete(val);
+    } else {
+      mcMultiSelections[qId].add(val);
+    }
+  }
+
+  function setMode(mode) {
+    const main = document.getElementById('main-content');
+    const btnLearn = document.getElementById('btn-learn');
+    const btnCheck = document.getElementById('btn-check');
+    const scoreDisplay = document.getElementById('score-display');
+
+    if (mode === 'learn') {
+      main.classList.remove('check-mode');
+      btnLearn.classList.add('active');
+      btnCheck.classList.remove('active');
+      scoreDisplay.classList.remove('visible');
+
+      // Reset MC visual states
+      document.querySelectorAll('.choice-label').forEach(l => {
+        l.classList.remove('correct-choice', 'wrong-choice');
+      });
+      document.querySelectorAll('.q-status').forEach(s => {
+        s.textContent = '';
+        s.className = 'q-status';
+      });
+
+    } else {
+      main.classList.add('check-mode');
+      btnCheck.classList.add('active');
+      btnLearn.classList.remove('active');
+
+      let totalScore = 0;
+      let maxScore = 0;
+
+      // Evaluate MC single
+      document.querySelectorAll('[data-type="mc"]').forEach(block => {
+        maxScore++;
+        const qId = block.querySelector('.answer-input, .choices')?.id?.replace('choices-', '') || '';
+        const labels = block.querySelectorAll('.choice-label');
+        let got = false;
+        labels.forEach(lbl => {
+          const isCorrect = lbl.onclick?.toString().includes('true');
+          if (lbl.classList.contains('selected')) {
+            if (isCorrect) { lbl.classList.add('correct-choice'); got = true; }
+            else lbl.classList.add('wrong-choice');
+          } else if (isCorrect) {
+            lbl.classList.add('correct-choice'); // show correct even if not selected
+          }
+        });
+        if (got) totalScore++;
+
+        // status badge
+        const blockId = block.querySelector('.q-num')?.textContent?.replace('F','q').toLowerCase();
+        if (blockId) {
+          const statusEl = document.getElementById('status-' + blockId);
+          if (statusEl) {
+            statusEl.textContent = got ? '✓ Richtig' : '✗ Falsch';
+            statusEl.className = 'q-status ' + (got ? 'correct' : 'incorrect');
+          }
+        }
+      });
+
+      // Evaluate MC multi (q8)
+      maxScore++;
+      const q8block = document.querySelector('[data-type="mc-multi"]');
+      if (q8block) {
+        const correctSet = new Set(['a','b']);
+        const userSet = mcMultiSelections['q8'] || new Set();
+        const labels = q8block.querySelectorAll('.choice-label');
+        labels.forEach(lbl => {
+          const val = lbl.querySelector('input').value;
+          const isCorrect = correctSet.has(val);
+          const isSelected = userSet.has(val);
+          if (isSelected && isCorrect) lbl.classList.add('correct-choice');
+          else if (isSelected && !isCorrect) lbl.classList.add('wrong-choice');
+          else if (!isSelected && isCorrect) lbl.classList.add('correct-choice');
+        });
+        const correctCount = [...userSet].filter(v => correctSet.has(v)).length;
+        const wrongCount = [...userSet].filter(v => !correctSet.has(v)).length;
+        const perfect = correctCount === correctSet.size && wrongCount === 0;
+        if (perfect) totalScore++;
+        else if (correctCount > 0 && wrongCount === 0) totalScore += 0.5;
+        const statusEl = document.getElementById('status-q8');
+        if (statusEl) {
+          if (perfect) { statusEl.textContent = '✓ Richtig'; statusEl.className = 'q-status correct'; }
+          else if (correctCount > 0) { statusEl.textContent = '◑ Teilweise'; statusEl.className = 'q-status partial'; }
+          else { statusEl.textContent = '✗ Falsch'; statusEl.className = 'q-status incorrect'; }
+        }
+      }
+
+      // Score display (MC only)
+      const mcTotal = 3; // F3, F6, F8
+      scoreDisplay.classList.add('visible');
+      document.getElementById('score-text').textContent = `${totalScore} / ${mcTotal} MC`;
+    }
+  }
+</script>
+</body>
+</html>
