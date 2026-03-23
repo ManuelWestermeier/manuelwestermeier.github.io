@@ -23,6 +23,8 @@
   --red-bg:    rgba(154,78,78,0.1);
   --orange:    #c8833a;
   --orange-bg: rgba(200,131,58,0.1);
+  --blue:      #4a80c4;
+  --blue-bg:   rgba(74,128,196,0.1);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -140,6 +142,7 @@ body::after {
   transition: border-color 0.3s; animation: up 0.5s ease both;
 }
 .q-card.answered { border-color: rgba(212,168,75,0.2); }
+.q-card.skipped  { border-color: rgba(100,100,100,0.3); background: linear-gradient(135deg, var(--card), rgba(60,60,60,0.04)); }
 .q-card.correct  { border-color: rgba(78,154,106,0.4);  background: linear-gradient(135deg, var(--card), rgba(78,154,106,0.04)); }
 .q-card.wrong    { border-color: rgba(154,78,78,0.4);   background: linear-gradient(135deg, var(--card), rgba(154,78,78,0.04)); }
 .q-card.partial  { border-color: rgba(200,131,58,0.4);  background: linear-gradient(135deg, var(--card), rgba(200,131,58,0.04)); }
@@ -154,6 +157,7 @@ body::after {
 .q-number.correct { background: var(--green-bg); border-color: var(--green); color: var(--green); }
 .q-number.wrong   { background: var(--red-bg);   border-color: var(--red);   color: var(--red); }
 .q-number.partial { background: var(--orange-bg); border-color: var(--orange); color: var(--orange); }
+.q-number.skipped { background: rgba(80,80,80,0.2); border-color: #555; color: #888; }
 
 .q-type {
   display: inline-block; font-size: 9px; font-weight: 600;
@@ -203,6 +207,7 @@ body::after {
 .text-input:focus { border-color: rgba(212,168,75,0.4); }
 .text-input::placeholder { color: var(--dim); }
 .text-input.v-correct { border-color: var(--green); background: var(--green-bg); }
+.text-input.v-partial  { border-color: var(--orange); background: var(--orange-bg); }
 .text-input.v-wrong   { border-color: var(--red);   background: var(--red-bg); }
 .text-input:disabled  { opacity: 0.7; cursor: default; }
 
@@ -212,6 +217,7 @@ body::after {
 .q-feedback.fb-correct { background: var(--green-bg); border: 1px solid rgba(78,154,106,0.3); color: #8fdfaa; }
 .q-feedback.fb-wrong   { background: var(--red-bg);   border: 1px solid rgba(154,78,78,0.3);  color: #df8f8f; }
 .q-feedback.fb-partial { background: var(--orange-bg); border: 1px solid rgba(200,131,58,0.3); color: #e8b070; }
+.q-feedback.fb-skipped { background: rgba(60,60,60,0.3); border: 1px solid rgba(100,100,100,0.3); color: #888; }
 .fb-icon { font-weight: 600; margin-right: 6px; }
 .fb-answer { margin-top: 5px; font-size: 12px; opacity: 0.8; }
 
@@ -227,7 +233,6 @@ body::after {
   transition: all 0.2s; box-shadow: 0 4px 24px rgba(212,168,75,0.25);
 }
 .btn-submit:hover { background: var(--gold2); box-shadow: 0 6px 32px rgba(212,168,75,0.4); transform: translateY(-1px); }
-.btn-submit:disabled { opacity: 0.35; cursor: default; transform: none; box-shadow: none; }
 .btn-reset {
   display: none; margin-top: 14px; padding: 10px 28px; border-radius: 4px;
   background: transparent; color: var(--muted);
@@ -246,7 +251,7 @@ body::after {
 }
 .result-panel.show { display: block; }
 .result-grade {
-  width: 120px; height: 120px; border-radius: 50%;
+  width: 130px; height: 130px; border-radius: 50%;
   margin: 0 auto 28px; position: relative;
   display: flex; align-items: center; justify-content: center;
 }
@@ -254,10 +259,11 @@ body::after {
 .result-grade circle { fill: none; stroke-width: 5; }
 .rg-bg   { stroke: var(--dim); }
 .rg-fill { stroke: var(--gold); stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
-.result-pct { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: var(--text); line-height: 1; position: relative; }
+.result-pct { font-family: 'Playfair Display', serif; font-size: 2.2rem; font-weight: 700; color: var(--text); line-height: 1; position: relative; }
 .result-pct sub { font-size: 1rem; color: var(--muted); }
-.result-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: var(--text); margin-bottom: 8px; }
+.result-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: var(--text); margin-bottom: 8px; margin-top: 4px; }
 .result-sub { font-size: 13.5px; color: var(--muted); font-weight: 300; margin-bottom: 28px; }
+
 .result-stats {
   display: flex; justify-content: center;
   border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 28px;
@@ -266,13 +272,37 @@ body::after {
 .rs-item:last-child { border-right: none; }
 .rs-value { font-family: 'Playfair Display', serif; font-size: 1.6rem; margin-bottom: 4px; }
 .rs-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
-.rs-item.ok   .rs-value { color: var(--green); }
-.rs-item.fail .rs-value { color: var(--red); }
-.rs-item.half .rs-value { color: var(--orange); }
-.rs-item.tot  .rs-value { color: var(--gold); }
-.grade-bar { height: 6px; background: var(--dim); border-radius: 3px; overflow: hidden; margin: 20px 0 8px; }
-.grade-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--gold), var(--gold2)); transition: width 1s ease 0.3s; width: 0; }
-.grade-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--dim); }
+.rs-item.ok    .rs-value { color: var(--green); }
+.rs-item.fail  .rs-value { color: var(--red); }
+.rs-item.half  .rs-value { color: var(--orange); }
+.rs-item.skip  .rs-value { color: #666; }
+.rs-item.tot   .rs-value { color: var(--gold); }
+
+/* Score breakdown bar */
+.score-breakdown {
+  display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 20px 0 6px; gap: 2px;
+}
+.sbd-seg { height: 100%; border-radius: 2px; transition: width 1s ease 0.3s; }
+.sbd-correct { background: var(--green); }
+.sbd-partial { background: var(--orange); }
+.sbd-wrong   { background: var(--red); }
+.sbd-skip    { background: #333; }
+
+.score-legend {
+  display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+  font-size: 11px; color: var(--muted); margin-bottom: 8px;
+}
+.sl-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+
+/* Points display */
+.points-display {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px 24px; margin-bottom: 20px;
+  display: inline-block;
+}
+.pts-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pts-value { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--gold); }
+.pts-value span { font-size: 1rem; color: var(--muted); }
 
 @keyframes up { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
 
@@ -282,6 +312,7 @@ body::after {
   .result-stats { flex-direction: column; }
   .rs-item { border-right: none; border-bottom: 1px solid var(--border); }
   .rs-item:last-child { border-bottom: none; }
+  .score-legend { gap: 12px; }
 }
 </style>
 </head>
@@ -343,7 +374,7 @@ body::after {
   <div class="quiz-header">
     <div class="quiz-tag">✦ Wissenstest</div>
     <h2>Quiz zum Video</h2>
-    <p>Beantworte alle Fragen und erhalte eine sofortige Auswertung mit Prozentanzeige.</p>
+    <p>Beantworte die Fragen und erhalte eine sofortige Auswertung. Übersprungene Fragen zählen als falsch.</p>
   </div>
 
   <div class="quiz-progress-bar">
@@ -354,6 +385,7 @@ body::after {
 
   <div id="quiz-questions">
 
+    <!-- Q1 -->
     <div class="q-card" data-qid="1" data-type="mc-single" data-correct="b">
       <div class="q-top">
         <div class="q-number" id="qn-1">1</div>
@@ -371,7 +403,8 @@ body::after {
       <div class="q-feedback" id="fb-1"></div>
     </div>
 
-    <div class="q-card" data-qid="2" data-type="text" data-correct="kugel|zylinder|rechteck|quader">
+    <!-- Q2 -->
+    <div class="q-card" data-qid="2" data-type="text" data-correct="kugel|zylinder|quader|rechteck">
       <div class="q-top">
         <div class="q-number" id="qn-2">2</div>
         <div class="q-info">
@@ -383,6 +416,7 @@ body::after {
       <div class="q-feedback" id="fb-2"></div>
     </div>
 
+    <!-- Q3 -->
     <div class="q-card" data-qid="3" data-type="mc-single" data-correct="b">
       <div class="q-top">
         <div class="q-number" id="qn-3">3</div>
@@ -400,63 +434,66 @@ body::after {
       <div class="q-feedback" id="fb-3"></div>
     </div>
 
-    <div class="q-card" data-qid="5" data-type="mc-multi" data-correct="a,c">
+    <!-- Q4 (war Q5) -->
+    <div class="q-card" data-qid="4" data-type="mc-multi" data-correct="a,c">
       <div class="q-top">
-        <div class="q-number" id="qn-5">5</div>
+        <div class="q-number" id="qn-4">4</div>
         <div class="q-info">
           <span class="q-type mc">Multiple Choice · Mehrfach</span>
           <div class="q-text">Welche Bauwerke gelten als typische Beispiele der Aufklärungsarchitektur? <em style="font-size:12px;color:var(--muted)">(alle richtigen wählen)</em></div>
         </div>
       </div>
       <div class="options">
-        <div class="opt" data-val="a" onclick="pickMulti(this,5)"><div class="opt-box"></div>Saline Royale (Ledoux, Arc-et-Senans)</div>
-        <div class="opt" data-val="b" onclick="pickMulti(this,5)"><div class="opt-box"></div>Sagrada Família (Gaudí, Barcelona)</div>
-        <div class="opt" data-val="c" onclick="pickMulti(this,5)"><div class="opt-box"></div>Brandenburger Tor (Langhans, Berlin)</div>
-        <div class="opt" data-val="d" onclick="pickMulti(this,5)"><div class="opt-box"></div>Schloss Versailles (Le Vau / Hardouin-Mansart)</div>
+        <div class="opt" data-val="a" onclick="pickMulti(this,4)"><div class="opt-box"></div>Saline Royale (Ledoux, Arc-et-Senans)</div>
+        <div class="opt" data-val="b" onclick="pickMulti(this,4)"><div class="opt-box"></div>Sagrada Família (Gaudí, Barcelona)</div>
+        <div class="opt" data-val="c" onclick="pickMulti(this,4)"><div class="opt-box"></div>Brandenburger Tor (Langhans, Berlin)</div>
+        <div class="opt" data-val="d" onclick="pickMulti(this,4)"><div class="opt-box"></div>Schloss Versailles (Le Vau / Hardouin-Mansart)</div>
       </div>
-      <div class="q-feedback" id="fb-5"></div>
+      <div class="q-feedback" id="fb-4"></div>
     </div>
 
-    <div class="q-card" data-qid="6" data-type="mc-single" data-correct="a">
+    <!-- Q5 (war Q6) -->
+    <div class="q-card" data-qid="5" data-type="mc-single" data-correct="a">
       <div class="q-top">
-        <div class="q-number" id="qn-6">6</div>
+        <div class="q-number" id="qn-5">5</div>
         <div class="q-info">
           <span class="q-type mc">Multiple Choice</span>
           <div class="q-text">Welches Merkmal ist charakteristisch für die gebaute Aufklärungsarchitektur?</div>
         </div>
       </div>
       <div class="options">
-        <div class="opt" data-val="a" onclick="pick(this,6)"><div class="opt-box"></div>Fokus auf Funktionalität und klare Ordnung</div>
-        <div class="opt" data-val="b" onclick="pick(this,6)"><div class="opt-box"></div>Übermäßiger dekorativer Schmuck</div>
-        <div class="opt" data-val="c" onclick="pick(this,6)"><div class="opt-box"></div>Vernachlässigung von Symmetrie</div>
-        <div class="opt" data-val="d" onclick="pick(this,6)"><div class="opt-box"></div>Zufällige, organische Bauformen</div>
+        <div class="opt" data-val="a" onclick="pick(this,5)"><div class="opt-box"></div>Fokus auf Funktionalität und klare Ordnung</div>
+        <div class="opt" data-val="b" onclick="pick(this,5)"><div class="opt-box"></div>Übermäßiger dekorativer Schmuck</div>
+        <div class="opt" data-val="c" onclick="pick(this,5)"><div class="opt-box"></div>Vernachlässigung von Symmetrie</div>
+        <div class="opt" data-val="d" onclick="pick(this,5)"><div class="opt-box"></div>Zufällige, organische Bauformen</div>
       </div>
-      <div class="q-feedback" id="fb-6"></div>
+      <div class="q-feedback" id="fb-5"></div>
     </div>
 
-    <div class="q-card" data-qid="8" data-type="mc-multi" data-correct="a,b">
+    <!-- Q6 (war Q8) -->
+    <div class="q-card" data-qid="6" data-type="mc-multi" data-correct="a,b">
       <div class="q-top">
-        <div class="q-number" id="qn-8">8</div>
+        <div class="q-number" id="qn-6">6</div>
         <div class="q-info">
           <span class="q-type mc">Multiple Choice · Mehrfach</span>
           <div class="q-text">Welche Aussagen treffen auf die Aufklärungsarchitektur zu? <em style="font-size:12px;color:var(--muted)">(alle richtigen wählen)</em></div>
         </div>
       </div>
       <div class="options">
-        <div class="opt" data-val="a" onclick="pickMulti(this,8)"><div class="opt-box"></div>Klare Formen und Symmetrie waren leitend.</div>
-        <div class="opt" data-val="b" onclick="pickMulti(this,8)"><div class="opt-box"></div>Funktionalität hatte Vorrang vor Dekoration.</div>
-        <div class="opt" data-val="c" onclick="pickMulti(this,8)"><div class="opt-box"></div>Visionäre Entwürfe wurden größtenteils realisiert.</div>
-        <div class="opt" data-val="d" onclick="pickMulti(this,8)"><div class="opt-box"></div>Antike Vorbilder wurden bewusst ignoriert.</div>
+        <div class="opt" data-val="a" onclick="pickMulti(this,6)"><div class="opt-box"></div>Klare Formen und Symmetrie waren leitend.</div>
+        <div class="opt" data-val="b" onclick="pickMulti(this,6)"><div class="opt-box"></div>Funktionalität hatte Vorrang vor Dekoration.</div>
+        <div class="opt" data-val="c" onclick="pickMulti(this,6)"><div class="opt-box"></div>Visionäre Entwürfe wurden größtenteils realisiert.</div>
+        <div class="opt" data-val="d" onclick="pickMulti(this,6)"><div class="opt-box"></div>Antike Vorbilder wurden bewusst ignoriert.</div>
       </div>
-      <div class="q-feedback" id="fb-8"></div>
+      <div class="q-feedback" id="fb-6"></div>
     </div>
 
   </div>
 
   <!-- SUBMIT -->
   <div class="submit-area">
-    <p class="submit-hint" id="submit-hint">Noch 6 Fragen offen.</p>
-    <button class="btn-submit" id="btn-submit" onclick="submitQuiz()" disabled>Quiz auswerten ›</button>
+    <p class="submit-hint" id="submit-hint">Beantworte die Fragen oder reiche direkt ein — übersprungene Fragen zählen als falsch.</p>
+    <button class="btn-submit" id="btn-submit" onclick="submitQuiz()">Quiz auswerten ›</button>
     <br>
     <button class="btn-reset" id="btn-reset" onclick="resetQuiz()">↺ Neu starten</button>
   </div>
@@ -464,23 +501,42 @@ body::after {
   <!-- RESULT -->
   <div class="result-panel" id="result-panel">
     <div class="result-grade">
-      <svg viewBox="0 0 120 120">
-        <circle class="rg-bg" cx="60" cy="60" r="52"/>
-        <circle class="rg-fill" id="rg-circle" cx="60" cy="60" r="52"
-                stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+      <svg viewBox="0 0 130 130">
+        <circle class="rg-bg" cx="65" cy="65" r="56"/>
+        <circle class="rg-fill" id="rg-circle" cx="65" cy="65" r="56"
+                stroke-dasharray="351.9" stroke-dashoffset="351.9"/>
       </svg>
       <div class="result-pct"><span id="res-pct">0</span><sub>%</sub></div>
     </div>
+
     <div class="result-title" id="res-title"></div>
     <div class="result-sub"   id="res-sub"></div>
-    <div class="result-stats">
-      <div class="rs-item ok">  <div class="rs-value" id="res-correct">0</div><div class="rs-label">Richtig</div></div>
-      <div class="rs-item half"><div class="rs-value" id="res-partial">0</div><div class="rs-label">Teilweise</div></div>
-      <div class="rs-item fail"><div class="rs-value" id="res-wrong">0</div>  <div class="rs-label">Falsch</div></div>
-      <div class="rs-item tot"> <div class="rs-value">6</div>                 <div class="rs-label">Gesamt</div></div>
+
+    <div class="points-display">
+      <div class="pts-label">Punktzahl</div>
+      <div class="pts-value"><span id="res-score">0</span> <span>/ 6 Punkte</span></div>
     </div>
-    <div class="grade-bar"><div class="grade-bar-fill" id="grade-bar-fill"></div></div>
-    <div class="grade-labels"><span>0 %</span><span>50 %</span><span>100 %</span></div>
+
+    <div class="result-stats">
+      <div class="rs-item ok">   <div class="rs-value" id="res-correct">0</div><div class="rs-label">Richtig</div></div>
+      <div class="rs-item half"> <div class="rs-value" id="res-partial">0</div><div class="rs-label">Teilweise</div></div>
+      <div class="rs-item fail"> <div class="rs-value" id="res-wrong">0</div>  <div class="rs-label">Falsch</div></div>
+      <div class="rs-item skip"> <div class="rs-value" id="res-skip">0</div>   <div class="rs-label">Übersprungen</div></div>
+      <div class="rs-item tot">  <div class="rs-value">6</div>                 <div class="rs-label">Gesamt</div></div>
+    </div>
+
+    <div class="score-breakdown" id="score-breakdown">
+      <div class="sbd-seg sbd-correct" id="bd-correct" style="width:0%"></div>
+      <div class="sbd-seg sbd-partial" id="bd-partial" style="width:0%"></div>
+      <div class="sbd-seg sbd-wrong"   id="bd-wrong"   style="width:0%"></div>
+      <div class="sbd-seg sbd-skip"    id="bd-skip"    style="width:0%"></div>
+    </div>
+    <div class="score-legend">
+      <span><span class="sl-dot" style="background:var(--green)"></span>Richtig</span>
+      <span><span class="sl-dot" style="background:var(--orange)"></span>Teilweise</span>
+      <span><span class="sl-dot" style="background:var(--red)"></span>Falsch</span>
+      <span><span class="sl-dot" style="background:#333"></span>Übersprungen</span>
+    </div>
   </div>
 
 </div>
@@ -493,8 +549,12 @@ const TOTAL    = 6;
 function pick(el, qid) {
   const card = el.closest('.q-card');
   if (card.classList.contains('locked')) return;
-  card.querySelectorAll('.opt').forEach(o => { o.classList.remove('selected'); o.querySelector('.opt-box').textContent=''; });
+  card.querySelectorAll('.opt').forEach(o => {
+    o.classList.remove('selected');
+    o.querySelector('.opt-box').textContent = '';
+  });
   el.classList.add('selected');
+  el.querySelector('.opt-box').textContent = '✓';
   answers[qid] = el.dataset.val;
   markAnswered(qid);
 }
@@ -505,16 +565,22 @@ function pickMulti(el, qid) {
   el.classList.toggle('selected');
   if (!answers[qid]) answers[qid] = new Set();
   const v = el.dataset.val;
-  answers[qid].has(v) ? answers[qid].delete(v) : answers[qid].add(v);
+  if (answers[qid].has(v)) {
+    answers[qid].delete(v);
+    el.querySelector('.opt-box').textContent = '';
+  } else {
+    answers[qid].add(v);
+    el.querySelector('.opt-box').textContent = '✓';
+  }
   if (answers[qid].size > 0) markAnswered(qid);
-  else { answered.delete(qid); updateProgress(); }
+  else { answered.delete(qid); document.querySelector(`[data-qid="${qid}"]`).classList.remove('answered'); updateProgress(); }
 }
 
 function textChanged(qid) {
   const v = document.getElementById('ti-' + qid).value.trim();
   answers[qid] = v;
   if (v.length >= 2) markAnswered(qid);
-  else { answered.delete(qid); updateProgress(); }
+  else { answered.delete(qid); document.querySelector(`[data-qid="${qid}"]`).classList.remove('answered'); updateProgress(); }
 }
 
 function markAnswered(qid) {
@@ -526,19 +592,24 @@ function markAnswered(qid) {
 function updateProgress() {
   const n = answered.size;
   document.getElementById('answered-count').textContent = n;
-  document.getElementById('progress-fill').style.width  = (n / TOTAL * 100) + '%';
-  document.getElementById('btn-submit').disabled = n < TOTAL;
-  document.getElementById('submit-hint').textContent =
-    n >= TOTAL ? 'Alle Fragen beantwortet — bereit zur Auswertung!' : `Noch ${TOTAL - n} Frage${TOTAL-n===1?'':'n'} offen.`;
+  document.getElementById('progress-fill').style.width = (n / TOTAL * 100) + '%';
+  const remaining = TOTAL - n;
+  if (remaining === 0) {
+    document.getElementById('submit-hint').textContent = 'Alle Fragen beantwortet — bereit zur Auswertung!';
+  } else {
+    document.getElementById('submit-hint').textContent =
+      `${n} von ${TOTAL} beantwortet — du kannst auch jetzt schon auswerten lassen.`;
+  }
 }
 
 function submitQuiz() {
-  let correct = 0, partial = 0, wrong = 0;
+  let correct = 0, partial = 0, wrong = 0, skipped = 0;
 
   document.querySelectorAll('.q-card').forEach(card => {
     const qid      = +card.dataset.qid;
     const type     = card.dataset.type;
     const correctR = card.dataset.correct;
+    const isAnswered = answered.has(qid);
 
     card.classList.add('locked');
     card.querySelectorAll('.opt').forEach(o => o.classList.add('locked'));
@@ -547,118 +618,207 @@ function submitQuiz() {
 
     const fb = document.getElementById('fb-' + qid);
     const qn = document.getElementById('qn-' + qid);
+
+    // Handle skipped questions
+    if (!isAnswered || (type === 'text' && !(answers[qid] && answers[qid].length >= 2))) {
+      card.classList.add('skipped');
+      qn.classList.add('skipped');
+      qn.textContent = '–';
+      let hint = '';
+      if (type === 'mc-single' || type === 'mc-multi') {
+        const cVals = correctR.split(',');
+        const cTexts = cVals.map(v => {
+          const el = card.querySelector(`.opt[data-val="${v}"]`);
+          return el ? el.textContent.trim() : v;
+        });
+        // Show correct answers as missed
+        card.querySelectorAll('.opt').forEach(o => {
+          if (cVals.includes(o.dataset.val)) {
+            o.classList.add('v-missed');
+            o.querySelector('.opt-box').textContent = '✓';
+          }
+        });
+        hint = `Richtige Antwort${cTexts.length > 1 ? 'en' : ''}: <strong>${cTexts.join(', ')}</strong>`;
+      } else if (type === 'text') {
+        hint = `Stichworte: <strong>${correctR.split('|').join(', ')}</strong>`;
+        if (ti) ti.classList.add('v-wrong');
+      }
+      fb.className = 'q-feedback fb-skipped show';
+      fb.innerHTML = `<span class="fb-icon">–</span> Nicht beantwortet.<div class="fb-answer">${hint}</div>`;
+      skipped++;
+      return;
+    }
+
     let result;
 
     if (type === 'mc-single') {
       const user = answers[qid];
       result = user === correctR ? 'correct' : 'wrong';
       card.querySelectorAll('.opt').forEach(o => {
-        const isCor = o.dataset.val === correctR, isSel = o.classList.contains('selected');
-        if (isSel && isCor)  { o.classList.add('v-correct'); o.querySelector('.opt-box').textContent='✓'; }
-        else if (isSel)      { o.classList.add('v-wrong');   o.querySelector('.opt-box').textContent='✗'; }
-        else if (isCor)      { o.classList.add('v-missed');  o.querySelector('.opt-box').textContent='✓'; }
+        const isCor = o.dataset.val === correctR;
+        const isSel = o.classList.contains('selected');
+        o.querySelector('.opt-box').textContent = '';
+        if (isSel && isCor)  { o.classList.add('v-correct'); o.querySelector('.opt-box').textContent = '✓'; }
+        else if (isSel)      { o.classList.add('v-wrong');   o.querySelector('.opt-box').textContent = '✗'; }
+        else if (isCor)      { o.classList.add('v-missed');  o.querySelector('.opt-box').textContent = '✓'; }
       });
       if (result === 'correct') {
-        fb.className='q-feedback fb-correct show';
-        fb.innerHTML='<span class="fb-icon">✓</span> Richtig!';
+        fb.className = 'q-feedback fb-correct show';
+        fb.innerHTML = '<span class="fb-icon">✓</span> Richtig!';
         correct++;
       } else {
-        const cText = card.querySelector(`.opt[data-val="${correctR}"]`)?.textContent.trim()||'';
-        fb.className='q-feedback fb-wrong show';
-        fb.innerHTML=`<span class="fb-icon">✗</span> Leider falsch.<div class="fb-answer">Richtige Antwort: <strong>${cText}</strong></div>`;
+        const cText = card.querySelector(`.opt[data-val="${correctR}"]`)?.textContent.trim() || '';
+        fb.className = 'q-feedback fb-wrong show';
+        fb.innerHTML = `<span class="fb-icon">✗</span> Leider falsch.<div class="fb-answer">Richtige Antwort: <strong>${cText}</strong></div>`;
         wrong++;
       }
     }
 
     else if (type === 'mc-multi') {
-      const cSet=new Set(correctR.split(',')), uSet=answers[qid]||new Set();
-      const hits=[...uSet].filter(v=>cSet.has(v)).length, bad=[...uSet].filter(v=>!cSet.has(v)).length;
-      const perf=hits===cSet.size&&bad===0;
-      result=perf?'correct':hits>0?'partial':'wrong';
-      card.querySelectorAll('.opt').forEach(o=>{
-        const v=o.dataset.val,isCor=cSet.has(v),isSel=uSet.has(v);
-        if(isSel&&isCor){o.classList.add('v-correct');o.querySelector('.opt-box').textContent='✓';}
-        else if(isSel){o.classList.add('v-wrong');o.querySelector('.opt-box').textContent='✗';}
-        else if(isCor){o.classList.add('v-missed');o.querySelector('.opt-box').textContent='✓';}
+      const cSet = new Set(correctR.split(','));
+      const uSet = answers[qid] || new Set();
+      const hits = [...uSet].filter(v => cSet.has(v)).length;
+      const bad  = [...uSet].filter(v => !cSet.has(v)).length;
+      const perf = hits === cSet.size && bad === 0;
+      result = perf ? 'correct' : hits > 0 ? 'partial' : 'wrong';
+      card.querySelectorAll('.opt').forEach(o => {
+        const v = o.dataset.val, isCor = cSet.has(v), isSel = uSet.has(v);
+        o.querySelector('.opt-box').textContent = '';
+        if (isSel && isCor)  { o.classList.add('v-correct'); o.querySelector('.opt-box').textContent = '✓'; }
+        else if (isSel)      { o.classList.add('v-wrong');   o.querySelector('.opt-box').textContent = '✗'; }
+        else if (isCor)      { o.classList.add('v-missed');  o.querySelector('.opt-box').textContent = '✓'; }
       });
-      if(perf){fb.className='q-feedback fb-correct show';fb.innerHTML='<span class="fb-icon">✓</span> Alle richtigen Antworten gewählt!';correct++;}
-      else if(hits>0){fb.className='q-feedback fb-partial show';fb.innerHTML=`<span class="fb-icon">◑</span> Teilweise richtig — ${hits} von ${cSet.size} korrekt.`;partial++;}
-      else{fb.className='q-feedback fb-wrong show';fb.innerHTML='<span class="fb-icon">✗</span> Keine richtige Antwort getroffen.';wrong++;}
+      if (perf) {
+        fb.className = 'q-feedback fb-correct show';
+        fb.innerHTML = '<span class="fb-icon">✓</span> Alle richtigen Antworten gewählt!';
+        correct++;
+      } else if (hits > 0) {
+        fb.className = 'q-feedback fb-partial show';
+        fb.innerHTML = `<span class="fb-icon">◑</span> Teilweise richtig — ${hits} von ${cSet.size} korrekt, ${bad} falsch gewählt.`;
+        partial++;
+      } else {
+        fb.className = 'q-feedback fb-wrong show';
+        fb.innerHTML = '<span class="fb-icon">✗</span> Keine richtige Antwort getroffen.';
+        wrong++;
+      }
     }
 
     else if (type === 'text') {
-      const pats=correctR.split('|');
-      const uNorm=(answers[qid]||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-      const hits=pats.filter(p=>uNorm.includes(p.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')));
-      result=hits.length>=pats.length?'correct':hits.length>0?'partial':'wrong';
-      if(ti) ti.classList.add(result==='correct'?'v-correct':result==='wrong'?'v-wrong':'');
-      if(result==='correct'){fb.className='q-feedback fb-correct show';fb.innerHTML='<span class="fb-icon">✓</span> Richtig!';correct++;}
-      else if(result==='partial'){fb.className='q-feedback fb-partial show';fb.innerHTML='<span class="fb-icon">◑</span> Teilweise richtig.';partial++;}
-      else{fb.className='q-feedback fb-wrong show';fb.innerHTML=`<span class="fb-icon">✗</span> Nicht ganz. Stichworte: <strong>${pats.join(', ')}</strong>`;wrong++;}
+      const pats  = correctR.split('|');
+      const uNorm = (answers[qid] || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const hits  = pats.filter(p => uNorm.includes(p.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')));
+      result = hits.length >= 3 ? 'correct' : hits.length >= 1 ? 'partial' : 'wrong';
+      if (ti) ti.classList.add(result === 'correct' ? 'v-correct' : result === 'partial' ? 'v-partial' : 'v-wrong');
+      if (result === 'correct') {
+        fb.className = 'q-feedback fb-correct show';
+        fb.innerHTML = '<span class="fb-icon">✓</span> Richtig! Drei oder mehr Formen genannt.';
+        correct++;
+      } else if (result === 'partial') {
+        fb.className = 'q-feedback fb-partial show';
+        fb.innerHTML = `<span class="fb-icon">◑</span> Teilweise — ${hits.length} von 3 erkannt. Stichworte: <strong>${pats.join(', ')}</strong>`;
+        partial++;
+      } else {
+        fb.className = 'q-feedback fb-wrong show';
+        fb.innerHTML = `<span class="fb-icon">✗</span> Nicht gefunden. Stichworte: <strong>${pats.join(', ')}</strong>`;
+        wrong++;
+      }
     }
 
     card.classList.add(result);
-    qn.classList.add(result==='correct'?'correct':result==='partial'?'partial':'wrong');
-    qn.textContent=result==='correct'?'✓':result==='partial'?'◑':'✗';
+    qn.classList.add(result === 'correct' ? 'correct' : result === 'partial' ? 'partial' : 'wrong');
+    qn.textContent = result === 'correct' ? '✓' : result === 'partial' ? '◑' : '✗';
   });
 
-  const score=correct+partial*0.5;
-  const pct=Math.round(score/TOTAL*100);
+  // Score: correct=1pt, partial=0.5pt, wrong/skip=0pt
+  const score = correct + partial * 0.5;
+  const pct   = Math.round(score / TOTAL * 100);
+  const scoreDisplay = Number.isInteger(score) ? score : score.toFixed(1);
 
-  document.getElementById('btn-submit').style.display='none';
-  document.getElementById('btn-reset').style.display='inline-flex';
+  // Hide submit, show reset
+  document.getElementById('btn-submit').style.display = 'none';
+  document.getElementById('btn-reset').style.display  = 'inline-flex';
 
-  const panel=document.getElementById('result-panel');
+  // Show result panel
+  const panel = document.getElementById('result-panel');
   panel.classList.add('show');
 
-  const circ=document.getElementById('rg-circle');
-  setTimeout(()=>{
-    circ.style.strokeDashoffset=326.7*(1-pct/100);
-    circ.style.stroke=pct>=80?'#4e9a6a':pct>=50?'#c8833a':'#9a4e4e';
-  },100);
+  // Animate circle
+  const circ = document.getElementById('rg-circle');
+  setTimeout(() => {
+    circ.style.strokeDashoffset = 351.9 * (1 - pct / 100);
+    circ.style.stroke = pct >= 80 ? '#4e9a6a' : pct >= 50 ? '#c8833a' : '#9a4e4e';
+  }, 120);
 
-  let cur=0;
-  const pctEl=document.getElementById('res-pct');
-  const step=Math.max(1,Math.ceil(pct/40));
-  const t=setInterval(()=>{cur=Math.min(cur+step,pct);pctEl.textContent=cur;if(cur>=pct)clearInterval(t);},25);
-  setTimeout(()=>{document.getElementById('grade-bar-fill').style.width=pct+'%';},300);
+  // Count-up
+  let cur = 0;
+  const pctEl = document.getElementById('res-pct');
+  const step = Math.max(1, Math.ceil(pct / 50));
+  const t = setInterval(() => { cur = Math.min(cur + step, pct); pctEl.textContent = cur; if (cur >= pct) clearInterval(t); }, 20);
 
-  document.getElementById('res-correct').textContent=correct;
-  document.getElementById('res-partial').textContent=partial;
-  document.getElementById('res-wrong').textContent=wrong;
+  // Breakdown bar (animate after short delay)
+  setTimeout(() => {
+    document.getElementById('bd-correct').style.width = (correct / TOTAL * 100) + '%';
+    document.getElementById('bd-partial').style.width = (partial / TOTAL * 100) + '%';
+    document.getElementById('bd-wrong').style.width   = (wrong   / TOTAL * 100) + '%';
+    document.getElementById('bd-skip').style.width    = (skipped / TOTAL * 100) + '%';
+  }, 300);
 
-  const grades=[[100,'Ausgezeichnet!','Perfektes Ergebnis — du hast alle Fragen korrekt beantwortet.'],[80,'Sehr gut!','Starkes Ergebnis — du hast den Stoff sehr gut verstanden.'],[60,'Gut gemacht.','Solide Grundlage — einige Themen kannst du noch vertiefen.'],[40,'Befriedigend.','Du kennst die Grundlagen, aber das Video lohnt sich nochmals.'],[0,'Nicht bestanden.','Schau dir das Video nochmals an und versuche es erneut.']];
-  const [,title,sub]=grades.find(([t])=>pct>=t);
-  document.getElementById('res-title').textContent=title;
-  document.getElementById('res-sub').textContent=sub;
+  // Stats
+  document.getElementById('res-correct').textContent = correct;
+  document.getElementById('res-partial').textContent = partial;
+  document.getElementById('res-wrong').textContent   = wrong;
+  document.getElementById('res-skip').textContent    = skipped;
+  document.getElementById('res-score').textContent   = scoreDisplay;
 
-  panel.scrollIntoView({behavior:'smooth',block:'center'});
+  // Grade text
+  const grades = [
+    [100, 'Ausgezeichnet!',   'Perfektes Ergebnis — du hast alle Fragen korrekt beantwortet.'],
+    [ 80, 'Sehr gut!',        'Starkes Ergebnis — du hast den Stoff sehr gut verstanden.'],
+    [ 60, 'Gut gemacht.',     'Solide Grundlage — einige Themen kannst du noch vertiefen.'],
+    [ 40, 'Befriedigend.',    'Du kennst die Grundlagen, aber das Video lohnt sich nochmals.'],
+    [  1, 'Nicht bestanden.', 'Schau dir das Video nochmals an und versuche es erneut.'],
+    [  0, 'Keine Antworten.', 'Du hast keine Fragen beantwortet — probiere es nochmal!'],
+  ];
+  const [, title, sub] = grades.find(([t]) => pct >= t) || grades[grades.length - 1];
+  document.getElementById('res-title').textContent = title;
+  document.getElementById('res-sub').textContent   = sub;
+
+  panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function resetQuiz() {
-  Object.keys(answers).forEach(k=>delete answers[k]);
+  // Clear state
+  Object.keys(answers).forEach(k => delete answers[k]);
   answered.clear();
-  document.querySelectorAll('.q-card').forEach(card=>{
-    card.classList.remove('locked','correct','wrong','partial','answered');
-    card.querySelectorAll('.opt').forEach(o=>{
-      o.classList.remove('selected','locked','v-correct','v-wrong','v-missed');
-      o.querySelector('.opt-box').textContent='';
+
+  document.querySelectorAll('.q-card').forEach(card => {
+    card.classList.remove('locked', 'correct', 'wrong', 'partial', 'skipped', 'answered');
+    card.querySelectorAll('.opt').forEach(o => {
+      o.classList.remove('selected', 'locked', 'v-correct', 'v-wrong', 'v-missed');
+      o.querySelector('.opt-box').textContent = '';
     });
-    const qid=card.dataset.qid;
-    const fb=document.getElementById('fb-'+qid);
-    if(fb){fb.className='q-feedback';fb.innerHTML='';}
-    const qn=document.getElementById('qn-'+qid);
-    if(qn){qn.className='q-number';qn.textContent=qid;}
-    const ti=document.getElementById('ti-'+qid);
-    if(ti){ti.value='';ti.disabled=false;ti.classList.remove('v-correct','v-wrong');}
+    const qid = card.dataset.qid;
+    const fb  = document.getElementById('fb-' + qid);
+    if (fb) { fb.className = 'q-feedback'; fb.innerHTML = ''; }
+    const qn  = document.getElementById('qn-' + qid);
+    if (qn) { qn.className = 'q-number'; qn.textContent = qid; }
+    const ti  = document.getElementById('ti-' + qid);
+    if (ti) { ti.value = ''; ti.disabled = false; ti.classList.remove('v-correct', 'v-partial', 'v-wrong'); }
   });
+
+  // Reset result
   document.getElementById('result-panel').classList.remove('show');
-  document.getElementById('rg-circle').style.strokeDashoffset=326.7;
-  document.getElementById('grade-bar-fill').style.width='0';
-  document.getElementById('btn-submit').style.display='inline-flex';
-  document.getElementById('btn-reset').style.display='none';
+  document.getElementById('rg-circle').style.strokeDashoffset = 351.9;
+  document.getElementById('rg-circle').style.stroke = 'var(--gold)';
+  ['bd-correct','bd-partial','bd-wrong','bd-skip'].forEach(id => {
+    document.getElementById(id).style.width = '0%';
+  });
+
+  document.getElementById('btn-submit').style.display = 'inline-flex';
+  document.getElementById('btn-reset').style.display  = 'none';
+
   updateProgress();
-  window.scrollTo({top:0,behavior:'smooth'});
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 </script>
 </body>
