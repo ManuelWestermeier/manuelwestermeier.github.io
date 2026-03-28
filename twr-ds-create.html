@@ -145,7 +145,11 @@ select.spd{background:var(--s2);border:1px solid var(--b1);color:var(--tx);font-
 .fth .fsp2{position:absolute;bottom:2px;left:2px;font-size:8px;padding:1px 4px;border-radius:3px;font-weight:700}
 .fth .fdl{position:absolute;top:2px;left:2px;background:rgba(239,68,68,.9);border:none;border-radius:3px;color:#fff;font-size:9px;padding:1px 4px;cursor:pointer;opacity:0;font-family:var(--f)}
 .fth:hover .fdl{opacity:1}
+.rfoot{padding:6px;border-top:1px solid var(--b1);flex-shrink:0}
+.rbtn{width:100%;font-family:var(--f);font-size:10px;font-weight:700;padding:6px 8px;border-radius:5px;border:1px solid var(--b2);background:var(--s2);color:var(--tx);cursor:pointer;transition:.12s}
+.rbtn:hover{border-color:var(--ac);color:var(--ac)}
 
+/* ── TOAST ── */
 #toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:7px 16px;font-size:11px;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;max-width:420px;text-align:center;color:var(--tx)}
 #toast.on{opacity:1}
 .hidden{display:none!important}
@@ -278,12 +282,16 @@ video{display:none}
   <div class="rp">
     <div class="rhead">Frames (<span id="fCount">0</span>)</div>
     <div class="fstrip" id="fstrip"></div>
+    <div class="rfoot">
+      <button class="rbtn" id="imgBtn">🖼 Bilder laden</button>
+    </div>
   </div>
 
 </div>
 
 <div id="toast"></div>
 <input type="file" id="vidFile" accept="video/*" style="display:none">
+<input type="file" id="imgFile" accept="image/*" multiple style="display:none">
 
 <script>
 const CLASSES = ["Drowning","Struggling","Unsure","Playing","Standing","Swimming","Rettungsboot"];
@@ -345,6 +353,10 @@ document.getElementById('folderBtn').onclick=async()=>{
 };
 document.getElementById('videoBtn').onclick=()=>document.getElementById('vidFile').click();
 document.getElementById('vidFile').onchange=e=>{const f=e.target.files[0];if(!f)return;loadVid(f);e.target.value='';};
+
+document.getElementById('imgBtn').onclick=()=>document.getElementById('imgFile').click();
+document.getElementById('imgFile').onchange=e=>{const files=[...e.target.files];if(!files.length)return;loadImages(files);e.target.value='';};
+
 function checkReady(){document.getElementById('goBtn').classList.toggle('ok',!!(rootDir&&vid.src));}
 document.getElementById('goBtn').onclick=()=>{
   if(!rootDir||!vid.src) return;
@@ -383,6 +395,29 @@ async function loadExisting(){
 }
 function parseTxt(t){return t.trim().split('\n').map(l=>{const p=l.trim().split(/\s+/).map(Number);return p.length>=5?{cls:p[0],cx:p[1],cy:p[2],w:p[3],h:p[4]}:null;}).filter(Boolean);}
 function blob2url(b){return new Promise(r=>{const fr=new FileReader();fr.onload=e=>r(e.target.result);fr.readAsDataURL(b);});}
+
+async function loadImages(files){
+  const imgs=files.filter(f=>f.type.startsWith('image/'));
+  if(!imgs.length){toast('Keine Bilddateien gefunden');return;}
+  const startIdx=frames.length;
+  let added=0;
+  for(const f of imgs){
+    const dataURL=await blob2url(f);
+    const stem=f.name.replace(/\.[^.]+$/,'');
+    const id=`img_${stem}_${Date.now()}_${Math.random().toString(16).slice(2,8)}`;
+    frames.push({id,dataURL,boxes:[],split:'train'});
+    addThumb(frames[frames.length-1],frames.length-1,true);
+    queueSave(frames.length-1);
+    added++;
+  }
+  reAssignSplits(false);
+  updateStats();
+  if(added>0){
+    toast(`🖼 ${added} Bild(er) geladen`);
+    selectFrame(startIdx);
+    setMode('label');
+  }
+}
 
 // ── Video ──
 function loadVid(f){
