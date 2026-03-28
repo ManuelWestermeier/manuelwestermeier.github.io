@@ -1,390 +1,425 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TWR2025 · YOLO Annotator</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap');
 :root {
-  --bg:#0a0c0f; --surf:#111418; --surf2:#181c22; --b1:#232830; --b2:#2e3540;
-  --tx:#e8eaf0; --mut:#5a6272;
-  --acc:#00e5ff; --grn:#39d98a; --yel:#ffd166; --red:#ef4565; --pur:#c084fc; --ora:#ff6b35;
-  --mono:'JetBrains Mono',monospace; --sans:'Syne',sans-serif;
+  --bg:#09090b; --surf:#111114; --surf2:#18181c; --b1:#27272a; --b2:#3f3f46;
+  --tx:#f4f4f5; --mut:#71717a; --dim:#52525b;
+  --acc:#22d3ee; --grn:#4ade80; --yel:#facc15; --red:#f87171; --ora:#fb923c;
+  --pur:#c084fc; --blu:#60a5fa;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Space Grotesk',sans-serif;
+  --step-seek:#22d3ee; --step-crop:#fb923c; --step-label:#4ade80;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--tx);font-family:var(--mono);height:100vh;overflow:hidden;display:flex;flex-direction:column;user-select:none}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--tx);font-family:var(--mono);display:flex;flex-direction:column}
 
-/* ── WIZARD ── */
-#wizard{position:fixed;inset:0;background:var(--bg);z-index:900;display:flex;align-items:center;justify-content:center}
-.wbox{background:var(--surf);border:1px solid var(--b2);border-radius:12px;padding:36px;width:460px;display:flex;flex-direction:column;gap:18px}
-.wlogo{font-family:var(--sans);font-size:26px;font-weight:800;color:var(--acc);letter-spacing:-1px}
-.wlogo span{color:var(--mut);font-weight:700}
-.wsep{height:1px;background:var(--b1)}
-.wstitle{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
-.wsdesc{font-size:11px;color:var(--mut);line-height:1.6;margin-bottom:8px}
-.wbtn{font-family:var(--mono);font-size:12px;font-weight:600;padding:10px 16px;border-radius:6px;border:1px solid var(--b2);background:var(--surf2);color:var(--tx);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px;width:100%}
-.wbtn:hover{border-color:var(--acc);color:var(--acc)}
-.wbtn.done{border-color:var(--grn)!important;color:var(--grn)!important}
-.wbtn .wsub{font-size:10px;color:var(--mut);font-weight:400;margin-top:1px}
-.wgo{font-family:var(--mono);font-size:13px;font-weight:700;padding:12px;border-radius:6px;border:none;background:var(--acc);color:#000;cursor:pointer;opacity:.35;pointer-events:none;transition:all .15s;width:100%}
-.wgo.ready{opacity:1;pointer-events:all}
-.wgo.ready:hover{background:#00c4d8}
+/* ── SETUP SCREEN ── */
+#setup{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0}
+.setup-box{width:480px;background:var(--surf);border:1px solid var(--b1);border-radius:16px;overflow:hidden}
+.setup-head{padding:28px 28px 20px;border-bottom:1px solid var(--b1)}
+.setup-logo{font-family:var(--sans);font-size:22px;font-weight:700;color:var(--acc);letter-spacing:-1px}
+.setup-logo span{color:var(--mut);font-weight:500}
+.setup-sub{font-size:11px;color:var(--mut);margin-top:4px}
+.setup-body{padding:20px 28px 24px;display:flex;flex-direction:column;gap:12px}
+.step-row{display:flex;gap:12px;align-items:flex-start}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--b1);color:var(--mut);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:all .2s}
+.step-num.done{background:var(--grn);color:#000}
+.step-num.active{background:var(--acc);color:#000}
+.step-label{font-size:12px;font-weight:600;color:var(--tx)}
+.step-desc{font-size:10px;color:var(--mut);margin-top:2px;line-height:1.5}
+.pick-btn{font-family:var(--mono);font-size:11px;font-weight:600;padding:8px 14px;border-radius:6px;border:1px solid var(--b2);background:var(--surf2);color:var(--tx);cursor:pointer;transition:all .15s;width:100%;text-align:left;margin-top:6px;display:flex;align-items:center;gap:8px}
+.pick-btn:hover{border-color:var(--acc);color:var(--acc)}
+.pick-btn.done{border-color:var(--grn)!important;color:var(--grn)!important}
+.pick-btn .pname{font-size:10px;color:var(--mut);margin-top:1px;font-weight:400}
+.go-btn{font-family:var(--mono);font-size:13px;font-weight:700;padding:13px;border-radius:8px;border:none;background:var(--acc);color:#000;cursor:pointer;transition:all .15s;width:100%;opacity:.3;pointer-events:none}
+.go-btn.ready{opacity:1;pointer-events:all}
+.go-btn.ready:hover{background:#06b6d4}
 
-/* ── APP HEADER ── */
-header{display:flex;align-items:center;gap:10px;padding:7px 14px;background:var(--surf);border-bottom:1px solid var(--b1);flex-shrink:0;z-index:100}
-.logo{font-family:var(--sans);font-weight:800;font-size:14px;color:var(--acc);letter-spacing:-.5px;white-space:nowrap}
-.logo span{color:var(--mut)}
-.hst{background:var(--surf2);border:1px solid var(--b1);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--mut);display:flex;align-items:center;gap:4px}
-.hst b{color:var(--tx)}
-.btn{font-family:var(--mono);font-size:11px;font-weight:600;padding:5px 11px;border-radius:4px;border:1px solid var(--b2);background:var(--surf2);color:var(--tx);cursor:pointer;transition:all .12s;white-space:nowrap}
-.btn:hover{border-color:var(--acc);color:var(--acc)}
-.btn.grn{border-color:var(--grn);color:var(--grn)}
-.btn.grn:hover{background:var(--grn);color:#000}
-.btn.acc{background:var(--acc);color:#000;border-color:var(--acc);font-weight:700}
-.btn.acc:hover{background:#00c4d8}
-.btn.red{border-color:var(--red);color:var(--red)}
-.btn.red:hover{background:var(--red);color:#fff}
-.btn.on{border-color:var(--acc);color:var(--acc);background:rgba(0,229,255,.1)}
+/* ── HEADER ── */
+header{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--surf);border-bottom:1px solid var(--b1);flex-shrink:0}
+.logo{font-family:var(--sans);font-size:13px;font-weight:700;color:var(--acc);letter-spacing:-.5px}
+.logo s{color:var(--mut);font-weight:500;text-decoration:none}
+.hstat{padding:2px 8px;border-radius:4px;font-size:10px;background:var(--surf2);border:1px solid var(--b1);color:var(--mut)}
+.hstat b{color:var(--tx)}
+#autosave-badge{font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid transparent;transition:all .4s;color:var(--mut)}
+#autosave-badge.saving{border-color:var(--yel);color:var(--yel)}
+#autosave-badge.saved{border-color:var(--grn);color:var(--grn)}
+.hbtn{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--b2);background:var(--surf2);color:var(--tx);cursor:pointer;transition:all .12s}
+.hbtn:hover{border-color:var(--acc);color:var(--acc)}
+.hbtn.red{border-color:var(--red);color:var(--red)}
 
 /* ── LAYOUT ── */
-.app{display:flex;flex:1;overflow:hidden}
+.app{flex:1;display:flex;overflow:hidden;min-height:0}
 
-/* ── LEFT PANEL ── */
-.lp{width:196px;flex-shrink:0;background:var(--surf);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
-.ps{padding:9px;border-bottom:1px solid var(--b1);flex-shrink:0}
-.pl{font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--mut);text-transform:uppercase;margin-bottom:7px}
+/* ── LEFT SIDEBAR ── */
+.left{width:180px;flex-shrink:0;background:var(--surf);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
+.left::-webkit-scrollbar{width:2px}
+.left::-webkit-scrollbar-thumb{background:var(--b2)}
 
-/* classes */
-.ci{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:4px;border:1px solid transparent;cursor:pointer;transition:all .1s;font-size:11px}
-.ci:hover{background:var(--surf2)}
-.ci.sel{border-color:var(--b2);background:var(--surf2)}
-.cdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.ckey{margin-left:auto;font-size:9px;color:var(--mut);background:var(--bg);border:1px solid var(--b1);border-radius:3px;padding:1px 4px;flex-shrink:0}
+.sect{padding:10px 10px 8px;border-bottom:1px solid var(--b1)}
+.sect-title{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
 
-/* box list */
-.bscroll{overflow-y:auto;flex:1;padding:4px}
-.bscroll::-webkit-scrollbar{width:3px}
-.bscroll::-webkit-scrollbar-thumb{background:var(--b2)}
-.bi{display:flex;align-items:center;gap:5px;padding:4px 6px;border-radius:3px;font-size:11px;border:1px solid transparent;cursor:pointer;transition:all .1s}
-.bi:hover{background:var(--surf2)}
-.bi.sel{border-color:var(--b2);background:var(--surf2)}
-.bdot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
-.bdel{margin-left:auto;color:var(--red);opacity:0;cursor:pointer;font-size:13px;line-height:1}
-.bi:hover .bdel{opacity:1}
+/* workflow steps */
+.wf-step{display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:6px;margin-bottom:2px;border:1px solid transparent;transition:all .2s}
+.wf-step.active{background:var(--surf2);border-color:var(--b1)}
+.wf-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px;transition:all .2s}
+.wf-step-body{}
+.wf-title{font-size:11px;font-weight:600;color:var(--mut);transition:color .2s}
+.wf-step.active .wf-title{color:var(--tx)}
+.wf-hint{font-size:9px;color:var(--dim);margin-top:2px;line-height:1.5}
+.wf-step.active .wf-hint{color:var(--mut)}
 
-/* split */
-.spnums{display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--mut)}
-.spnums label{display:flex;align-items:center;gap:5px}
-.spnums input{width:38px;background:var(--bg);border:1px solid var(--b1);border-radius:3px;color:var(--tx);font-family:var(--mono);font-size:11px;padding:2px 5px;outline:none}
-.spnums input:focus{border-color:var(--acc)}
-.sbadges{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
-.sb{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700}
-.sbtr{background:rgba(57,217,138,.18);color:var(--grn)}
-.sbva{background:rgba(255,209,102,.18);color:var(--yel)}
-.sbte{background:rgba(239,69,101,.18);color:var(--red)}
+/* class selector */
+.cls-item{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:5px;cursor:pointer;border:1px solid transparent;transition:all .1s;font-size:11px;margin-bottom:1px}
+.cls-item:hover{background:var(--surf2)}
+.cls-item.sel{background:var(--surf2);border-color:var(--b1)}
+.cls-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cls-key{margin-left:auto;font-size:9px;color:var(--dim);background:var(--bg);border:1px solid var(--b1);border-radius:3px;padding:1px 4px}
+
+/* shortcuts */
+.sc-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:10px;color:var(--mut);border-bottom:1px solid var(--bg)}
+.sc-key{font-size:9px;background:var(--bg);border:1px solid var(--b1);border-radius:3px;padding:1px 5px;color:var(--tx);font-weight:600;white-space:nowrap}
+
+/* split config */
+.split-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut);margin-bottom:4px}
+.split-row input{width:36px;background:var(--bg);border:1px solid var(--b1);border-radius:3px;color:var(--tx);font-family:var(--mono);font-size:11px;padding:2px 4px;outline:none;text-align:center}
+.split-row input:focus{border-color:var(--acc)}
+.split-badges{display:flex;gap:4px;margin-top:4px}
+.sp-badge{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700}
+.sp-tr{background:rgba(74,222,128,.15);color:var(--grn)}
+.sp-va{background:rgba(250,204,21,.15);color:var(--yel)}
+.sp-te{background:rgba(248,113,113,.15);color:var(--red)}
 
 /* ── CENTER ── */
-.center{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#060809}
-.toolbar{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--surf);border-bottom:1px solid var(--b1);flex-shrink:0;flex-wrap:wrap;min-height:40px}
-.tsep{width:1px;height:18px;background:var(--b2);margin:0 3px}
-.cwrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;background:#060809}
+.center{flex:1;display:flex;flex-direction:column;min-width:0;background:#06060a}
+.canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;min-height:0}
 #mc{cursor:crosshair;display:block;max-width:100%;max-height:100%;image-rendering:auto}
-.emptymsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;pointer-events:none;color:var(--mut)}
-.emptymsg .big{font-family:var(--sans);font-size:20px}
-.modebadge{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,107,53,.92);color:#fff;padding:4px 14px;border-radius:4px;font-size:11px;font-weight:700;pointer-events:none;display:none;z-index:5}
+
+/* step banner */
+#step-banner{position:absolute;top:10px;left:50%;transform:translateX(-50%);padding:5px 16px;border-radius:20px;font-size:11px;font-weight:700;pointer-events:none;z-index:10;letter-spacing:.5px;opacity:0;transition:opacity .3s;white-space:nowrap}
+#step-banner.show{opacity:1}
+#step-banner.mode-seek{background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.5);color:var(--acc)}
+#step-banner.mode-crop{background:rgba(251,146,60,.15);border:1px solid rgba(251,146,60,.5);color:var(--ora)}
+#step-banner.mode-label{background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.5);color:var(--grn)}
+
+/* crop overlay hint */
+#crop-hint{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.4);border-radius:8px;padding:8px 16px;font-size:11px;color:var(--ora);pointer-events:none;z-index:10;display:none;text-align:center;line-height:1.6}
+
+/* empty state */
+#empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;pointer-events:none;color:var(--mut)}
+#empty .big{font-family:var(--sans);font-size:24px;font-weight:700;color:var(--dim)}
+#empty .small{font-size:11px;color:var(--dim)}
 
 /* video bar */
-.vbar{display:flex;align-items:center;gap:7px;padding:6px 12px;background:var(--surf);border-top:1px solid var(--b1);flex-shrink:0}
-.seek{flex:1;-webkit-appearance:none;appearance:none;height:4px;background:var(--b2);border-radius:2px;outline:none;cursor:pointer}
-.seek::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--acc);border-radius:50%;cursor:pointer}
-.tdisp{font-size:11px;color:var(--mut);white-space:nowrap;min-width:90px}
-.vc{background:none;border:none;color:var(--mut);cursor:pointer;font-size:14px;padding:3px;transition:color .1s}
+.vbar{display:flex;align-items:center;gap:7px;padding:7px 12px;background:var(--surf);border-top:1px solid var(--b1);flex-shrink:0}
+.seek-slider{flex:1;-webkit-appearance:none;appearance:none;height:3px;background:var(--b2);border-radius:2px;outline:none;cursor:pointer}
+.seek-slider::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--acc);border-radius:50%;cursor:pointer;transition:transform .1s}
+.seek-slider:hover::-webkit-slider-thumb{transform:scale(1.2)}
+.tdisp{font-size:10px;color:var(--mut);white-space:nowrap;min-width:80px}
+.vc{background:none;border:none;color:var(--mut);cursor:pointer;font-size:14px;padding:3px 5px;transition:color .1s;font-family:var(--mono)}
 .vc:hover{color:var(--acc)}
-select.spd{background:var(--surf2);border:1px solid var(--b1);color:var(--tx);font-family:var(--mono);font-size:11px;padding:2px 4px;border-radius:3px;outline:none}
+.vc.cap{background:var(--acc);color:#000;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:700}
+.vc.cap:hover{background:#06b6d4}
+select.spd{background:var(--surf2);border:1px solid var(--b1);color:var(--tx);font-family:var(--mono);font-size:10px;padding:2px 4px;border-radius:3px;outline:none}
 
-/* ── RIGHT PANEL ── */
-.rp{width:164px;flex-shrink:0;background:var(--surf);border-left:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
-.fstrip{flex:1;overflow-y:auto;padding:5px;display:flex;flex-direction:column;gap:4px}
-.fstrip::-webkit-scrollbar{width:3px}
-.fstrip::-webkit-scrollbar-thumb{background:var(--b2)}
-.fth{position:relative;border-radius:4px;overflow:hidden;border:2px solid transparent;cursor:pointer;flex-shrink:0;aspect-ratio:16/9;transition:border-color .1s}
+/* ── RIGHT STRIP ── */
+.right{width:140px;flex-shrink:0;background:var(--surf);border-left:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
+.strip-head{padding:7px 8px 5px;border-bottom:1px solid var(--b1);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.strip-head span{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
+.strip-scroll{flex:1;overflow-y:auto;padding:5px;display:flex;flex-direction:column;gap:4px}
+.strip-scroll::-webkit-scrollbar{width:2px}
+.strip-scroll::-webkit-scrollbar-thumb{background:var(--b2)}
+.fth{position:relative;border-radius:5px;overflow:hidden;border:2px solid transparent;cursor:pointer;aspect-ratio:16/9;transition:border-color .1s;flex-shrink:0}
 .fth canvas{width:100%;height:100%;display:block}
 .fth.active{border-color:var(--acc)}
-.fth.hbox{border-color:var(--grn)}
+.fth.hbox{border-color:rgba(74,222,128,.4)}
 .fth.active.hbox{border-color:var(--acc)}
-.fth .fbadge{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.75);border-radius:3px;font-size:8px;padding:1px 4px;color:var(--mut)}
-.fth .fdel{position:absolute;top:2px;left:2px;background:rgba(239,69,101,.85);border:none;border-radius:3px;color:#fff;font-size:9px;padding:1px 4px;cursor:pointer;opacity:0;font-family:var(--mono)}
+.fth .fbadge{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.8);border-radius:3px;font-size:8px;padding:1px 4px;color:var(--mut)}
+.fth .fsp{position:absolute;bottom:2px;left:2px;font-size:8px;padding:1px 4px;border-radius:3px;font-weight:700}
+.fth .fdel{position:absolute;top:2px;left:2px;background:rgba(248,113,113,.9);border:none;border-radius:3px;color:#fff;font-size:9px;padding:1px 4px;cursor:pointer;opacity:0;font-family:var(--mono)}
 .fth:hover .fdel{opacity:1}
-.fth .fsp{position:absolute;bottom:2px;left:2px;font-size:8px;padding:1px 5px;border-radius:3px;font-weight:700}
 
-/* ── MODAL ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:800;opacity:0;pointer-events:none;transition:opacity .2s}
-.overlay.open{opacity:1;pointer-events:all}
-.modal{background:var(--surf);border:1px solid var(--b2);border-radius:8px;padding:20px;max-width:92vw;max-height:85vh;overflow-y:auto;transform:translateY(6px);transition:transform .2s;width:680px}
-.overlay.open .modal{transform:translateY(0)}
-.modal h2{font-family:var(--sans);font-size:16px;font-weight:800;color:var(--acc);margin-bottom:12px}
-.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:6px;margin-top:6px}
-.pitem{position:relative;border-radius:4px;overflow:hidden;border:1px solid var(--b1);cursor:pointer}
-.pitem:hover{border-color:var(--acc)}
-.pitem canvas{width:100%;display:block}
-.psp{position:absolute;bottom:3px;left:3px;font-size:8px;padding:1px 4px;border-radius:3px;font-weight:700}
-.plbl{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.7);border-radius:3px;font-size:8px;padding:1px 4px}
+/* annotation box list */
+.box-list{padding:0 6px 6px}
+.bi{display:flex;align-items:center;gap:5px;padding:4px 5px;border-radius:4px;cursor:pointer;font-size:10px;border:1px solid transparent;transition:all .1s;margin-bottom:1px}
+.bi:hover{background:var(--surf2)}
+.bi.sel{background:var(--surf2);border-color:var(--b1)}
+.bdot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.bdel{margin-left:auto;color:var(--red);opacity:0;cursor:pointer;font-size:12px;font-weight:700}
+.bi:hover .bdel{opacity:1}
 
-/* ── TOAST ── */
-#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--surf2);border:1px solid var(--b2);border-radius:6px;padding:7px 14px;font-size:12px;z-index:2000;opacity:0;transition:opacity .2s;pointer-events:none;color:var(--tx);max-width:420px;text-align:center}
+/* toast */
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--surf2);border:1px solid var(--b2);border-radius:8px;padding:7px 16px;font-size:11px;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;max-width:380px;text-align:center}
 #toast.show{opacity:1}
+
 .hidden{display:none!important}
 video{display:none}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 </style>
 </head>
 <body>
 <video id="vid" preload="metadata"></video>
 
-<!-- ══ WIZARD ══ -->
-<div id="wizard">
-  <div class="wbox">
-    <div>
-      <div class="wlogo">TWR<span>2025</span></div>
-      <div style="font-size:11px;color:var(--mut);margin-top:3px">YOLOv8 Dataset Annotator · drowning-detection-ai/boat</div>
+<!-- ══ SETUP ══ -->
+<div id="setup">
+  <div class="setup-box">
+    <div class="setup-head">
+      <div class="setup-logo">TWR<s>2025</s> <span style="font-size:13px;color:var(--mut)">YOLO Annotator</span></div>
+      <div class="setup-sub">YOLOv8 · drowning-detection-ai/boat · Chrome/Edge benötigt</div>
     </div>
-    <div class="wsep"></div>
-
-    <div>
-      <div class="wstitle">Step 1 — Open twr2025 root folder</div>
-      <div class="wsdesc">Grant read/write. Dataset saves to <code style="color:var(--acc)">twr2025/drowning-detection-ai/boat/{train|valid|test}/{images|labels}/</code></div>
-      <button class="wbtn" id="wizFolder">
-        <span style="font-size:18px">📁</span>
-        <div><div>Open twr2025 folder</div><div class="wsub" id="folderSub">No folder selected</div></div>
-      </button>
+    <div class="setup-body">
+      <div class="step-row">
+        <div class="step-num" id="sn1">1</div>
+        <div>
+          <div class="step-label">Dataset-Ordner öffnen</div>
+          <div class="step-desc">twr2025 root-Ordner auswählen. Bilder &amp; Labels werden automatisch in <code style="color:var(--acc);font-size:10px">drowning-detection-ai/boat/{split}/{images|labels}/</code> gespeichert.</div>
+          <button class="pick-btn" id="folderBtn">
+            <span>📁</span>
+            <div><div>twr2025 Ordner öffnen</div><div class="pname" id="folderName">Noch kein Ordner gewählt</div></div>
+          </button>
+        </div>
+      </div>
+      <div class="step-row">
+        <div class="step-num" id="sn2">2</div>
+        <div>
+          <div class="step-label">Video laden</div>
+          <div class="step-desc">MP4, MOV, AVI o.ä. Drag &amp; Drop funktioniert auch im Hauptfenster.</div>
+          <button class="pick-btn" id="videoBtn">
+            <span>🎬</span>
+            <div><div>Video öffnen</div><div class="pname" id="videoName">Noch kein Video gewählt</div></div>
+          </button>
+        </div>
+      </div>
+      <button class="go-btn" id="goBtn">Annotieren starten →</button>
     </div>
-
-    <div>
-      <div class="wstitle">Step 2 — Select video to label</div>
-      <div class="wsdesc">You can switch to another video at any time. Drag &amp; drop also works.</div>
-      <button class="wbtn" id="wizVideo">
-        <span style="font-size:18px">🎬</span>
-        <div><div>Open video file</div><div class="wsub" id="videoSub">No video selected</div></div>
-      </button>
-    </div>
-
-    <div class="wsep"></div>
-    <button class="wgo" id="wizGo">Start Annotating →</button>
   </div>
 </div>
 
 <!-- ══ APP ══ -->
 <header class="hidden" id="appH">
-  <div class="logo">TWR<span>2025</span></div>
-  <div style="font-size:10px;color:var(--mut);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="hpath">—</div>
-  <div class="hst">🖼 <b id="hTotal">0</b> frames</div>
-  <div class="hst">🏷 <b id="hLbl">0</b> labeled</div>
-  <div class="hst"><b id="hSplit">0/0/0</b> tr/va/te</div>
-  <div style="margin-left:auto;display:flex;gap:6px">
-    <button class="btn" onclick="showBrowser()">Browse Dataset</button>
-    <button class="btn grn" onclick="saveFrame()">💾 Save</button>
-    <button class="btn acc" onclick="saveAndNext()">Save &amp; Next →</button>
-    <button class="btn" onclick="openNewVideo()">⏏ Video</button>
-    <button class="btn" onclick="goWizard()">⌂</button>
+  <div class="logo">TWR<s>2025</s></div>
+  <div class="hstat">🖼 <b id="hTotal">0</b></div>
+  <div class="hstat">✅ <b id="hLbl">0</b> gelabelt</div>
+  <div class="hstat"><b id="hSplit">0/0/0</b> TR/VA/TE</div>
+  <div id="autosave-badge">● autosave</div>
+  <div style="margin-left:auto;display:flex;gap:5px">
+    <button class="hbtn" onclick="exportYaml()">Export data.yaml</button>
+    <button class="hbtn" onclick="openVideo()">⏏ Video</button>
+    <button class="hbtn" onclick="goSetup()">⌂</button>
   </div>
 </header>
 
 <div class="app hidden" id="appUI">
+
   <!-- LEFT -->
-  <div class="lp">
-    <div class="ps">
-      <div class="pl">Classes</div>
-      <div id="clsList"></div>
-      <div style="font-size:9px;color:var(--mut);margin-top:5px">Keys 0–6 · click or reassign selected box</div>
-    </div>
+  <div class="left">
 
-    <div class="ps" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-      <div class="pl">Annotations</div>
-      <div class="bscroll" id="boxList"></div>
-    </div>
-
-    <div class="ps">
-      <div class="pl">Split (per N frames)</div>
-      <div class="spnums">
-        <label><span style="width:36px">Train</span><input type="number" id="spTr" value="7" min="1" max="90"></label>
-        <label><span style="width:36px">Valid</span><input type="number" id="spVa" value="2" min="1" max="90"></label>
-        <label><span style="width:36px">Test</span><input type="number" id="spTe" value="1" min="1" max="90"></label>
+    <!-- Workflow -->
+    <div class="sect">
+      <div class="sect-title">Workflow</div>
+      <div class="wf-step" id="wf-seek">
+        <div class="wf-dot" style="background:var(--acc)"></div>
+        <div class="wf-step-body">
+          <div class="wf-title">1 · Video seekenx</div>
+          <div class="wf-hint"><kbd>F</kbd> = Frame capturen<br><kbd>Space</kbd> = Play/Pause<br><kbd>← →</kbd> = Frame vor/zurück</div>
+        </div>
       </div>
-      <div class="sbadges" id="sbadges"></div>
+      <div class="wf-step" id="wf-crop">
+        <div class="wf-dot" style="background:var(--ora)"></div>
+        <div class="wf-step-body">
+          <div class="wf-title">2 · Zuschneiden (opt.)</div>
+          <div class="wf-hint">Rechteck zeichnen<br>oder <kbd>Enter</kbd> für ganzen Frame</div>
+        </div>
+      </div>
+      <div class="wf-step" id="wf-label">
+        <div class="wf-dot" style="background:var(--grn)"></div>
+        <div class="wf-step-body">
+          <div class="wf-title">3 · Labels zeichnen</div>
+          <div class="wf-hint">Boxen ziehen, Klasse per <kbd>0–6</kbd><br><kbd>Enter</kbd> = speichern &amp; weiter</div>
+        </div>
+      </div>
     </div>
 
-    <div class="ps">
-      <div class="pl">Transforms</div>
-      <label style="font-size:11px;color:var(--mut);display:flex;align-items:center;gap:7px;cursor:pointer;margin-bottom:7px">
-        <input type="checkbox" id="chkMirror" onchange="onMirrorChange()"> Mirror (flip horizontal)
-      </label>
-      <button class="btn" id="btnCrop" onclick="toggleCropMode()" style="width:100%;margin-bottom:4px">✂ Draw crop region</button>
-      <button class="btn red hidden" id="btnCropClear" onclick="clearCrop()" style="width:100%">✕ Clear crop</button>
-      <div style="font-size:9px;color:var(--mut);margin-top:5px" id="cropInfo">Full frame (no crop)</div>
+    <!-- Classes -->
+    <div class="sect" style="flex-shrink:0">
+      <div class="sect-title">Klassen <span style="color:var(--dim)">(0–6)</span></div>
+      <div id="clsList"></div>
     </div>
+
+    <!-- Box list for current frame -->
+    <div class="sect" style="flex:1;min-height:0;padding-bottom:0;display:flex;flex-direction:column;">
+      <div class="sect-title">Boxen auf diesem Frame</div>
+      <div id="boxList" class="box-list" style="overflow-y:auto;flex:1"></div>
+    </div>
+
+    <!-- Split -->
+    <div class="sect">
+      <div class="sect-title">Split (pro N Frames)</div>
+      <div class="split-row"><span style="width:38px">Train</span><input type="number" id="spTr" value="7" min="1" max="90"></div>
+      <div class="split-row"><span style="width:38px">Valid</span><input type="number" id="spVa" value="2" min="1" max="90"></div>
+      <div class="split-row"><span style="width:38px">Test</span><input type="number" id="spTe" value="1" min="1" max="90"></div>
+      <div class="split-badges" id="sbadges"></div>
+    </div>
+
+    <!-- Shortcuts -->
+    <div class="sect">
+      <div class="sect-title">Shortcuts</div>
+      <div class="sc-row"><span>Capture frame</span><span class="sc-key">F</span></div>
+      <div class="sc-row"><span>Ganzer Frame (im Crop-Modus)</span><span class="sc-key">Enter</span></div>
+      <div class="sc-row"><span>Speichern &amp; weiter</span><span class="sc-key">Enter</span></div>
+      <div class="sc-row"><span>Box löschen</span><span class="sc-key">Del</span></div>
+      <div class="sc-row"><span>Klasse 0–6</span><span class="sc-key">0–6</span></div>
+      <div class="sc-row"><span>Play/Pause</span><span class="sc-key">Space</span></div>
+      <div class="sc-row"><span>Frames vor/zurück</span><span class="sc-key">← →</span></div>
+      <div class="sc-row"><span>Prev/Next Frame</span><span class="sc-key">A / D</span></div>
+      <div class="sc-row"><span>Mirror toggle</span><span class="sc-key">M</span></div>
+      <div class="sc-row"><span>Speichern</span><span class="sc-key">Ctrl+S</span></div>
+    </div>
+
+    <!-- Mirror -->
+    <div class="sect">
+      <label style="font-size:11px;color:var(--mut);display:flex;align-items:center;gap:7px;cursor:pointer">
+        <input type="checkbox" id="chkMirror"> Spiegeln (Flip horizontal)
+      </label>
+    </div>
+
   </div>
 
   <!-- CENTER -->
   <div class="center">
-    <div class="toolbar">
-      <span style="font-size:11px;color:var(--mut)" id="frameName">No frame — capture one below</span>
-      <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <button class="btn" onclick="captureFrame()" title="F">⊕ Capture frame</button>
-        <span style="font-size:11px;color:var(--mut)">every</span>
-        <input type="number" id="capInt" value="1" min="0.1" max="120" step="0.1"
-          style="width:46px;background:var(--bg);border:1px solid var(--b1);border-radius:3px;color:var(--tx);font-family:var(--mono);font-size:11px;padding:2px 5px;outline:none">
-        <span style="font-size:11px;color:var(--mut)">s</span>
-        <button class="btn" id="autoBtn" onclick="toggleAuto()">Auto</button>
-        <div class="tsep"></div>
-        <button class="btn red" onclick="clearBoxes()">Clear</button>
-        <div class="tsep"></div>
-        <button class="btn" onclick="prevFrame()" title="←">← Prev</button>
-        <button class="btn" onclick="nextFrame()" title="→">Next →</button>
-      </div>
-    </div>
-
-    <div class="cwrap" id="cwrap">
-      <div class="modebadge" id="modeBadge">CROP MODE — draw a rectangle on the video</div>
+    <div class="canvas-wrap" id="cwrap">
+      <div id="step-banner" class="mode-seek">📹 Seekmodus — drücke F um Frame zu capturen</div>
+      <div id="crop-hint">Rechteck ziehen zum Zuschneiden<br>oder <strong>Enter</strong> für den ganzen Frame</div>
       <canvas id="mc"></canvas>
-      <div class="emptymsg" id="emptyMsg">
-        <div class="big">🎬 No frame yet</div>
-        <div style="font-size:12px">Seek the video, then press ⊕ Capture (or F)</div>
+      <div id="empty">
+        <div class="big">🎬 Bereit</div>
+        <div class="small">Seek zum gewünschten Frame, dann F drücken</div>
       </div>
     </div>
-
     <div class="vbar">
-      <button class="vc" onclick="stepFr(-1)" title="Step back">⏮</button>
+      <button class="vc" onclick="stepFr(-1)" title="Ein Frame zurück">⏮</button>
       <button class="vc" id="ppBtn" onclick="togglePlay()">▶</button>
-      <button class="vc" onclick="stepFr(1)" title="Step forward">⏭</button>
-      <input class="seek" type="range" id="seek" value="0" min="0" max="100" step="0.01">
+      <button class="vc" onclick="stepFr(1)" title="Ein Frame vor">⏭</button>
+      <input class="seek-slider" type="range" id="seekBar" value="0" min="0" max="100" step="0.01">
       <div class="tdisp" id="tdisp">0:00 / 0:00</div>
       <select class="spd" id="speedSel" onchange="vid.playbackRate=+this.value">
         <option value=".25">.25×</option><option value=".5">.5×</option>
         <option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option>
       </select>
+      <div style="margin-left:8px"></div>
+      <button class="vc cap" onclick="captureFrame()" title="F">⊕ Capture (F)</button>
     </div>
   </div>
 
   <!-- RIGHT -->
-  <div class="rp">
-    <div class="ps" style="flex-shrink:0">
-      <div class="pl">Frames (<span id="fCount">0</span>)</div>
+  <div class="right">
+    <div class="strip-head">
+      <span>Frames (<span id="fCount">0</span>)</span>
     </div>
-    <div class="fstrip" id="fstrip"></div>
+    <div class="strip-scroll" id="fstrip"></div>
   </div>
-</div>
 
-<!-- BROWSER MODAL -->
-<div class="overlay" id="browserOv">
-  <div class="modal">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-      <h2 style="margin:0">Dataset Browser</h2>
-      <button class="btn grn" onclick="exportYaml()" style="margin-left:auto">Export data.yaml</button>
-      <button class="btn" onclick="closeOv('browserOv')">✕</button>
-    </div>
-    <div id="browserContent"></div>
-  </div>
 </div>
 
 <div id="toast"></div>
 <input type="file" id="vidFile" accept="video/*" style="display:none">
 
 <script>
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 // CONSTANTS
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 const CLASSES = ["Drowning","Struggling","Unsure","Playing","Standing","Swimming","Rettungsboot"];
-const COLORS  = ["#ef4565","#ff6b35","#ffd166","#39d98a","#c084fc","#00e5ff","#f97316"];
+const COLORS  = ["#f87171","#fb923c","#facc15","#4ade80","#c084fc","#22d3ee","#f97316"];
 const DS_PATH = ["drowning-detection-ai","boat"];
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 // STATE
-// ═══════════════════════════════════════════════
-let rootDir = null;
-let boatDir = null;
-let frames  = [];
-let curIdx  = -1;
-let curCls  = 0;
-let selBox  = -1;
+// ═══════════════════════════════
+let rootDir = null, boatDir = null;
+let frames  = [], curIdx = -1, curCls = 0, selBox = -1;
+let mode    = 'seek'; // 'seek' | 'crop' | 'label'
 
-// drawing boxes
+// drawing
 let drawing = false, dp0 = null, dp1 = null;
-// crop mode
-let cropMode = false, cropRect = null;
+// crop
 let cdrawing = false, cp0 = null, cp1 = null;
+let pendingFrame = null; // captured but not yet committed (waiting for crop decision)
 
-// auto-capture
-let autoOn = false, autoTimer = null;
+// autosave
+let saveQueue = new Set(), saveTimer = null;
 
 const vid = document.getElementById('vid');
 const mc  = document.getElementById('mc');
 const ctx = mc.getContext('2d');
 
-// ═══════════════════════════════════════════════
-// WIZARD
-// ═══════════════════════════════════════════════
-document.getElementById('wizFolder').onclick = async () => {
+// ═══════════════════════════════
+// SETUP
+// ═══════════════════════════════
+document.getElementById('folderBtn').onclick = async () => {
   try {
-    rootDir = await window.showDirectoryPicker({ mode:'readwrite' });
-    document.getElementById('folderSub').textContent = rootDir.name;
-    document.getElementById('wizFolder').classList.add('done');
-    toast('📁 ' + rootDir.name + ' — read/write granted');
+    rootDir = await window.showDirectoryPicker({mode:'readwrite'});
+    document.getElementById('folderName').textContent = rootDir.name;
+    document.getElementById('folderBtn').classList.add('done');
+    document.getElementById('sn1').classList.add('done');
+    toast('📁 '+rootDir.name+' geöffnet');
     await initBoat();
     await loadExisting();
     checkReady();
-  } catch(e) { if(e.name!=='AbortError') toast('Error: '+e.message); }
+  } catch(e) { if(e.name!=='AbortError') toast('Fehler: '+e.message); }
 };
 
-document.getElementById('wizVideo').onclick = () => document.getElementById('vidFile').click();
+document.getElementById('videoBtn').onclick = () => document.getElementById('vidFile').click();
 document.getElementById('vidFile').onchange = e => {
   const f = e.target.files[0]; if(!f) return;
-  loadVid(f); e.target.value = '';
+  loadVid(f); e.target.value='';
 };
 
 function checkReady() {
   const ok = rootDir && vid.src;
-  document.getElementById('wizGo').classList.toggle('ready', ok);
+  document.getElementById('goBtn').classList.toggle('ready', ok);
 }
-document.getElementById('wizGo').onclick = () => {
-  if(!rootDir || !vid.src) return;
-  document.getElementById('wizard').classList.add('hidden');
+document.getElementById('goBtn').onclick = () => {
+  if(!rootDir||!vid.src) return;
+  document.getElementById('setup').classList.add('hidden');
   document.getElementById('appH').classList.remove('hidden');
   document.getElementById('appUI').classList.remove('hidden');
+  setMode('seek');
 };
 
-function goWizard() {
-  document.getElementById('wizard').classList.remove('hidden');
+function goSetup() {
+  document.getElementById('setup').classList.remove('hidden');
   document.getElementById('appH').classList.add('hidden');
   document.getElementById('appUI').classList.add('hidden');
 }
 
-// ═══════════════════════════════════════════════
-// FS
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
+// FS HELPERS
+// ═══════════════════════════════
 async function getDir(parent, ...parts) {
   let d = parent;
-  for(const p of parts) d = await d.getDirectoryHandle(p, {create:true});
+  for(const p of parts) d = await d.getDirectoryHandle(p,{create:true});
   return d;
 }
 async function writeFH(dir, name, data) {
-  const fh = await dir.getFileHandle(name, {create:true});
+  const fh = await dir.getFileHandle(name,{create:true});
   const w  = await fh.createWritable();
   await w.write(data); await w.close();
 }
 async function readFH(dir, name) {
   try { return await (await (await dir.getFileHandle(name)).getFile()).text(); } catch { return null; }
 }
-
 async function initBoat() {
   boatDir = await getDir(rootDir, ...DS_PATH);
-  document.getElementById('hpath').textContent = rootDir.name+'/drowning-detection-ai/boat';
 }
 
-// ═══════════════════════════════════════════════
-// LOAD EXISTING DATASET
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
+// LOAD EXISTING
+// ═══════════════════════════════
 async function loadExisting() {
   if(!boatDir) return;
   let n = 0;
@@ -395,225 +430,300 @@ async function loadExisting() {
       imgD = await sd.getDirectoryHandle('images');
       try { lblD = await sd.getDirectoryHandle('labels'); } catch{}
     } catch { continue; }
-
     for await(const [name, fh] of imgD.entries()) {
       if(!/\.(jpe?g|png|webp)$/i.test(name)) continue;
       const file = await fh.getFile();
       const dataURL = await toDataURL(file);
       const stem = name.replace(/\.[^.]+$/,'');
       let boxes = [];
-      if(lblD) {
-        const txt = await readFH(lblD, stem+'.txt');
-        if(txt) boxes = parseTxt(txt);
-      }
-      frames.push({id:stem, dataURL, boxes, split, mirrored:false, crop:null});
+      if(lblD) { const txt = await readFH(lblD, stem+'.txt'); if(txt) boxes = parseTxt(txt); }
+      frames.push({id:stem, dataURL, boxes, split});
       n++;
     }
   }
   reAssignSplits(false);
   renderStrip();
   updateStats();
-  if(n>0) { toast(`Loaded ${n} existing frames`); if(curIdx<0&&frames.length>0) selectFrame(0); }
+  if(n>0) { toast(`✅ ${n} vorhandene Frames geladen`); if(curIdx<0&&frames.length>0) selectFrame(0); }
 }
 
 function parseTxt(t) {
   return t.trim().split('\n').map(l=>{
     const p=l.trim().split(/\s+/).map(Number);
-    return p.length>=5 ? {cls:p[0],cx:p[1],cy:p[2],w:p[3],h:p[4]} : null;
+    return p.length>=5?{cls:p[0],cx:p[1],cy:p[2],w:p[3],h:p[4]}:null;
   }).filter(Boolean);
 }
 function toDataURL(blob) {
-  return new Promise(r=>{ const fr=new FileReader(); fr.onload=e=>r(e.target.result); fr.readAsDataURL(blob); });
+  return new Promise(r=>{const fr=new FileReader();fr.onload=e=>r(e.target.result);fr.readAsDataURL(blob);});
 }
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 // VIDEO
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 function loadVid(f) {
-  const url = URL.createObjectURL(f);
-  vid.src = url;
+  vid.src = URL.createObjectURL(f);
   vid.onloadedmetadata = () => {
-    document.getElementById('seek').max = vid.duration;
+    document.getElementById('seekBar').max = vid.duration;
     updateTime();
-    document.getElementById('videoSub').textContent = f.name;
-    document.getElementById('wizVideo').classList.add('done');
+    document.getElementById('videoName').textContent = f.name;
+    document.getElementById('videoBtn').classList.add('done');
+    document.getElementById('sn2').classList.add('done');
     checkReady();
-    toast('🎬 '+f.name+' ('+fmt(vid.duration)+')');
-    drawLive(); // show first frame
+    toast('🎬 '+f.name);
+    drawLive();
   };
 }
-function openNewVideo() { document.getElementById('vidFile').click(); }
+function openVideo() { document.getElementById('vidFile').click(); }
 
 vid.ontimeupdate = () => {
-  document.getElementById('seek').value = vid.currentTime;
+  document.getElementById('seekBar').value = vid.currentTime;
   updateTime();
-  if(curIdx < 0) drawLive(); // live preview when no frame selected
+  if(mode==='seek') drawLive();
 };
-vid.onplay  = () => document.getElementById('ppBtn').textContent = '⏸';
-vid.onpause = () => document.getElementById('ppBtn').textContent = '▶';
+vid.onplay  = () => document.getElementById('ppBtn').textContent='⏸';
+vid.onpause = () => document.getElementById('ppBtn').textContent='▶';
+vid.onended = () => document.getElementById('ppBtn').textContent='▶';
 
-document.getElementById('seek').oninput = () => {
-  vid.currentTime = +document.getElementById('seek').value;
-  setTimeout(drawLive, 40);
+document.getElementById('seekBar').oninput = () => {
+  vid.currentTime = +document.getElementById('seekBar').value;
+  setTimeout(()=>{ if(mode==='seek') drawLive(); },40);
 };
-function togglePlay() { vid.paused ? vid.play() : vid.pause(); }
-function stepFr(d) { vid.currentTime=Math.max(0,Math.min(vid.duration,vid.currentTime+d/30)); setTimeout(drawLive,40); }
-function updateTime() {
-  document.getElementById('tdisp').textContent = fmt(vid.currentTime)+' / '+fmt(vid.duration||0);
+function togglePlay() { vid.paused?vid.play():vid.pause(); }
+function stepFr(d) {
+  vid.currentTime=Math.max(0,Math.min(vid.duration,vid.currentTime+d/30));
+  setTimeout(()=>{ if(mode==='seek') drawLive(); },40);
 }
-function fmt(s) { const m=Math.floor(s/60); return m+':'+Math.floor(s%60).toString().padStart(2,'0'); }
+function updateTime() {
+  document.getElementById('tdisp').textContent=fmt(vid.currentTime)+' / '+fmt(vid.duration||0);
+}
+function fmt(s){const m=Math.floor(s/60);return m+':'+(Math.floor(s%60)+'').padStart(2,'0');}
 
-// draw live video into canvas (no stored frame)
 function drawLive() {
-  if(!vid.src) return;
+  if(!vid.src&&!vid.videoWidth) return;
   const W=vid.videoWidth||640, H=vid.videoHeight||360;
   mc.width=W; mc.height=H;
   ctx.clearRect(0,0,W,H);
-  const mir = document.getElementById('chkMirror').checked;
-  if(mir) { ctx.save(); ctx.scale(-1,1); ctx.drawImage(vid,-W,0,W,H); ctx.restore(); }
+  const mir=document.getElementById('chkMirror').checked;
+  if(mir){ctx.save();ctx.scale(-1,1);ctx.drawImage(vid,-W,0,W,H);ctx.restore();}
   else ctx.drawImage(vid,0,0,W,H);
-  // crop overlay on live
-  drawCropOv();
+  document.getElementById('empty').classList.add('hidden');
 }
 
-// ═══════════════════════════════════════════════
-// CAPTURE FRAME
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
+// MODE MANAGEMENT
+// ═══════════════════════════════
+function setMode(m) {
+  mode = m;
+  const banner = document.getElementById('step-banner');
+  const cropHint = document.getElementById('crop-hint');
+
+  // update workflow steps
+  document.querySelectorAll('.wf-step').forEach(el=>el.classList.remove('active'));
+  banner.classList.remove('show','mode-seek','mode-crop','mode-label');
+
+  if(m==='seek') {
+    document.getElementById('wf-seek').classList.add('active');
+    banner.className='show mode-seek';
+    banner.textContent='📹 Seekmodus — drücke F um Frame zu capturen';
+    cropHint.style.display='none';
+    mc.style.cursor='default';
+  } else if(m==='crop') {
+    document.getElementById('wf-crop').classList.add('active');
+    banner.className='show mode-crop';
+    banner.textContent='✂ Crop-Modus — Rechteck ziehen oder Enter für ganzen Frame';
+    cropHint.style.display='block';
+    mc.style.cursor='crosshair';
+  } else if(m==='label') {
+    document.getElementById('wf-label').classList.add('active');
+    banner.className='show mode-label';
+    banner.textContent='🏷 Label-Modus — Boxen zeichnen · Enter = speichern & weiter';
+    cropHint.style.display='none';
+    mc.style.cursor='crosshair';
+  }
+}
+
+// ═══════════════════════════════
+// CAPTURE
+// ═══════════════════════════════
 function captureFrame() {
-  if(!vid.src) { toast('No video loaded'); return; }
+  if(!vid.src) { toast('Kein Video geladen'); return; }
   const mir = document.getElementById('chkMirror').checked;
   const VW=vid.videoWidth, VH=vid.videoHeight;
-  let sx=0, sy=0, sw=VW, sh=VH;
-  if(cropRect) { sx=cropRect.x; sy=cropRect.y; sw=cropRect.w; sh=cropRect.h; }
   const tmp=document.createElement('canvas');
-  tmp.width=sw; tmp.height=sh;
+  tmp.width=VW; tmp.height=VH;
   const tc=tmp.getContext('2d');
-  if(mir) {
-    tc.save(); tc.scale(-1,1);
-    tc.drawImage(vid, -(sx+sw), sy, sw, sh, -sw, 0, sw, sh);
-    tc.restore();
-  } else {
-    tc.drawImage(vid, sx, sy, sw, sh, 0, 0, sw, sh);
+  if(mir){tc.save();tc.scale(-1,1);tc.drawImage(vid,-VW,0,VW,VH);tc.restore();}
+  else tc.drawImage(vid,0,0,VW,VH);
+  pendingFrame = {dataURL:tmp.toDataURL('image/jpeg',0.93), mirrored:mir, W:VW, H:VH};
+  // show frozen frame
+  mc.width=VW; mc.height=VH;
+  ctx.drawImage(tmp,0,0);
+  setMode('crop');
+  cp0=cp1=null; cdrawing=false;
+  toast('Frame eingefroren — Bereich ziehen oder Enter für ganzen Frame');
+}
+
+function commitCrop(cropRect) {
+  if(!pendingFrame) return;
+  let dataURL = pendingFrame.dataURL;
+  if(cropRect) {
+    const {x,y,w,h}=cropRect;
+    const tmp2=document.createElement('canvas');
+    tmp2.width=Math.round(w); tmp2.height=Math.round(h);
+    const tc2=tmp2.getContext('2d');
+    const src=new Image(); src.src=pendingFrame.dataURL;
+    // draw synchronously into offscreen canvas
+    tc2.drawImage(src,x,y,w,h,0,0,Math.round(w),Math.round(h));
+    dataURL=tmp2.toDataURL('image/jpeg',0.93);
   }
   const id='f'+Date.now();
-  const dataURL=tmp.toDataURL('image/jpeg',0.93);
-  const frame={id, dataURL, boxes:[], split:'train', mirrored:mir, crop:cropRect?{...cropRect}:null};
+  const frame={id, dataURL, boxes:[], split:'train'};
   frames.push(frame);
   reAssignSplits(false);
   addThumb(frame, frames.length-1);
   updateStats();
+  pendingFrame=null;
+  cp0=cp1=null; cdrawing=false;
   selectFrame(frames.length-1);
-  document.getElementById('emptyMsg').classList.add('hidden');
-  toast('✓ Captured'+( cropRect?' (cropped)':'')+( mir?' [mirrored]':'' ));
+  setMode('label');
+  toast('✓ Frame bereit — Boxen zeichnen');
 }
 
-function onMirrorChange() {
-  if(curIdx<0) drawLive();
+// ═══════════════════════════════
+// CANVAS EVENTS
+// ═══════════════════════════════
+function scale(){return mc.getBoundingClientRect().width/mc.width;}
+function evPt(e){
+  const r=mc.getBoundingClientRect(),sc=r.width/mc.width;
+  return{x:e.clientX-r.left,y:e.clientY-r.top,sc};
 }
 
-// auto capture
-function toggleAuto() {
-  autoOn=!autoOn;
-  const b=document.getElementById('autoBtn');
-  b.classList.toggle('on',autoOn);
-  b.textContent=autoOn?'■ Stop':'Auto';
-  if(autoOn) schedAuto(); else clearTimeout(autoTimer);
-}
-function schedAuto() {
-  if(!autoOn) return;
-  const ms=parseFloat(document.getElementById('capInt').value)*1000||1000;
-  autoTimer=setTimeout(()=>{ if(!vid.paused&&!vid.ended) captureFrame(); schedAuto(); },ms);
+mc.addEventListener('mousedown',e=>{
+  if(e.button!==0) return;
+  const pt=evPt(e);
+  if(mode==='crop'){
+    cdrawing=true; cp0={x:pt.x,y:pt.y}; cp1={x:pt.x,y:pt.y}; return;
+  }
+  if(mode==='label') {
+    // try to select existing box
+    const fr=frames[curIdx]; if(!fr) return;
+    const nx=pt.x/pt.sc/mc.width, ny=pt.y/pt.sc/mc.height;
+    for(let i=fr.boxes.length-1;i>=0;i--){
+      const b=fr.boxes[i];
+      if(nx>=b.cx-b.w/2&&nx<=b.cx+b.w/2&&ny>=b.cy-b.h/2&&ny<=b.cy+b.h/2){
+        selBox=i; curCls=b.cls; renderBoxList(); renderCls(); redraw(); return;
+      }
+    }
+    drawing=true; dp0={x:pt.x,y:pt.y}; dp1={x:pt.x,y:pt.y};
+  }
+});
+
+mc.addEventListener('mousemove',e=>{
+  const pt=evPt(e);
+  if(cdrawing){cp1={x:pt.x,y:pt.y}; drawCropPreview(); return;}
+  if(drawing&&mode==='label'){dp1={x:pt.x,y:pt.y}; redraw();}
+});
+
+mc.addEventListener('mouseup',e=>{
+  const pt=evPt(e);
+  if(cdrawing){
+    cdrawing=false;
+    const sc=scale();
+    const x=Math.min(cp0.x,pt.x)/sc, y=Math.min(cp0.y,pt.y)/sc;
+    const w=Math.abs(pt.x-cp0.x)/sc, h=Math.abs(pt.y-cp0.y)/sc;
+    if(w>10&&h>10){
+      toast(`Crop: ${Math.round(w)}×${Math.round(h)}px — Enter zum Bestätigen`);
+      // show crop rect but don't commit yet — pressing Enter commits
+      drawCropConfirm({x,y,w,h});
+      // store pending crop
+      window._pendingCrop={x,y,w,h};
+    } else {
+      cp0=cp1=null; drawCropPreview();
+      window._pendingCrop=null;
+    }
+    return;
+  }
+  if(!drawing||mode!=='label') return;
+  drawing=false;
+  const sc=pt.sc;
+  const x1=Math.min(dp0.x,pt.x)/sc/mc.width, y1=Math.min(dp0.y,pt.y)/sc/mc.height;
+  const x2=Math.max(dp0.x,pt.x)/sc/mc.width, y2=Math.max(dp0.y,pt.y)/sc/mc.height;
+  dp0=dp1=null;
+  const bw=x2-x1, bh=y2-y1;
+  if(bw<0.004||bh<0.004){redraw();return;}
+  if(curIdx<0){redraw();return;}
+  const cx=Math.max(bw/2,Math.min(1-bw/2,x1+bw/2));
+  const cy=Math.max(bh/2,Math.min(1-bh/2,y1+bh/2));
+  frames[curIdx].boxes.push({cls:curCls,cx,cy,w:bw,h:bh});
+  selBox=frames[curIdx].boxes.length-1;
+  redraw(); renderBoxList(); updateStats(); updateThumb(curIdx);
+  queueSave(curIdx);
+});
+
+function drawCropPreview() {
+  // redraw frozen frame + crop rect being drawn
+  if(!pendingFrame) return;
+  const img=new Image(); img.src=pendingFrame.dataURL;
+  ctx.clearRect(0,0,mc.width,mc.height);
+  ctx.drawImage(img,0,0,mc.width,mc.height);
+  if(cdrawing&&cp0&&cp1){
+    const sc=scale();
+    const rx=Math.min(cp0.x,cp1.x)/sc, ry=Math.min(cp0.y,cp1.y)/sc;
+    const rw=Math.abs(cp1.x-cp0.x)/sc, rh=Math.abs(cp1.y-cp0.y)/sc;
+    ctx.strokeStyle='#fb923c'; ctx.lineWidth=2; ctx.setLineDash([6,3]);
+    ctx.fillStyle='rgba(251,146,60,.1)'; ctx.fillRect(rx,ry,rw,rh);
+    ctx.strokeRect(rx,ry,rw,rh); ctx.setLineDash([]);
+  }
 }
 
-// ═══════════════════════════════════════════════
-// SAVE / DELETE (filesystem)
-// ═══════════════════════════════════════════════
-async function saveFrame(idx) {
-  idx = (idx==null) ? curIdx : idx;
-  if(idx<0||!boatDir) { toast('Nothing to save'); return; }
-  const frame=frames[idx];
-  try {
-    const sd  = await getDir(boatDir, frame.split);
-    const imd = await getDir(sd,'images');
-    const lbd = await getDir(sd,'labels');
-    const blob = await fetch(frame.dataURL).then(r=>r.blob());
-    await writeFH(imd, frame.id+'.jpg', blob);
-    const txt = frame.boxes.map(b=>`${b.cls} ${b.cx.toFixed(6)} ${b.cy.toFixed(6)} ${b.w.toFixed(6)} ${b.h.toFixed(6)}`).join('\n');
-    await writeFH(lbd, frame.id+'.txt', txt);
-    toast('💾 Saved → '+frame.split+'/'+frame.id);
-  } catch(e) { toast('Save error: '+e.message); }
+function drawCropConfirm(cr) {
+  if(!pendingFrame) return;
+  const img=new Image(); img.src=pendingFrame.dataURL;
+  ctx.clearRect(0,0,mc.width,mc.height);
+  ctx.drawImage(img,0,0,mc.width,mc.height);
+  // dim outside crop
+  ctx.fillStyle='rgba(0,0,0,.5)';
+  ctx.fillRect(0,0,mc.width,cr.y);
+  ctx.fillRect(0,cr.y,cr.x,cr.h);
+  ctx.fillRect(cr.x+cr.w,cr.y,mc.width-(cr.x+cr.w),cr.h);
+  ctx.fillRect(0,cr.y+cr.h,mc.width,mc.height-(cr.y+cr.h));
+  // border
+  ctx.strokeStyle='#fb923c'; ctx.lineWidth=2.5; ctx.setLineDash([]);
+  ctx.strokeRect(cr.x,cr.y,cr.w,cr.h);
+  // label
+  ctx.font='bold 12px JetBrains Mono,monospace';
+  const lbl=`${Math.round(cr.w)}×${Math.round(cr.h)} — Enter bestätigt`;
+  const tw=ctx.measureText(lbl).width;
+  ctx.fillStyle='rgba(251,146,60,.9)'; ctx.fillRect(cr.x,cr.y-22,tw+10,20);
+  ctx.fillStyle='#000'; ctx.fillText(lbl,cr.x+5,cr.y-6);
 }
 
-async function saveAndNext() {
-  await saveFrame();
-  nextFrame();
-}
-
-async function deleteFromFS(frame) {
-  if(!boatDir) return;
-  try {
-    const sd  = await boatDir.getDirectoryHandle(frame.split);
-    const imd = await sd.getDirectoryHandle('images');
-    const lbd = await sd.getDirectoryHandle('labels');
-    try { await imd.removeEntry(frame.id+'.jpg'); } catch{}
-    try { await lbd.removeEntry(frame.id+'.txt'); } catch{}
-  } catch{}
-}
-
-async function exportYaml() {
-  if(!boatDir) { toast('No dataset folder'); return; }
-  const yaml=`train: ./train/images\nval: ./valid/images\ntest: ./test/images\n\nnc: ${CLASSES.length}\nnames: [${CLASSES.map(c=>'"'+c+'"').join(', ')}]\n`;
-  await writeFH(boatDir,'data.yaml',yaml);
-  toast('✓ data.yaml written to boat/');
-}
-
-// ═══════════════════════════════════════════════
-// FRAME SELECTION & REDRAW
-// ═══════════════════════════════════════════════
-function selectFrame(idx) {
-  curIdx=idx; selBox=-1;
-  document.querySelectorAll('.fth').forEach((el,i)=>el.classList.toggle('active',i===idx));
-  const fr=frames[idx]; if(!fr) return;
-  document.getElementById('frameName').textContent=fr.id+' · ['+fr.split+']';
-  document.getElementById('chkMirror').checked=!!fr.mirrored;
-  document.getElementById('emptyMsg').classList.add('hidden');
-  const img=new Image();
-  img.onload=()=>{ mc.width=img.naturalWidth; mc.height=img.naturalHeight; redraw(); };
-  img.src=fr.dataURL;
-  renderBoxList();
-  const th=document.querySelectorAll('.fth')[idx];
-  if(th) th.scrollIntoView({block:'nearest',behavior:'smooth'});
-}
-
+// ═══════════════════════════════
+// REDRAW
+// ═══════════════════════════════
 function redraw() {
-  const fr=frames[curIdx];
-  if(!fr) { drawLive(); return; }
+  const fr=frames[curIdx]; if(!fr) return;
   const img=new Image();
   img.onload=()=>{
     ctx.clearRect(0,0,mc.width,mc.height);
-    ctx.drawImage(img,0,0); // stored frames are already baked (mirrored/cropped)
-
-    // boxes
+    ctx.drawImage(img,0,0);
     fr.boxes.forEach((b,i)=>{
       const col=COLORS[b.cls%COLORS.length];
       const x=(b.cx-b.w/2)*mc.width, y=(b.cy-b.h/2)*mc.height;
       const w=b.w*mc.width, h=b.h*mc.height;
       ctx.strokeStyle=col;
-      ctx.lineWidth=i===selBox?3:1.5;
-      ctx.setLineDash(i===selBox?[6,3]:[]);
+      ctx.lineWidth=i===selBox?2.5:1.5;
+      ctx.setLineDash(i===selBox?[5,3]:[]);
       ctx.strokeRect(x,y,w,h);
       const lbl=CLASSES[b.cls]||'c'+b.cls;
       ctx.font='bold 11px JetBrains Mono,monospace';
       const tw=ctx.measureText(lbl).width;
-      ctx.fillStyle=col+'cc';
-      ctx.fillRect(x, y>14?y-15:y+h, tw+8, 15);
-      ctx.fillStyle='#000';
-      ctx.fillText(lbl, x+4, y>14?y-3:y+h+11);
+      ctx.fillStyle=col+'dd'; ctx.fillRect(x,y>14?y-16:y+h,tw+8,16);
+      ctx.fillStyle='#000'; ctx.fillText(lbl,x+4,y>14?y-3:y+h+12);
       ctx.setLineDash([]);
     });
-
-    // in-progress draw
-    if(drawing&&dp0&&dp1) {
+    // in-progress
+    if(drawing&&dp0&&dp1){
       const sc=scale();
       const rx=Math.min(dp0.x,dp1.x)/sc, ry=Math.min(dp0.y,dp1.y)/sc;
       const rw=Math.abs(dp1.x-dp0.x)/sc, rh=Math.abs(dp1.y-dp0.y)/sc;
@@ -621,251 +731,193 @@ function redraw() {
       ctx.lineWidth=1.5; ctx.setLineDash([4,2]);
       ctx.strokeRect(rx,ry,rw,rh); ctx.setLineDash([]);
     }
-    // crop overlay on stored frame view
-    drawCropOv();
   };
   img.src=fr.dataURL;
 }
 
-// crop overlay
-function drawCropOv() {
-  // show pending crop draw
-  if(cdrawing&&cp0&&cp1) {
-    const sc=scale();
-    const rx=Math.min(cp0.x,cp1.x)/sc, ry=Math.min(cp0.y,cp1.y)/sc;
-    const rw=Math.abs(cp1.x-cp0.x)/sc, rh=Math.abs(cp1.y-cp0.y)/sc;
-    ctx.strokeStyle='#ff6b35'; ctx.lineWidth=2; ctx.setLineDash([6,3]);
-    ctx.strokeRect(rx,ry,rw,rh);
-    ctx.fillStyle='rgba(255,107,53,.09)'; ctx.fillRect(rx,ry,rw,rh);
-    ctx.setLineDash([]);
-  }
-  // show committed crop on live view
-  if(cropRect&&curIdx<0) {
-    ctx.strokeStyle='#ff6b35'; ctx.lineWidth=2; ctx.setLineDash([6,3]);
-    ctx.strokeRect(cropRect.x,cropRect.y,cropRect.w,cropRect.h);
-    ctx.fillStyle='rgba(255,107,53,.07)'; ctx.fillRect(cropRect.x,cropRect.y,cropRect.w,cropRect.h);
-    ctx.setLineDash([]);
-  }
+// ═══════════════════════════════
+// FRAME SELECTION
+// ═══════════════════════════════
+function selectFrame(idx) {
+  curIdx=idx; selBox=-1;
+  document.querySelectorAll('.fth').forEach((el,i)=>el.classList.toggle('active',i===idx));
+  const fr=frames[idx]; if(!fr) return;
+  const img=new Image();
+  img.onload=()=>{mc.width=img.naturalWidth;mc.height=img.naturalHeight;redraw();};
+  img.src=fr.dataURL;
+  renderBoxList();
+  if(mode!=='label') setMode('label');
+  const th=document.querySelectorAll('.fth')[idx];
+  if(th) th.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
 
-// ═══════════════════════════════════════════════
-// CANVAS EVENTS
-// ═══════════════════════════════════════════════
-function scale() { return mc.getBoundingClientRect().width/mc.width; }
-function evPt(e) {
-  const r=mc.getBoundingClientRect(), sc=r.width/mc.width;
-  return {x:e.clientX-r.left, y:e.clientY-r.top, sc};
+// ═══════════════════════════════
+// AUTOSAVE
+// ═══════════════════════════════
+function queueSave(idx) {
+  if(!boatDir) return;
+  saveQueue.add(idx);
+  clearTimeout(saveTimer);
+  setBadge('saving');
+  saveTimer = setTimeout(flushSave, 600);
 }
 
-mc.addEventListener('mousedown', e=>{
-  if(e.button!==0) return;
-  const pt=evPt(e);
+async function flushSave() {
+  if(!boatDir) return;
+  const idxs=[...saveQueue]; saveQueue.clear();
+  for(const idx of idxs) await saveFrameAt(idx);
+  setBadge('saved');
+  setTimeout(()=>setBadge(''),2000);
+}
 
-  if(cropMode) { cdrawing=true; cp0={x:pt.x,y:pt.y}; cp1={x:pt.x,y:pt.y}; return; }
+function setBadge(state) {
+  const b=document.getElementById('autosave-badge');
+  b.className=''; if(state) b.classList.add(state);
+  b.textContent=state==='saving'?'● speichert…':state==='saved'?'✓ gespeichert':'● autosave';
+}
 
-  // try to select existing box
-  if(curIdx>=0) {
-    const fr=frames[curIdx];
-    const nx=pt.x/pt.sc/mc.width, ny=pt.y/pt.sc/mc.height;
-    for(let i=fr.boxes.length-1;i>=0;i--) {
-      const b=fr.boxes[i];
-      if(nx>=b.cx-b.w/2&&nx<=b.cx+b.w/2&&ny>=b.cy-b.h/2&&ny<=b.cy+b.h/2) {
-        selBox=i; curCls=b.cls; renderBoxList(); renderCls(); redraw(); return;
-      }
+async function saveFrameAt(idx) {
+  if(idx<0||!boatDir) return;
+  const frame=frames[idx];
+  try {
+    const sd=await getDir(boatDir,frame.split);
+    const imd=await getDir(sd,'images');
+    const lbd=await getDir(sd,'labels');
+    const blob=await fetch(frame.dataURL).then(r=>r.blob());
+    await writeFH(imd,frame.id+'.jpg',blob);
+    const txt=frame.boxes.map(b=>`${b.cls} ${b.cx.toFixed(6)} ${b.cy.toFixed(6)} ${b.w.toFixed(6)} ${b.h.toFixed(6)}`).join('\n');
+    await writeFH(lbd,frame.id+'.txt',txt);
+  } catch(e){ toast('Speicherfehler: '+e.message); }
+}
+
+async function saveAndNext() {
+  if(curIdx>=0) await saveFrameAt(curIdx);
+  setBadge('saved'); setTimeout(()=>setBadge(''),2000);
+  if(curIdx<frames.length-1) selectFrame(curIdx+1);
+  else { setMode('seek'); toast('Letzter Frame — bereit für neuen Capture'); }
+}
+
+async function deleteFromFS(frame) {
+  if(!boatDir) return;
+  try {
+    const sd=await boatDir.getDirectoryHandle(frame.split);
+    for(const sub of ['images','labels']) {
+      try {
+        const d=await sd.getDirectoryHandle(sub);
+        await d.removeEntry(frame.id+'.'+(sub==='images'?'jpg':'txt'));
+      } catch{}
     }
-  }
-  // start new box
-  drawing=true; dp0={x:pt.x,y:pt.y}; dp1={x:pt.x,y:pt.y};
-});
-
-mc.addEventListener('mousemove', e=>{
-  const pt=evPt(e);
-  if(cdrawing) { cp1={x:pt.x,y:pt.y}; curIdx>=0?redraw():drawLive(); return; }
-  if(!drawing) return;
-  dp1={x:pt.x,y:pt.y};
-  curIdx>=0?redraw():drawLive();
-});
-
-mc.addEventListener('mouseup', e=>{
-  const pt=evPt(e);
-  if(cdrawing) {
-    cdrawing=false;
-    const sc=scale();
-    const x=Math.min(cp0.x,pt.x)/sc, y=Math.min(cp0.y,pt.y)/sc;
-    const w=Math.abs(pt.x-cp0.x)/sc, h=Math.abs(pt.y-cp0.y)/sc;
-    cp0=cp1=null;
-    if(w>8&&h>8) {
-      cropRect={x,y,w,h};
-      document.getElementById('btnCropClear').classList.remove('hidden');
-      document.getElementById('cropInfo').textContent=`Crop: ${Math.round(w)}×${Math.round(h)}px`;
-      toast('Crop set — next capture will use this region');
-    }
-    if(cropMode) toggleCropMode(); // auto-exit crop mode
-    curIdx>=0?redraw():drawLive();
-    return;
-  }
-  if(!drawing) return;
-  drawing=false;
-  const sc=pt.sc;
-  const x1=Math.min(dp0.x,pt.x)/sc/mc.width, y1=Math.min(dp0.y,pt.y)/sc/mc.height;
-  const x2=Math.max(dp0.x,pt.x)/sc/mc.width, y2=Math.max(dp0.y,pt.y)/sc/mc.height;
-  dp0=dp1=null;
-  const bw=x2-x1, bh=y2-y1;
-  if(bw<0.004||bh<0.004) { curIdx>=0?redraw():drawLive(); return; }
-  if(curIdx<0) { toast('Capture a frame first, then draw boxes'); drawLive(); return; }
-
-  // clamp
-  const cx=Math.max(bw/2,Math.min(1-bw/2, x1+bw/2));
-  const cy=Math.max(bh/2,Math.min(1-bh/2, y1+bh/2));
-  frames[curIdx].boxes.push({cls:curCls, cx, cy, w:bw, h:bh});
-  selBox=frames[curIdx].boxes.length-1;
-  redraw(); renderBoxList(); updateStats(); updateThumb(curIdx);
-});
-
-// ═══════════════════════════════════════════════
-// CROP MODE
-// ═══════════════════════════════════════════════
-function toggleCropMode() {
-  cropMode=!cropMode;
-  const b=document.getElementById('btnCrop');
-  b.classList.toggle('on',cropMode);
-  b.textContent=cropMode?'✂ Drawing... click canvas':'✂ Draw crop region';
-  document.getElementById('modeBadge').style.display=cropMode?'block':'none';
-}
-function clearCrop() {
-  cropRect=null;
-  if(cropMode) toggleCropMode();
-  document.getElementById('btnCropClear').classList.add('hidden');
-  document.getElementById('cropInfo').textContent='Full frame (no crop)';
-  curIdx>=0?redraw():drawLive();
-  toast('Crop cleared');
+  } catch{}
 }
 
-// ═══════════════════════════════════════════════
+async function exportYaml() {
+  if(!boatDir){toast('Kein Datensatz-Ordner');return;}
+  const yaml=`train: ./train/images\nval: ./valid/images\ntest: ./test/images\n\nnc: ${CLASSES.length}\nnames: [${CLASSES.map(c=>'"'+c+'"').join(', ')}]\n`;
+  await writeFH(boatDir,'data.yaml',yaml);
+  toast('✓ data.yaml → boat/');
+}
+
+// ═══════════════════════════════
 // CLASSES
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 function renderCls() {
-  document.getElementById('clsList').innerHTML = CLASSES.map((n,i)=>`
-    <div class="ci${i===curCls?' sel':''}" onclick="selectCls(${i})">
-      <div class="cdot" style="background:${COLORS[i%COLORS.length]}"></div>
-      <span>${n}</span>
-      <span class="ckey">${i}</span>
-    </div>
-  `).join('');
+  document.getElementById('clsList').innerHTML=CLASSES.map((n,i)=>`
+    <div class="cls-item${i===curCls?' sel':''}" onclick="selectCls(${i})">
+      <div class="cls-dot" style="background:${COLORS[i%COLORS.length]}"></div>
+      <span>${n}</span><span class="cls-key">${i}</span>
+    </div>`).join('');
 }
 function selectCls(i) {
   curCls=i;
-  if(curIdx>=0&&selBox>=0&&selBox<frames[curIdx].boxes.length) {
+  if(curIdx>=0&&selBox>=0&&selBox<frames[curIdx].boxes.length){
     frames[curIdx].boxes[selBox].cls=i;
-    updateThumb(curIdx); redraw(); renderBoxList();
+    updateThumb(curIdx); redraw(); renderBoxList(); queueSave(curIdx);
   }
   renderCls();
 }
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 // BOX LIST
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 function renderBoxList() {
   const fr=frames[curIdx];
-  if(!fr) { document.getElementById('boxList').innerHTML=''; return; }
+  if(!fr){document.getElementById('boxList').innerHTML='';return;}
   document.getElementById('boxList').innerHTML=fr.boxes.map((b,i)=>`
     <div class="bi${i===selBox?' sel':''}" onclick="pickBox(${i})">
       <div class="bdot" style="background:${COLORS[b.cls%COLORS.length]}"></div>
       <span>${CLASSES[b.cls]||'c'+b.cls}</span>
-      <span style="font-size:9px;color:var(--mut)">${(b.w*100).toFixed(0)}×${(b.h*100).toFixed(0)}%</span>
+      <span style="font-size:9px;color:var(--dim)">${(b.w*100).toFixed(0)}×${(b.h*100).toFixed(0)}%</span>
       <span class="bdel" onclick="removeBox(${i});event.stopPropagation()">✕</span>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
-function pickBox(i) { selBox=i; curCls=frames[curIdx].boxes[i].cls; renderBoxList(); renderCls(); redraw(); }
-function removeBox(i) {
+function pickBox(i){selBox=i;curCls=frames[curIdx].boxes[i].cls;renderBoxList();renderCls();redraw();}
+function removeBox(i){
   frames[curIdx].boxes.splice(i,1);
   if(selBox>=frames[curIdx].boxes.length) selBox=frames[curIdx].boxes.length-1;
-  renderBoxList(); redraw(); updateStats(); updateThumb(curIdx);
-}
-function clearBoxes() {
-  if(curIdx<0) return;
-  if(!confirm('Clear all boxes on this frame?')) return;
-  frames[curIdx].boxes=[]; selBox=-1;
-  renderBoxList(); redraw(); updateStats(); updateThumb(curIdx);
+  renderBoxList();redraw();updateStats();updateThumb(curIdx);queueSave(curIdx);
 }
 
-// ═══════════════════════════════════════════════
-// FRAME NAV
-// ═══════════════════════════════════════════════
-function prevFrame() { if(curIdx>0) selectFrame(curIdx-1); }
-function nextFrame() { if(curIdx<frames.length-1) selectFrame(curIdx+1); }
-
-// ═══════════════════════════════════════════════
-// FRAME STRIP
-// ═══════════════════════════════════════════════
-function renderStrip() {
+// ═══════════════════════════════
+// STRIP
+// ═══════════════════════════════
+function renderStrip(){
   document.getElementById('fstrip').innerHTML='';
   frames.forEach((f,i)=>addThumb(f,i,true));
   document.getElementById('fCount').textContent=frames.length;
 }
-function addThumb(frame, idx, noScroll) {
+function addThumb(frame,idx,noScroll){
   const el=document.createElement('div');
   el.className='fth'+(frame.boxes.length?' hbox':'');
   el.onclick=()=>selectFrame(idx);
-
-  const tc=document.createElement('canvas'); tc.width=160; tc.height=90;
+  const tc=document.createElement('canvas'); tc.width=134; tc.height=76;
   paintThumb(tc,frame);
-
   const badge=document.createElement('div'); badge.className='fbadge';
-  badge.textContent=frame.boxes.length>0?frame.boxes.length+'🏷':idx;
-
-  const sp=document.createElement('div');
-  sp.className='fsp '+spClass(frame.split);
+  badge.textContent=frame.boxes.length>0?frame.boxes.length+'🏷':idx+1;
+  const sp=document.createElement('div'); sp.className='fsp '+spClass(frame.split);
   sp.textContent=spShort(frame.split);
-
   const del=document.createElement('button'); del.className='fdel'; del.textContent='✕';
-  del.onclick=async e=>{ e.stopPropagation(); await deleteFrameAt(idx); };
-
+  del.onclick=async e=>{e.stopPropagation();await deleteFrameAt(idx);};
   el.append(tc,badge,sp,del);
   document.getElementById('fstrip').appendChild(el);
   document.getElementById('fCount').textContent=frames.length;
   if(!noScroll) el.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
-function paintThumb(tc,frame) {
+function paintThumb(tc,frame){
   const tctx=tc.getContext('2d');
   const img=new Image();
   img.onload=()=>{
-    tctx.clearRect(0,0,160,90); tctx.drawImage(img,0,0,160,90);
+    tctx.clearRect(0,0,134,76); tctx.drawImage(img,0,0,134,76);
     frame.boxes.forEach(b=>{
       tctx.strokeStyle=COLORS[b.cls%COLORS.length]; tctx.lineWidth=1.5;
-      tctx.strokeRect((b.cx-b.w/2)*160,(b.cy-b.h/2)*90,b.w*160,b.h*90);
+      tctx.strokeRect((b.cx-b.w/2)*134,(b.cy-b.h/2)*76,b.w*134,b.h*76);
     });
   };
   img.src=frame.dataURL;
 }
-function updateThumb(idx) {
+function updateThumb(idx){
   const ths=document.querySelectorAll('.fth'); const el=ths[idx]; if(!el) return;
   const fr=frames[idx];
   el.classList.toggle('hbox',fr.boxes.length>0);
   const badge=el.querySelector('.fbadge');
-  if(badge) badge.textContent=fr.boxes.length>0?fr.boxes.length+'🏷':idx;
+  if(badge) badge.textContent=fr.boxes.length>0?fr.boxes.length+'🏷':idx+1;
   const tc=el.querySelector('canvas'); if(tc) paintThumb(tc,fr);
 }
-async function deleteFrameAt(idx) {
-  if(!confirm('Remove frame from dataset and filesystem?')) return;
-  const fr=frames[idx];
-  await deleteFromFS(fr);
+async function deleteFrameAt(idx){
+  if(!confirm('Frame aus Datensatz und Dateisystem löschen?')) return;
+  await deleteFromFS(frames[idx]);
   frames.splice(idx,1);
   if(curIdx>=frames.length) curIdx=frames.length-1;
-  reAssignSplits(false);
-  renderStrip();
-  updateStats();
+  reAssignSplits(false); renderStrip(); updateStats();
   if(frames.length>0) selectFrame(Math.max(0,curIdx));
-  else { ctx.clearRect(0,0,mc.width,mc.height); document.getElementById('emptyMsg').classList.remove('hidden'); curIdx=-1; }
+  else{ctx.clearRect(0,0,mc.width,mc.height);curIdx=-1;setMode('seek');}
 }
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 // SPLIT
-// ═══════════════════════════════════════════════
-function spClass(s){ return s==='train'?'sbtr':s==='valid'?'sbva':'sbte'; }
-function spShort(s){ return s==='train'?'TR':s==='valid'?'VA':'TE'; }
-function reAssignSplits(updateThumbsFlag=true) {
+// ═══════════════════════════════
+function spClass(s){return s==='train'?'sp-tr':s==='valid'?'sp-va':'sp-te';}
+function spShort(s){return s==='train'?'TR':s==='valid'?'VA':'TE';}
+function reAssignSplits(updateThumbs=true){
   const tr=parseInt(document.getElementById('spTr').value)||7;
   const va=parseInt(document.getElementById('spVa').value)||2;
   const te=parseInt(document.getElementById('spTe').value)||1;
@@ -874,91 +926,99 @@ function reAssignSplits(updateThumbsFlag=true) {
     const p=i%total;
     f.split=p<tr?'train':p<tr+va?'valid':'test';
   });
-  if(updateThumbsFlag) {
+  if(updateThumbs){
     document.querySelectorAll('.fth').forEach((el,i)=>{
       if(!frames[i]) return;
       const sp=el.querySelector('.fsp');
-      if(sp){ sp.className='fsp '+spClass(frames[i].split); sp.textContent=spShort(frames[i].split); }
+      if(sp){sp.className='fsp '+spClass(frames[i].split);sp.textContent=spShort(frames[i].split);}
     });
   }
   updateStats();
 }
 ['spTr','spVa','spTe'].forEach(id=>document.getElementById(id).oninput=()=>reAssignSplits());
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 // STATS
-// ═══════════════════════════════════════════════
-function updateStats() {
+// ═══════════════════════════════
+function updateStats(){
   const c={train:0,valid:0,test:0};
   frames.forEach(f=>c[f.split]++);
   document.getElementById('hTotal').textContent=frames.length;
   document.getElementById('hLbl').textContent=frames.filter(f=>f.boxes.length>0).length;
   document.getElementById('hSplit').textContent=c.train+'/'+c.valid+'/'+c.test;
   document.getElementById('sbadges').innerHTML=
-    `<span class="sb sbtr">TR:${c.train}</span><span class="sb sbva">VA:${c.valid}</span><span class="sb sbte">TE:${c.test}</span>`;
+    `<span class="sp-badge sp-tr">TR:${c.train}</span><span class="sp-badge sp-va">VA:${c.valid}</span><span class="sp-badge sp-te">TE:${c.test}</span>`;
 }
 
-// ═══════════════════════════════════════════════
-// BROWSER
-// ═══════════════════════════════════════════════
-function showBrowser() {
-  const c=document.getElementById('browserContent');
-  let html=`<div style="font-size:12px;color:var(--mut);margin-bottom:10px">${frames.length} frames · ${frames.filter(f=>f.boxes.length>0).length} labeled</div>`;
-  for(const split of ['train','valid','test']) {
-    const sf=frames.filter(f=>f.split===split);
-    if(!sf.length) continue;
-    html+=`<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--mut);margin:12px 0 5px">${split} (${sf.length})</div><div class="pgrid">`;
-    sf.forEach(fr=>{
-      html+=`<div class="pitem" onclick="jumpTo('${fr.id}');closeOv('browserOv')">
-        <canvas id="pv_${fr.id}" width="150" height="85"></canvas>
-        <div class="psp ${spClass(fr.split)}">${spShort(fr.split)}</div>
-        <div class="plbl">${fr.boxes.length}🏷</div>
-      </div>`;
-    });
-    html+=`</div>`;
-  }
-  c.innerHTML=html;
-  document.getElementById('browserOv').classList.add('open');
-  frames.forEach(fr=>{ const cv=document.getElementById('pv_'+fr.id); if(cv) paintThumb(cv,fr); });
-}
-function jumpTo(id) { const i=frames.findIndex(f=>f.id===id); if(i>=0) selectFrame(i); }
-function closeOv(id) { document.getElementById(id).classList.remove('open'); }
-
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 // KEYBOARD
-// ═══════════════════════════════════════════════
-document.addEventListener('keydown', e=>{
+// ═══════════════════════════════
+document.addEventListener('keydown',e=>{
   if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)) return;
-  if(e.key>='0'&&e.key<='6') { selectCls(+e.key); return; }
-  switch(e.key) {
-    case ' ':         e.preventDefault(); if(vid.src) togglePlay(); break;
-    case 'f':case'F': captureFrame(); break;
-    case 'ArrowLeft': e.preventDefault(); prevFrame(); break;
-    case 'ArrowRight':e.preventDefault(); nextFrame(); break;
-    case 'Delete':case'Backspace': if(selBox>=0) removeBox(selBox); break;
-    case 'c':case'C': toggleCropMode(); break;
-    case 'm':case'M': document.getElementById('chkMirror').click(); break;
-    case 'Enter':     saveAndNext(); break;
-    case 's':
-      if(e.ctrlKey||e.metaKey){ e.preventDefault(); saveFrame(); }
+
+  // numeric class selection
+  if(e.key>='0'&&e.key<='6'){selectCls(+e.key);return;}
+
+  switch(e.key){
+    case ' ':
+      e.preventDefault();
+      if(mode==='seek'&&vid.src) togglePlay();
       break;
-    case 'Escape': closeOv('browserOv'); if(cropMode) toggleCropMode(); break;
+    case 'f': case 'F':
+      if(mode==='seek') captureFrame();
+      break;
+    case 'Enter':
+      if(mode==='crop'){
+        const cr=window._pendingCrop||null;
+        window._pendingCrop=null;
+        commitCrop(cr);
+      } else if(mode==='label'){
+        saveAndNext();
+      }
+      break;
+    case 'Escape':
+      if(mode==='crop'){
+        // cancel capture, go back to seek
+        pendingFrame=null; cp0=cp1=null; window._pendingCrop=null;
+        setMode('seek'); drawLive(); toast('Capture abgebrochen');
+      } else if(mode==='label'){
+        setMode('seek');
+      }
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      if(mode==='seek') stepFr(-1);
+      else if(mode==='label'&&curIdx>0) selectFrame(curIdx-1);
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      if(mode==='seek') stepFr(1);
+      else if(mode==='label'&&curIdx<frames.length-1) selectFrame(curIdx+1);
+      break;
+    case 'a': case 'A':
+      if(mode==='label'&&curIdx>0) selectFrame(curIdx-1);
+      break;
+    case 'd': case 'D':
+      if(mode==='label'&&curIdx<frames.length-1) selectFrame(curIdx+1);
+      break;
+    case 'Delete': case 'Backspace':
+      if(mode==='label'&&selBox>=0) removeBox(selBox);
+      break;
+    case 'm': case 'M':
+      document.getElementById('chkMirror').click();
+      break;
+    case 's':
+      if(e.ctrlKey||e.metaKey){
+        e.preventDefault();
+        if(curIdx>=0){saveFrameAt(curIdx);setBadge('saved');setTimeout(()=>setBadge(''),2000);}
+      }
+      break;
   }
 });
 
-// ═══════════════════════════════════════════════
-// TOAST
-// ═══════════════════════════════════════════════
-let toastT;
-function toast(msg) {
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2800);
-}
-
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 // DRAG & DROP
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 document.body.addEventListener('dragover',e=>e.preventDefault());
 document.body.addEventListener('drop',e=>{
   e.preventDefault();
@@ -966,12 +1026,22 @@ document.body.addEventListener('drop',e=>{
   if(f&&f.type.startsWith('video/')) loadVid(f);
 });
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
+// TOAST
+// ═══════════════════════════════
+let toastT;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+// ═══════════════════════════════
 // INIT
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════
 renderCls();
 updateStats();
-if(!window.showDirectoryPicker) alert('⚠️ Requires Chrome or Edge (File System Access API).');
+if(!window.showDirectoryPicker) alert('⚠️ Benötigt Chrome oder Edge (File System Access API).');
 </script>
 </body>
 </html>
