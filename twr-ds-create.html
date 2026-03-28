@@ -3,1562 +3,975 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TWR2025 · YOLO Dataset Annotator</title>
+<title>TWR2025 · YOLO Annotator</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap');
+:root {
+  --bg:#0a0c0f; --surf:#111418; --surf2:#181c22; --b1:#232830; --b2:#2e3540;
+  --tx:#e8eaf0; --mut:#5a6272;
+  --acc:#00e5ff; --grn:#39d98a; --yel:#ffd166; --red:#ef4565; --pur:#c084fc; --ora:#ff6b35;
+  --mono:'JetBrains Mono',monospace; --sans:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:var(--mono);height:100vh;overflow:hidden;display:flex;flex-direction:column;user-select:none}
 
-  :root {
-    --bg: #0a0c0f;
-    --surface: #111418;
-    --surface2: #181c22;
-    --border: #232830;
-    --border2: #2e3540;
-    --text: #e8eaf0;
-    --muted: #5a6272;
-    --accent: #00e5ff;
-    --accent2: #ff6b35;
-    --green: #39d98a;
-    --yellow: #ffd166;
-    --red: #ef4565;
-    --purple: #c084fc;
-    --mono: 'JetBrains Mono', monospace;
-    --sans: 'Syne', sans-serif;
-    --label-colors: #ef4565, #ff6b35, #ffd166, #39d98a, #c084fc;
-  }
+/* ── WIZARD ── */
+#wizard{position:fixed;inset:0;background:var(--bg);z-index:900;display:flex;align-items:center;justify-content:center}
+.wbox{background:var(--surf);border:1px solid var(--b2);border-radius:12px;padding:36px;width:460px;display:flex;flex-direction:column;gap:18px}
+.wlogo{font-family:var(--sans);font-size:26px;font-weight:800;color:var(--acc);letter-spacing:-1px}
+.wlogo span{color:var(--mut);font-weight:700}
+.wsep{height:1px;background:var(--b1)}
+.wstitle{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.wsdesc{font-size:11px;color:var(--mut);line-height:1.6;margin-bottom:8px}
+.wbtn{font-family:var(--mono);font-size:12px;font-weight:600;padding:10px 16px;border-radius:6px;border:1px solid var(--b2);background:var(--surf2);color:var(--tx);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px;width:100%}
+.wbtn:hover{border-color:var(--acc);color:var(--acc)}
+.wbtn.done{border-color:var(--grn)!important;color:var(--grn)!important}
+.wbtn .wsub{font-size:10px;color:var(--mut);font-weight:400;margin-top:1px}
+.wgo{font-family:var(--mono);font-size:13px;font-weight:700;padding:12px;border-radius:6px;border:none;background:var(--acc);color:#000;cursor:pointer;opacity:.35;pointer-events:none;transition:all .15s;width:100%}
+.wgo.ready{opacity:1;pointer-events:all}
+.wgo.ready:hover{background:#00c4d8}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── APP HEADER ── */
+header{display:flex;align-items:center;gap:10px;padding:7px 14px;background:var(--surf);border-bottom:1px solid var(--b1);flex-shrink:0;z-index:100}
+.logo{font-family:var(--sans);font-weight:800;font-size:14px;color:var(--acc);letter-spacing:-.5px;white-space:nowrap}
+.logo span{color:var(--mut)}
+.hst{background:var(--surf2);border:1px solid var(--b1);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--mut);display:flex;align-items:center;gap:4px}
+.hst b{color:var(--tx)}
+.btn{font-family:var(--mono);font-size:11px;font-weight:600;padding:5px 11px;border-radius:4px;border:1px solid var(--b2);background:var(--surf2);color:var(--tx);cursor:pointer;transition:all .12s;white-space:nowrap}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.grn{border-color:var(--grn);color:var(--grn)}
+.btn.grn:hover{background:var(--grn);color:#000}
+.btn.acc{background:var(--acc);color:#000;border-color:var(--acc);font-weight:700}
+.btn.acc:hover{background:#00c4d8}
+.btn.red{border-color:var(--red);color:var(--red)}
+.btn.red:hover{background:var(--red);color:#fff}
+.btn.on{border-color:var(--acc);color:var(--acc);background:rgba(0,229,255,.1)}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
+/* ── LAYOUT ── */
+.app{display:flex;flex:1;overflow:hidden}
 
-  /* HEADER */
-  header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 10px 20px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    z-index: 100;
-  }
+/* ── LEFT PANEL ── */
+.lp{width:196px;flex-shrink:0;background:var(--surf);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
+.ps{padding:9px;border-bottom:1px solid var(--b1);flex-shrink:0}
+.pl{font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--mut);text-transform:uppercase;margin-bottom:7px}
 
-  .logo {
-    font-family: var(--sans);
-    font-weight: 800;
-    font-size: 16px;
-    color: var(--accent);
-    letter-spacing: -0.5px;
-    white-space: nowrap;
-  }
-  .logo span { color: var(--muted); }
+/* classes */
+.ci{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:4px;border:1px solid transparent;cursor:pointer;transition:all .1s;font-size:11px}
+.ci:hover{background:var(--surf2)}
+.ci.sel{border-color:var(--b2);background:var(--surf2)}
+.cdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.ckey{margin-left:auto;font-size:9px;color:var(--mut);background:var(--bg);border:1px solid var(--b1);border-radius:3px;padding:1px 4px;flex-shrink:0}
 
-  .header-stats {
-    display: flex;
-    gap: 16px;
-    margin-left: auto;
-    font-size: 11px;
-    color: var(--muted);
-  }
-  .stat-pill {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 3px 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .stat-pill b { color: var(--text); }
+/* box list */
+.bscroll{overflow-y:auto;flex:1;padding:4px}
+.bscroll::-webkit-scrollbar{width:3px}
+.bscroll::-webkit-scrollbar-thumb{background:var(--b2)}
+.bi{display:flex;align-items:center;gap:5px;padding:4px 6px;border-radius:3px;font-size:11px;border:1px solid transparent;cursor:pointer;transition:all .1s}
+.bi:hover{background:var(--surf2)}
+.bi.sel{border-color:var(--b2);background:var(--surf2)}
+.bdot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.bdel{margin-left:auto;color:var(--red);opacity:0;cursor:pointer;font-size:13px;line-height:1}
+.bi:hover .bdel{opacity:1}
 
-  .btn {
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 600;
-    padding: 6px 12px;
-    border-radius: 4px;
-    border: 1px solid var(--border2);
-    background: var(--surface2);
-    color: var(--text);
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .btn:hover { border-color: var(--accent); color: var(--accent); }
-  .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
-  .btn.primary:hover { background: #00b8cc; border-color: #00b8cc; color: #000; }
-  .btn.danger { border-color: var(--red); color: var(--red); }
-  .btn.danger:hover { background: var(--red); color: #fff; }
-  .btn.success { border-color: var(--green); color: var(--green); }
-  .btn.success:hover { background: var(--green); color: #000; }
+/* split */
+.spnums{display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--mut)}
+.spnums label{display:flex;align-items:center;gap:5px}
+.spnums input{width:38px;background:var(--bg);border:1px solid var(--b1);border-radius:3px;color:var(--tx);font-family:var(--mono);font-size:11px;padding:2px 5px;outline:none}
+.spnums input:focus{border-color:var(--acc)}
+.sbadges{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.sb{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700}
+.sbtr{background:rgba(57,217,138,.18);color:var(--grn)}
+.sbva{background:rgba(255,209,102,.18);color:var(--yel)}
+.sbte{background:rgba(239,69,101,.18);color:var(--red)}
 
-  /* MAIN LAYOUT */
-  .main {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
+/* ── CENTER ── */
+.center{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#060809}
+.toolbar{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--surf);border-bottom:1px solid var(--b1);flex-shrink:0;flex-wrap:wrap;min-height:40px}
+.tsep{width:1px;height:18px;background:var(--b2);margin:0 3px}
+.cwrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;background:#060809}
+#mc{cursor:crosshair;display:block;max-width:100%;max-height:100%;image-rendering:auto}
+.emptymsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;pointer-events:none;color:var(--mut)}
+.emptymsg .big{font-family:var(--sans);font-size:20px}
+.modebadge{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,107,53,.92);color:#fff;padding:4px 14px;border-radius:4px;font-size:11px;font-weight:700;pointer-events:none;display:none;z-index:5}
 
-  /* LEFT PANEL */
-  .panel-left {
-    width: 220px;
-    flex-shrink: 0;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+/* video bar */
+.vbar{display:flex;align-items:center;gap:7px;padding:6px 12px;background:var(--surf);border-top:1px solid var(--b1);flex-shrink:0}
+.seek{flex:1;-webkit-appearance:none;appearance:none;height:4px;background:var(--b2);border-radius:2px;outline:none;cursor:pointer}
+.seek::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--acc);border-radius:50%;cursor:pointer}
+.tdisp{font-size:11px;color:var(--mut);white-space:nowrap;min-width:90px}
+.vc{background:none;border:none;color:var(--mut);cursor:pointer;font-size:14px;padding:3px;transition:color .1s}
+.vc:hover{color:var(--acc)}
+select.spd{background:var(--surf2);border:1px solid var(--b1);color:var(--tx);font-family:var(--mono);font-size:11px;padding:2px 4px;border-radius:3px;outline:none}
 
-  .panel-section {
-    padding: 10px;
-    border-bottom: 1px solid var(--border);
-  }
-  .panel-label {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
+/* ── RIGHT PANEL ── */
+.rp{width:164px;flex-shrink:0;background:var(--surf);border-left:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
+.fstrip{flex:1;overflow-y:auto;padding:5px;display:flex;flex-direction:column;gap:4px}
+.fstrip::-webkit-scrollbar{width:3px}
+.fstrip::-webkit-scrollbar-thumb{background:var(--b2)}
+.fth{position:relative;border-radius:4px;overflow:hidden;border:2px solid transparent;cursor:pointer;flex-shrink:0;aspect-ratio:16/9;transition:border-color .1s}
+.fth canvas{width:100%;height:100%;display:block}
+.fth.active{border-color:var(--acc)}
+.fth.hbox{border-color:var(--grn)}
+.fth.active.hbox{border-color:var(--acc)}
+.fth .fbadge{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.75);border-radius:3px;font-size:8px;padding:1px 4px;color:var(--mut)}
+.fth .fdel{position:absolute;top:2px;left:2px;background:rgba(239,69,101,.85);border:none;border-radius:3px;color:#fff;font-size:9px;padding:1px 4px;cursor:pointer;opacity:0;font-family:var(--mono)}
+.fth:hover .fdel{opacity:1}
+.fth .fsp{position:absolute;bottom:2px;left:2px;font-size:8px;padding:1px 5px;border-radius:3px;font-weight:700}
 
-  /* CLASSES */
-  .class-list { display: flex; flex-direction: column; gap: 3px; }
-  .class-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: 4px;
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.1s;
-    font-size: 12px;
-  }
-  .class-item:hover { background: var(--surface2); }
-  .class-item.active { border-color: var(--border2); background: var(--surface2); }
-  .class-dot {
-    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-  }
-  .class-key {
-    margin-left: auto;
-    font-size: 9px;
-    color: var(--muted);
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 1px 5px;
-  }
-  .class-name-input {
-    background: transparent;
-    border: none;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 12px;
-    flex: 1;
-    outline: none;
-    cursor: pointer;
-    min-width: 0;
-  }
-  .class-name-input:focus { cursor: text; }
-  .class-delete {
-    opacity: 0;
-    cursor: pointer;
-    color: var(--red);
-    font-size: 14px;
-    line-height: 1;
-    padding: 0 2px;
-    flex-shrink: 0;
-    transition: opacity 0.1s;
-  }
-  .class-item:hover .class-delete { opacity: 1; }
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:800;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surf);border:1px solid var(--b2);border-radius:8px;padding:20px;max-width:92vw;max-height:85vh;overflow-y:auto;transform:translateY(6px);transition:transform .2s;width:680px}
+.overlay.open .modal{transform:translateY(0)}
+.modal h2{font-family:var(--sans);font-size:16px;font-weight:800;color:var(--acc);margin-bottom:12px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:6px;margin-top:6px}
+.pitem{position:relative;border-radius:4px;overflow:hidden;border:1px solid var(--b1);cursor:pointer}
+.pitem:hover{border-color:var(--acc)}
+.pitem canvas{width:100%;display:block}
+.psp{position:absolute;bottom:3px;left:3px;font-size:8px;padding:1px 4px;border-radius:3px;font-weight:700}
+.plbl{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.7);border-radius:3px;font-size:8px;padding:1px 4px}
 
-  .add-class-row {
-    display: flex; gap: 4px; margin-top: 6px;
-  }
-  .add-class-input {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 4px 8px;
-    outline: none;
-  }
-  .add-class-input:focus { border-color: var(--accent); }
-
-  /* FRAME STRIP */
-  .panel-right {
-    width: 180px;
-    flex-shrink: 0;
-    background: var(--surface);
-    border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .frame-strip {
-    flex: 1;
-    overflow-y: auto;
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .frame-strip::-webkit-scrollbar { width: 4px; }
-  .frame-strip::-webkit-scrollbar-track { background: transparent; }
-  .frame-strip::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
-  .frame-thumb {
-    position: relative;
-    border-radius: 4px;
-    overflow: hidden;
-    border: 2px solid transparent;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: border-color 0.1s;
-    aspect-ratio: 16/9;
-  }
-  .frame-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .frame-thumb canvas { width: 100%; height: 100%; display: block; }
-  .frame-thumb.active { border-color: var(--accent); }
-  .frame-thumb.labeled { border-color: var(--green); }
-  .frame-thumb.active.labeled { border-color: var(--accent); }
-  .frame-thumb-badge {
-    position: absolute;
-    top: 3px; right: 3px;
-    background: rgba(0,0,0,0.75);
-    border-radius: 3px;
-    font-size: 9px;
-    padding: 1px 4px;
-    color: var(--muted);
-  }
-  .frame-delete-btn {
-    position: absolute;
-    top: 3px; left: 3px;
-    background: rgba(239,69,101,0.85);
-    border: none;
-    border-radius: 3px;
-    color: #fff;
-    font-size: 10px;
-    padding: 1px 4px;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.1s;
-    font-family: var(--mono);
-  }
-  .frame-thumb:hover .frame-delete-btn { opacity: 1; }
-  .frame-split-badge {
-    position: absolute;
-    bottom: 3px; left: 3px;
-    border-radius: 3px;
-    font-size: 8px;
-    padding: 1px 4px;
-    font-weight: 700;
-    font-family: var(--mono);
-  }
-
-  /* CENTER CANVAS AREA */
-  .center {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: var(--bg);
-  }
-
-  .toolbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    flex-wrap: wrap;
-  }
-  .toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
-
-  .tool-btn {
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 5px 10px;
-    border-radius: 4px;
-    border: 1px solid var(--border2);
-    background: var(--surface2);
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.1s;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  .tool-btn:hover, .tool-btn.active { color: var(--text); border-color: var(--accent); }
-  .tool-btn.active { background: rgba(0,229,255,0.08); }
-
-  .canvas-wrap {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    position: relative;
-    background: #060809;
-  }
-
-  #mainCanvas {
-    cursor: crosshair;
-    image-rendering: pixelated;
-    max-width: 100%;
-    max-height: 100%;
-    display: block;
-  }
-
-  /* VIDEO CONTROLS */
-  .video-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .seek-bar {
-    flex: 1;
-    height: 4px;
-    -webkit-appearance: none;
-    appearance: none;
-    background: var(--border2);
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-  }
-  .seek-bar::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 12px; height: 12px;
-    background: var(--accent);
-    border-radius: 50%;
-    cursor: pointer;
-  }
-  .time-display { font-size: 11px; color: var(--muted); white-space: nowrap; min-width: 80px; }
-  .vc-btn {
-    background: none; border: none; color: var(--muted); cursor: pointer;
-    font-size: 14px; padding: 4px; transition: color 0.1s;
-  }
-  .vc-btn:hover { color: var(--accent); }
-
-  /* BOX LAYER */
-  .box-item {
-    display: flex; align-items: center; gap: 6px;
-    padding: 4px 6px; border-radius: 3px;
-    font-size: 11px;
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.1s;
-  }
-  .box-item:hover { background: var(--surface2); }
-  .box-item.selected { border-color: var(--border2); background: var(--surface2); }
-  .box-color-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-  .box-delete { margin-left: auto; color: var(--red); opacity: 0; cursor: pointer; font-size: 13px; }
-  .box-item:hover .box-delete { opacity: 1; }
-
-  .boxes-scroll { overflow-y: auto; flex: 1; padding: 4px; }
-  .boxes-scroll::-webkit-scrollbar { width: 3px; }
-  .boxes-scroll::-webkit-scrollbar-thumb { background: var(--border); }
-
-  /* MODALS */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.85);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 1000;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.2s;
-  }
-  .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 8px;
-    padding: 24px;
-    min-width: 400px;
-    max-width: 90vw;
-    max-height: 80vh;
-    overflow-y: auto;
-    transform: translateY(8px);
-    transition: transform 0.2s;
-  }
-  .modal-overlay.open .modal { transform: translateY(0); }
-  .modal h2 { font-family: var(--sans); font-size: 18px; font-weight: 800; margin-bottom: 16px; color: var(--accent); }
-  .modal p { font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 12px; }
-
-  /* WELCOME SCREEN */
-  #welcomeScreen {
-    position: fixed; inset: 0;
-    background: var(--bg);
-    z-index: 500;
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column;
-    gap: 32px;
-  }
-  .welcome-logo {
-    font-family: var(--sans);
-    font-weight: 800;
-    font-size: 36px;
-    color: var(--accent);
-    letter-spacing: -2px;
-  }
-  .welcome-logo span { color: var(--muted); font-weight: 400; }
-  .welcome-sub {
-    font-size: 13px; color: var(--muted); text-align: center;
-    max-width: 400px; line-height: 1.7;
-  }
-  .welcome-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-    width: 360px;
-  }
-  .welcome-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-  .welcome-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .welcome-icon { font-size: 28px; }
-  .welcome-card-title { font-family: var(--sans); font-weight: 700; font-size: 13px; }
-  .welcome-card-desc { font-size: 10px; color: var(--muted); line-height: 1.5; }
-
-  /* PREVIEW MODAL */
-  .preview-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 8px; margin-top: 12px;
-  }
-  .preview-item { position: relative; border-radius: 4px; overflow: hidden; }
-  .preview-item canvas { width: 100%; display: block; }
-  .preview-split {
-    position: absolute; top: 4px; left: 4px;
-    background: rgba(0,0,0,0.7); border-radius: 3px;
-    font-size: 9px; padding: 2px 5px; font-weight: 700;
-  }
-
-  /* TOAST */
-  #toast {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: var(--surface2); border: 1px solid var(--border2);
-    border-radius: 6px; padding: 8px 16px; font-size: 12px;
-    z-index: 2000; opacity: 0; transition: opacity 0.2s;
-    pointer-events: none; color: var(--text);
-  }
-  #toast.show { opacity: 1; }
-
-  /* PROGRESS */
-  .progress-bar-wrap {
-    height: 3px; background: var(--border);
-    border-radius: 2px; overflow: hidden; margin-top: 6px;
-  }
-  .progress-bar-fill {
-    height: 100%; background: var(--accent);
-    border-radius: 2px; transition: width 0.3s;
-  }
-
-  /* Scrollbar global */
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-
-  .panel-section-inner { padding: 8px 10px 10px; }
-
-  input[type=number] {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 4px 8px;
-    width: 60px;
-    outline: none;
-  }
-  input[type=number]:focus { border-color: var(--accent); }
-
-  .shortcut-hint {
-    font-size: 9px; color: var(--muted);
-    margin-top: 4px; line-height: 1.6;
-  }
-
-  .split-info {
-    display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;
-  }
-  .split-badge {
-    font-size: 10px; padding: 2px 7px; border-radius: 3px; font-weight: 700;
-  }
-  .split-train { background: rgba(57,217,138,0.2); color: var(--green); }
-  .split-valid { background: rgba(255,209,102,0.2); color: var(--yellow); }
-  .split-test  { background: rgba(239,69,101,0.2); color: var(--red); }
-
-  .hidden { display: none !important; }
-
-  video { display: none; }
-
-  /* Crop rect overlay */
-  .crop-mode-indicator {
-    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-    background: rgba(255,107,53,0.9); color: #fff;
-    padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700;
-    pointer-events: none;
-    z-index: 10;
-  }
+/* ── TOAST ── */
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--surf2);border:1px solid var(--b2);border-radius:6px;padding:7px 14px;font-size:12px;z-index:2000;opacity:0;transition:opacity .2s;pointer-events:none;color:var(--tx);max-width:420px;text-align:center}
+#toast.show{opacity:1}
+.hidden{display:none!important}
+video{display:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 </style>
 </head>
 <body>
+<video id="vid" preload="metadata"></video>
 
-<!-- HIDDEN VIDEO -->
-<video id="videoEl" preload="metadata"></video>
+<!-- ══ WIZARD ══ -->
+<div id="wizard">
+  <div class="wbox">
+    <div>
+      <div class="wlogo">TWR<span>2025</span></div>
+      <div style="font-size:11px;color:var(--mut);margin-top:3px">YOLOv8 Dataset Annotator · drowning-detection-ai/boat</div>
+    </div>
+    <div class="wsep"></div>
 
-<!-- WELCOME SCREEN -->
-<div id="welcomeScreen">
-  <div>
-    <div class="welcome-logo">TWR<span>2025</span></div>
-  </div>
-  <div class="welcome-sub">YOLOv8 Dataset Annotator · Fast clean workflow for drowning detection AI</div>
-  <div class="welcome-grid">
-    <div class="welcome-card" id="openVideoBtn">
-      <div class="welcome-icon">🎬</div>
-      <div class="welcome-card-title">Open Video</div>
-      <div class="welcome-card-desc">Extract frames from any video file</div>
+    <div>
+      <div class="wstitle">Step 1 — Open twr2025 root folder</div>
+      <div class="wsdesc">Grant read/write. Dataset saves to <code style="color:var(--acc)">twr2025/drowning-detection-ai/boat/{train|valid|test}/{images|labels}/</code></div>
+      <button class="wbtn" id="wizFolder">
+        <span style="font-size:18px">📁</span>
+        <div><div>Open twr2025 folder</div><div class="wsub" id="folderSub">No folder selected</div></div>
+      </button>
     </div>
-    <div class="welcome-card" id="openFolderBtn">
-      <div class="welcome-icon">📁</div>
-      <div class="welcome-card-title">Open twr2025</div>
-      <div class="welcome-card-desc">Load existing dataset folder</div>
+
+    <div>
+      <div class="wstitle">Step 2 — Select video to label</div>
+      <div class="wsdesc">You can switch to another video at any time. Drag &amp; drop also works.</div>
+      <button class="wbtn" id="wizVideo">
+        <span style="font-size:18px">🎬</span>
+        <div><div>Open video file</div><div class="wsub" id="videoSub">No video selected</div></div>
+      </button>
     </div>
-  </div>
-  <div style="font-size:10px;color:var(--muted);text-align:center">
-    Shortcut keys: <b>0–4</b> = select class · <b>Del</b> = remove selected box · <b>C</b> = crop mode · <b>Space</b> = play/pause
+
+    <div class="wsep"></div>
+    <button class="wgo" id="wizGo">Start Annotating →</button>
   </div>
 </div>
 
-<!-- MAIN APP (hidden until opened) -->
-<header id="mainHeader" class="hidden">
-  <div class="logo">TWR<span>2025</span> ·</div>
-  <div style="font-size:11px;color:var(--muted)" id="datasetPath">no dataset folder</div>
-  <div class="header-stats">
-    <div class="stat-pill">🖼 <b id="statTotal">0</b> frames</div>
-    <div class="stat-pill">🏷 <b id="statLabeled">0</b> labeled</div>
-    <div class="stat-pill" title="train / valid / test">📦 <b id="statSplit">0/0/0</b></div>
+<!-- ══ APP ══ -->
+<header class="hidden" id="appH">
+  <div class="logo">TWR<span>2025</span></div>
+  <div style="font-size:10px;color:var(--mut);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="hpath">—</div>
+  <div class="hst">🖼 <b id="hTotal">0</b> frames</div>
+  <div class="hst">🏷 <b id="hLbl">0</b> labeled</div>
+  <div class="hst"><b id="hSplit">0/0/0</b> tr/va/te</div>
+  <div style="margin-left:auto;display:flex;gap:6px">
+    <button class="btn" onclick="showBrowser()">Browse Dataset</button>
+    <button class="btn grn" onclick="saveFrame()">💾 Save</button>
+    <button class="btn acc" onclick="saveAndNext()">Save &amp; Next →</button>
+    <button class="btn" onclick="openNewVideo()">⏏ Video</button>
+    <button class="btn" onclick="goWizard()">⌂</button>
   </div>
-  <button class="btn" onclick="showPreview()">Preview Dataset</button>
-  <button class="btn success" onclick="exportDataset()">Export YOLO</button>
-  <button class="btn" onclick="document.getElementById('videoFileInput').click()">+ Video</button>
-  <button class="btn" onclick="showWelcome()">⌂</button>
 </header>
 
-<div class="main hidden" id="mainUI">
-  <!-- LEFT PANEL -->
-  <div class="panel-left">
-    <!-- CLASSES -->
-    <div class="panel-section">
-      <div class="panel-label">Classes</div>
-      <div class="class-list" id="classList"></div>
-      <div class="add-class-row">
-        <input class="add-class-input" id="newClassName" placeholder="new class…" maxlength="30">
-        <button class="btn" onclick="addClass()">+</button>
-      </div>
-      <div class="shortcut-hint">Keys 0–9 to select · click name to rename</div>
+<div class="app hidden" id="appUI">
+  <!-- LEFT -->
+  <div class="lp">
+    <div class="ps">
+      <div class="pl">Classes</div>
+      <div id="clsList"></div>
+      <div style="font-size:9px;color:var(--mut);margin-top:5px">Keys 0–6 · click or reassign selected box</div>
     </div>
 
-    <!-- CURRENT FRAME BOXES -->
-    <div class="panel-section" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-      <div class="panel-label">Annotations</div>
-      <div class="boxes-scroll" id="boxesList"></div>
+    <div class="ps" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div class="pl">Annotations</div>
+      <div class="bscroll" id="boxList"></div>
     </div>
 
-    <!-- SPLIT RATIOS -->
-    <div class="panel-section">
-      <div class="panel-label">Dataset Split</div>
-      <div style="font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:6px">
-        <label style="display:flex;align-items:center;gap:8px">
-          <span style="width:32px">Train</span>
-          <input type="number" id="splitTrain" value="7" min="1" max="90" style="width:48px"> per 10
-        </label>
-        <label style="display:flex;align-items:center;gap:8px">
-          <span style="width:32px">Valid</span>
-          <input type="number" id="splitValid" value="2" min="1" max="90" style="width:48px"> per 10
-        </label>
-        <label style="display:flex;align-items:center;gap:8px">
-          <span style="width:32px">Test</span>
-          <input type="number" id="splitTest"  value="1" min="1" max="90" style="width:48px"> per 10
-        </label>
+    <div class="ps">
+      <div class="pl">Split (per N frames)</div>
+      <div class="spnums">
+        <label><span style="width:36px">Train</span><input type="number" id="spTr" value="7" min="1" max="90"></label>
+        <label><span style="width:36px">Valid</span><input type="number" id="spVa" value="2" min="1" max="90"></label>
+        <label><span style="width:36px">Test</span><input type="number" id="spTe" value="1" min="1" max="90"></label>
       </div>
-      <div class="split-info" id="splitPreview"></div>
+      <div class="sbadges" id="sbadges"></div>
+    </div>
+
+    <div class="ps">
+      <div class="pl">Transforms</div>
+      <label style="font-size:11px;color:var(--mut);display:flex;align-items:center;gap:7px;cursor:pointer;margin-bottom:7px">
+        <input type="checkbox" id="chkMirror" onchange="onMirrorChange()"> Mirror (flip horizontal)
+      </label>
+      <button class="btn" id="btnCrop" onclick="toggleCropMode()" style="width:100%;margin-bottom:4px">✂ Draw crop region</button>
+      <button class="btn red hidden" id="btnCropClear" onclick="clearCrop()" style="width:100%">✕ Clear crop</button>
+      <div style="font-size:9px;color:var(--mut);margin-top:5px" id="cropInfo">Full frame (no crop)</div>
     </div>
   </div>
 
   <!-- CENTER -->
   <div class="center">
     <div class="toolbar">
-      <div style="font-size:11px;color:var(--muted)">Mode:</div>
-      <button class="tool-btn active" id="toolBox" onclick="setTool('box')">◻ Box</button>
-      <button class="tool-btn" id="toolCrop" onclick="setTool('crop')" title="Crop region from frame (C)">✂ Crop</button>
-      <div class="toolbar-sep"></div>
-      <button class="btn" onclick="captureCurrentFrame()" title="Capture current video frame">⊕ Frame</button>
-      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)">
-        Interval:
-        <input type="number" id="captureInterval" value="1" min="0.1" max="60" step="0.1" style="width:52px"> s
-        <button class="btn" id="autoCapBtn" onclick="toggleAutoCapture()">Auto</button>
+      <span style="font-size:11px;color:var(--mut)" id="frameName">No frame — capture one below</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+        <button class="btn" onclick="captureFrame()" title="F">⊕ Capture frame</button>
+        <span style="font-size:11px;color:var(--mut)">every</span>
+        <input type="number" id="capInt" value="1" min="0.1" max="120" step="0.1"
+          style="width:46px;background:var(--bg);border:1px solid var(--b1);border-radius:3px;color:var(--tx);font-family:var(--mono);font-size:11px;padding:2px 5px;outline:none">
+        <span style="font-size:11px;color:var(--mut)">s</span>
+        <button class="btn" id="autoBtn" onclick="toggleAuto()">Auto</button>
+        <div class="tsep"></div>
+        <button class="btn red" onclick="clearBoxes()">Clear</button>
+        <div class="tsep"></div>
+        <button class="btn" onclick="prevFrame()" title="←">← Prev</button>
+        <button class="btn" onclick="nextFrame()" title="→">Next →</button>
       </div>
-      <div class="toolbar-sep"></div>
-      <button class="btn danger" onclick="clearBoxes()" title="Clear all boxes on current frame">Clear</button>
-      <div style="margin-left:auto;font-size:11px;color:var(--muted)" id="frameLabel">No frame</div>
     </div>
 
-    <div class="canvas-wrap" id="canvasWrap">
-      <div id="cropModeIndicator" class="crop-mode-indicator hidden">CROP MODE — draw region to crop</div>
-      <canvas id="mainCanvas"></canvas>
+    <div class="cwrap" id="cwrap">
+      <div class="modebadge" id="modeBadge">CROP MODE — draw a rectangle on the video</div>
+      <canvas id="mc"></canvas>
+      <div class="emptymsg" id="emptyMsg">
+        <div class="big">🎬 No frame yet</div>
+        <div style="font-size:12px">Seek the video, then press ⊕ Capture (or F)</div>
+      </div>
     </div>
 
-    <!-- VIDEO CONTROLS -->
-    <div class="video-controls" id="videoControls">
-      <button class="vc-btn" onclick="stepFrame(-1)">⏮</button>
-      <button class="vc-btn" id="playPauseBtn" onclick="togglePlay()">▶</button>
-      <button class="vc-btn" onclick="stepFrame(1)">⏭</button>
-      <input type="range" class="seek-bar" id="seekBar" value="0" min="0" max="100" step="0.01">
-      <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)">
-        Speed:
-        <select id="speedSelect" onchange="setSpeed()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;padding:2px 4px;border-radius:3px;outline:none">
-          <option value="0.25">0.25×</option>
-          <option value="0.5">0.5×</option>
-          <option value="1" selected>1×</option>
-          <option value="2">2×</option>
-          <option value="4">4×</option>
-        </select>
-      </div>
+    <div class="vbar">
+      <button class="vc" onclick="stepFr(-1)" title="Step back">⏮</button>
+      <button class="vc" id="ppBtn" onclick="togglePlay()">▶</button>
+      <button class="vc" onclick="stepFr(1)" title="Step forward">⏭</button>
+      <input class="seek" type="range" id="seek" value="0" min="0" max="100" step="0.01">
+      <div class="tdisp" id="tdisp">0:00 / 0:00</div>
+      <select class="spd" id="speedSel" onchange="vid.playbackRate=+this.value">
+        <option value=".25">.25×</option><option value=".5">.5×</option>
+        <option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option>
+      </select>
     </div>
   </div>
 
-  <!-- RIGHT PANEL: frame strip -->
-  <div class="panel-right">
-    <div class="panel-section" style="flex-shrink:0">
-      <div class="panel-label">Frames (<span id="frameCount">0</span>)</div>
+  <!-- RIGHT -->
+  <div class="rp">
+    <div class="ps" style="flex-shrink:0">
+      <div class="pl">Frames (<span id="fCount">0</span>)</div>
     </div>
-    <div class="frame-strip" id="frameStrip"></div>
+    <div class="fstrip" id="fstrip"></div>
   </div>
 </div>
 
-<!-- PREVIEW MODAL -->
-<div class="modal-overlay" id="previewModal">
-  <div class="modal" style="min-width:600px;max-width:90vw">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-      <h2 style="margin:0">Dataset Preview</h2>
-      <button class="btn" onclick="closeModal('previewModal')" style="margin-left:auto">✕ Close</button>
+<!-- BROWSER MODAL -->
+<div class="overlay" id="browserOv">
+  <div class="modal">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <h2 style="margin:0">Dataset Browser</h2>
+      <button class="btn grn" onclick="exportYaml()" style="margin-left:auto">Export data.yaml</button>
+      <button class="btn" onclick="closeOv('browserOv')">✕</button>
     </div>
-    <div id="previewContent"></div>
+    <div id="browserContent"></div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div id="toast"></div>
-
-<!-- HIDDEN INPUTS -->
-<input type="file" id="videoFileInput" accept="video/*" style="display:none">
-<input type="file" id="folderInput" webkitdirectory style="display:none">
+<input type="file" id="vidFile" accept="video/*" style="display:none">
 
 <script>
-// ─── STATE ───────────────────────────────────────────────────────────────────
-const DEFAULT_CLASSES = ["Drowning","Struggling","Unsure","Playing","Standing","Swimming","Rettungsboot"];
-const CLASS_COLORS = ["#ef4565","#ff6b35","#ffd166","#39d98a","#c084fc","#00e5ff","#f472b6","#fb923c","#a3e635","#38bdf8"];
+// ═══════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════
+const CLASSES = ["Drowning","Struggling","Unsure","Playing","Standing","Swimming","Rettungsboot"];
+const COLORS  = ["#ef4565","#ff6b35","#ffd166","#39d98a","#c084fc","#00e5ff","#f97316"];
+const DS_PATH = ["drowning-detection-ai","boat"];
 
-let state = {
-  classes: [...DEFAULT_CLASSES],
-  frames: [],        // { id, dataURL, canvas_el, boxes:[], split:'train'|'valid'|'test', cropRect:null }
-  currentFrameIdx: -1,
-  currentClass: 0,
-  tool: 'box',       // 'box' | 'crop'
-  selectedBox: -1,
-  datasetDirHandle: null,
-  videoLoaded: false,
-};
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let rootDir = null;
+let boatDir = null;
+let frames  = [];
+let curIdx  = -1;
+let curCls  = 0;
+let selBox  = -1;
 
-// Drawing state
-let isDrawing = false;
-let drawStart = null;
-let drawCurrent = null;
-let isCropDrawing = false;
-let cropStart = null;
-let cropCurrent = null;
-let autoCapturing = false;
-let autoCaptureTimer = null;
+// drawing boxes
+let drawing = false, dp0 = null, dp1 = null;
+// crop mode
+let cropMode = false, cropRect = null;
+let cdrawing = false, cp0 = null, cp1 = null;
 
-// ─── DOM ──────────────────────────────────────────────────────────────────────
-const videoEl       = document.getElementById('videoEl');
-const canvas        = document.getElementById('mainCanvas');
-const ctx           = canvas.getContext('2d');
-const seekBar       = document.getElementById('seekBar');
-const timeDisplay   = document.getElementById('timeDisplay');
-const playPauseBtn  = document.getElementById('playPauseBtn');
-const frameStrip    = document.getElementById('frameStrip');
-const classList     = document.getElementById('classList');
-const boxesList     = document.getElementById('boxesList');
-const frameCount    = document.getElementById('frameCount');
-const frameLabel    = document.getElementById('frameLabel');
-const cropModeIndicator = document.getElementById('cropModeIndicator');
+// auto-capture
+let autoOn = false, autoTimer = null;
 
-// ─── WELCOME ─────────────────────────────────────────────────────────────────
-document.getElementById('openVideoBtn').onclick = () => document.getElementById('videoFileInput').click();
-document.getElementById('openFolderBtn').onclick = openDatasetFolder;
+const vid = document.getElementById('vid');
+const mc  = document.getElementById('mc');
+const ctx = mc.getContext('2d');
 
-document.getElementById('videoFileInput').onchange = (e) => {
-  const f = e.target.files[0];
-  if (!f) return;
-  loadVideo(f);
-  e.target.value = '';
-};
-
-function showWelcome() {
-  document.getElementById('welcomeScreen').classList.remove('hidden');
-  document.getElementById('mainHeader').classList.add('hidden');
-  document.getElementById('mainUI').classList.add('hidden');
-}
-
-function showApp() {
-  document.getElementById('welcomeScreen').classList.add('hidden');
-  document.getElementById('mainHeader').classList.remove('hidden');
-  document.getElementById('mainUI').classList.remove('hidden');
-}
-
-// ─── DATASET FOLDER ───────────────────────────────────────────────────────────
-async function openDatasetFolder() {
+// ═══════════════════════════════════════════════
+// WIZARD
+// ═══════════════════════════════════════════════
+document.getElementById('wizFolder').onclick = async () => {
   try {
-    const handle = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'documents' });
-    state.datasetDirHandle = handle;
-    document.getElementById('datasetPath').textContent = handle.name;
-    showApp();
-    toast(`📁 Folder "${handle.name}" opened with read/write access`);
-    await loadExistingDataset(handle);
-  } catch(e) {
-    if (e.name !== 'AbortError') toast('Could not open folder: ' + e.message);
-  }
+    rootDir = await window.showDirectoryPicker({ mode:'readwrite' });
+    document.getElementById('folderSub').textContent = rootDir.name;
+    document.getElementById('wizFolder').classList.add('done');
+    toast('📁 ' + rootDir.name + ' — read/write granted');
+    await initBoat();
+    await loadExisting();
+    checkReady();
+  } catch(e) { if(e.name!=='AbortError') toast('Error: '+e.message); }
+};
+
+document.getElementById('wizVideo').onclick = () => document.getElementById('vidFile').click();
+document.getElementById('vidFile').onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  loadVid(f); e.target.value = '';
+};
+
+function checkReady() {
+  const ok = rootDir && vid.src;
+  document.getElementById('wizGo').classList.toggle('ready', ok);
+}
+document.getElementById('wizGo').onclick = () => {
+  if(!rootDir || !vid.src) return;
+  document.getElementById('wizard').classList.add('hidden');
+  document.getElementById('appH').classList.remove('hidden');
+  document.getElementById('appUI').classList.remove('hidden');
+};
+
+function goWizard() {
+  document.getElementById('wizard').classList.remove('hidden');
+  document.getElementById('appH').classList.add('hidden');
+  document.getElementById('appUI').classList.add('hidden');
 }
 
-async function ensureDir(parentHandle, name) {
-  return await parentHandle.getDirectoryHandle(name, { create: true });
+// ═══════════════════════════════════════════════
+// FS
+// ═══════════════════════════════════════════════
+async function getDir(parent, ...parts) {
+  let d = parent;
+  for(const p of parts) d = await d.getDirectoryHandle(p, {create:true});
+  return d;
+}
+async function writeFH(dir, name, data) {
+  const fh = await dir.getFileHandle(name, {create:true});
+  const w  = await fh.createWritable();
+  await w.write(data); await w.close();
+}
+async function readFH(dir, name) {
+  try { return await (await (await dir.getFileHandle(name)).getFile()).text(); } catch { return null; }
 }
 
-async function loadExistingDataset(handle) {
-  // Try to find existing images
-  let loaded = 0;
-  for (const split of ['train','valid','test']) {
+async function initBoat() {
+  boatDir = await getDir(rootDir, ...DS_PATH);
+  document.getElementById('hpath').textContent = rootDir.name+'/drowning-detection-ai/boat';
+}
+
+// ═══════════════════════════════════════════════
+// LOAD EXISTING DATASET
+// ═══════════════════════════════════════════════
+async function loadExisting() {
+  if(!boatDir) return;
+  let n = 0;
+  for(const split of ['train','valid','test']) {
+    let imgD, lblD;
     try {
-      const splitDir = await handle.getDirectoryHandle(split, { create: false });
-      const imgDir   = await splitDir.getDirectoryHandle('images', { create: false });
-      for await (const [name, fh] of imgDir.entries()) {
-        if (!name.match(/\.(jpg|jpeg|png|webp)$/i)) continue;
-        const file = await fh.getFile();
-        const dataURL = await fileToDataURL(file);
-        const frameId = name.replace(/\.[^.]+$/, '');
-        const frame = { id: frameId, dataURL, boxes: [], split };
+      const sd = await boatDir.getDirectoryHandle(split);
+      imgD = await sd.getDirectoryHandle('images');
+      try { lblD = await sd.getDirectoryHandle('labels'); } catch{}
+    } catch { continue; }
 
-        // Try to load label
-        try {
-          const lblDir = await splitDir.getDirectoryHandle('labels', { create: false });
-          const lblFh  = await lblDir.getFileHandle(frameId + '.txt', { create: false });
-          const lblFile = await lblFh.getFile();
-          const txt = await lblFile.text();
-          frame.boxes = parseLabelFile(txt);
-        } catch {}
-
-        state.frames.push(frame);
-        loaded++;
+    for await(const [name, fh] of imgD.entries()) {
+      if(!/\.(jpe?g|png|webp)$/i.test(name)) continue;
+      const file = await fh.getFile();
+      const dataURL = await toDataURL(file);
+      const stem = name.replace(/\.[^.]+$/,'');
+      let boxes = [];
+      if(lblD) {
+        const txt = await readFH(lblD, stem+'.txt');
+        if(txt) boxes = parseTxt(txt);
       }
-    } catch {}
+      frames.push({id:stem, dataURL, boxes, split, mirrored:false, crop:null});
+      n++;
+    }
   }
-  if (loaded > 0) {
-    reassignSplits();
-    renderFrameStrip();
-    updateStats();
-    toast(`Loaded ${loaded} existing frames`);
-    if (state.frames.length > 0) selectFrame(0);
-  }
+  reAssignSplits(false);
+  renderStrip();
+  updateStats();
+  if(n>0) { toast(`Loaded ${n} existing frames`); if(curIdx<0&&frames.length>0) selectFrame(0); }
 }
 
-function parseLabelFile(txt) {
-  return txt.trim().split('\n').filter(l => l.trim()).map(line => {
-    const parts = line.trim().split(/\s+/).map(Number);
-    if (parts.length < 5) return null;
-    return { cls: parts[0], cx: parts[1], cy: parts[2], w: parts[3], h: parts[4] };
+function parseTxt(t) {
+  return t.trim().split('\n').map(l=>{
+    const p=l.trim().split(/\s+/).map(Number);
+    return p.length>=5 ? {cls:p[0],cx:p[1],cy:p[2],w:p[3],h:p[4]} : null;
   }).filter(Boolean);
 }
-
-function fileToDataURL(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = e => res(e.target.result);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
+function toDataURL(blob) {
+  return new Promise(r=>{ const fr=new FileReader(); fr.onload=e=>r(e.target.result); fr.readAsDataURL(blob); });
 }
 
-// ─── VIDEO LOADING ────────────────────────────────────────────────────────────
-function loadVideo(file) {
-  const url = URL.createObjectURL(file);
-  videoEl.src = url;
-  videoEl.onloadedmetadata = () => {
-    seekBar.max = videoEl.duration;
-    updateTimeDisplay();
-    state.videoLoaded = true;
-    showApp();
-    document.getElementById('videoControls').style.display = 'flex';
-    toast(`🎬 Loaded: ${file.name} (${formatTime(videoEl.duration)})`);
+// ═══════════════════════════════════════════════
+// VIDEO
+// ═══════════════════════════════════════════════
+function loadVid(f) {
+  const url = URL.createObjectURL(f);
+  vid.src = url;
+  vid.onloadedmetadata = () => {
+    document.getElementById('seek').max = vid.duration;
+    updateTime();
+    document.getElementById('videoSub').textContent = f.name;
+    document.getElementById('wizVideo').classList.add('done');
+    checkReady();
+    toast('🎬 '+f.name+' ('+fmt(vid.duration)+')');
+    drawLive(); // show first frame
   };
 }
+function openNewVideo() { document.getElementById('vidFile').click(); }
 
-videoEl.ontimeupdate = () => {
-  if (!videoEl.seeking) {
-    seekBar.value = videoEl.currentTime;
-    updateTimeDisplay();
-    if (state.currentFrameIdx === -1) drawVideoFrame();
-  }
+vid.ontimeupdate = () => {
+  document.getElementById('seek').value = vid.currentTime;
+  updateTime();
+  if(curIdx < 0) drawLive(); // live preview when no frame selected
 };
+vid.onplay  = () => document.getElementById('ppBtn').textContent = '⏸';
+vid.onpause = () => document.getElementById('ppBtn').textContent = '▶';
 
-videoEl.onplay  = () => playPauseBtn.textContent = '⏸';
-videoEl.onpause = () => playPauseBtn.textContent = '▶';
-videoEl.onended = () => playPauseBtn.textContent = '▶';
-
-seekBar.oninput = () => {
-  videoEl.currentTime = seekBar.value;
-  updateTimeDisplay();
-  setTimeout(drawVideoFrame, 50);
+document.getElementById('seek').oninput = () => {
+  vid.currentTime = +document.getElementById('seek').value;
+  setTimeout(drawLive, 40);
 };
+function togglePlay() { vid.paused ? vid.play() : vid.pause(); }
+function stepFr(d) { vid.currentTime=Math.max(0,Math.min(vid.duration,vid.currentTime+d/30)); setTimeout(drawLive,40); }
+function updateTime() {
+  document.getElementById('tdisp').textContent = fmt(vid.currentTime)+' / '+fmt(vid.duration||0);
+}
+function fmt(s) { const m=Math.floor(s/60); return m+':'+Math.floor(s%60).toString().padStart(2,'0'); }
 
-function togglePlay() {
-  if (videoEl.paused) videoEl.play(); else videoEl.pause();
+// draw live video into canvas (no stored frame)
+function drawLive() {
+  if(!vid.src) return;
+  const W=vid.videoWidth||640, H=vid.videoHeight||360;
+  mc.width=W; mc.height=H;
+  ctx.clearRect(0,0,W,H);
+  const mir = document.getElementById('chkMirror').checked;
+  if(mir) { ctx.save(); ctx.scale(-1,1); ctx.drawImage(vid,-W,0,W,H); ctx.restore(); }
+  else ctx.drawImage(vid,0,0,W,H);
+  // crop overlay on live
+  drawCropOv();
 }
 
-function stepFrame(dir) {
-  videoEl.currentTime = Math.max(0, Math.min(videoEl.duration, videoEl.currentTime + dir / 30));
-  setTimeout(drawVideoFrame, 50);
-}
-
-function setSpeed() {
-  videoEl.playbackRate = parseFloat(document.getElementById('speedSelect').value);
-}
-
-function updateTimeDisplay() {
-  timeDisplay.textContent = `${formatTime(videoEl.currentTime)} / ${formatTime(videoEl.duration || 0)}`;
-}
-
-function formatTime(s) {
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60).toString().padStart(2,'0');
-  return `${m}:${sec}`;
-}
-
-function drawVideoFrame() {
-  if (!videoEl.src) return;
-  canvas.width  = videoEl.videoWidth  || 640;
-  canvas.height = videoEl.videoHeight || 360;
-  ctx.drawImage(videoEl, 0, 0);
-}
-
-// ─── FRAME CAPTURE ────────────────────────────────────────────────────────────
-function captureCurrentFrame() {
-  if (!videoEl.src) { toast('No video loaded'); return; }
-
-  const tmpCanvas = document.createElement('canvas');
-  let srcX=0, srcY=0, srcW, srcH;
-
-  if (state.tool === 'crop' && cropStart && cropCurrent) {
-    const rect = getCanvasRect();
-    srcX = Math.min(cropStart.x, cropCurrent.x) / rect.scale;
-    srcY = Math.min(cropStart.y, cropCurrent.y) / rect.scale;
-    srcW = Math.abs(cropCurrent.x - cropStart.x) / rect.scale;
-    srcH = Math.abs(cropCurrent.y - cropStart.y) / rect.scale;
-    if (srcW < 10 || srcH < 10) { toast('Draw a crop region first'); return; }
+// ═══════════════════════════════════════════════
+// CAPTURE FRAME
+// ═══════════════════════════════════════════════
+function captureFrame() {
+  if(!vid.src) { toast('No video loaded'); return; }
+  const mir = document.getElementById('chkMirror').checked;
+  const VW=vid.videoWidth, VH=vid.videoHeight;
+  let sx=0, sy=0, sw=VW, sh=VH;
+  if(cropRect) { sx=cropRect.x; sy=cropRect.y; sw=cropRect.w; sh=cropRect.h; }
+  const tmp=document.createElement('canvas');
+  tmp.width=sw; tmp.height=sh;
+  const tc=tmp.getContext('2d');
+  if(mir) {
+    tc.save(); tc.scale(-1,1);
+    tc.drawImage(vid, -(sx+sw), sy, sw, sh, -sw, 0, sw, sh);
+    tc.restore();
   } else {
-    srcW = videoEl.videoWidth;
-    srcH = videoEl.videoHeight;
+    tc.drawImage(vid, sx, sy, sw, sh, 0, 0, sw, sh);
   }
-
-  tmpCanvas.width  = Math.round(srcW);
-  tmpCanvas.height = Math.round(srcH);
-  const tctx = tmpCanvas.getContext('2d');
-  tctx.drawImage(videoEl, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
-  const dataURL = tmpCanvas.toDataURL('image/jpeg', 0.92);
-
-  const id = `frame_${Date.now()}`;
-  const frame = { id, dataURL, boxes: [], split: 'train', cropRect: state.tool==='crop' ? {srcX,srcY,srcW,srcH} : null };
-  state.frames.push(frame);
-  reassignSplits();
-  addFrameThumb(frame, state.frames.length - 1);
+  const id='f'+Date.now();
+  const dataURL=tmp.toDataURL('image/jpeg',0.93);
+  const frame={id, dataURL, boxes:[], split:'train', mirrored:mir, crop:cropRect?{...cropRect}:null};
+  frames.push(frame);
+  reAssignSplits(false);
+  addThumb(frame, frames.length-1);
   updateStats();
-  selectFrame(state.frames.length - 1);
-  toast(`✓ Frame captured${frame.cropRect ? ' (cropped)' : ''}`);
-
-  // clear crop
-  cropStart = cropCurrent = null;
-  setTool('box');
+  selectFrame(frames.length-1);
+  document.getElementById('emptyMsg').classList.add('hidden');
+  toast('✓ Captured'+( cropRect?' (cropped)':'')+( mir?' [mirrored]':'' ));
 }
 
-function toggleAutoCapture() {
-  autoCapturing = !autoCapturing;
-  const btn = document.getElementById('autoCapBtn');
-  if (autoCapturing) {
-    btn.classList.add('btn');
-    btn.style.borderColor = 'var(--accent)';
-    btn.style.color = 'var(--accent)';
-    btn.textContent = '■ Stop';
-    scheduleAutoCapture();
-  } else {
-    btn.style.borderColor = '';
-    btn.style.color = '';
-    btn.textContent = 'Auto';
-    clearTimeout(autoCaptureTimer);
-  }
+function onMirrorChange() {
+  if(curIdx<0) drawLive();
 }
 
-function scheduleAutoCapture() {
-  if (!autoCapturing) return;
-  const interval = parseFloat(document.getElementById('captureInterval').value) * 1000;
-  autoCaptureTimer = setTimeout(() => {
-    if (!videoEl.paused && !videoEl.ended) captureCurrentFrame();
-    scheduleAutoCapture();
-  }, interval);
+// auto capture
+function toggleAuto() {
+  autoOn=!autoOn;
+  const b=document.getElementById('autoBtn');
+  b.classList.toggle('on',autoOn);
+  b.textContent=autoOn?'■ Stop':'Auto';
+  if(autoOn) schedAuto(); else clearTimeout(autoTimer);
+}
+function schedAuto() {
+  if(!autoOn) return;
+  const ms=parseFloat(document.getElementById('capInt').value)*1000||1000;
+  autoTimer=setTimeout(()=>{ if(!vid.paused&&!vid.ended) captureFrame(); schedAuto(); },ms);
 }
 
-// ─── FRAME SELECTION ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════
+// SAVE / DELETE (filesystem)
+// ═══════════════════════════════════════════════
+async function saveFrame(idx) {
+  idx = (idx==null) ? curIdx : idx;
+  if(idx<0||!boatDir) { toast('Nothing to save'); return; }
+  const frame=frames[idx];
+  try {
+    const sd  = await getDir(boatDir, frame.split);
+    const imd = await getDir(sd,'images');
+    const lbd = await getDir(sd,'labels');
+    const blob = await fetch(frame.dataURL).then(r=>r.blob());
+    await writeFH(imd, frame.id+'.jpg', blob);
+    const txt = frame.boxes.map(b=>`${b.cls} ${b.cx.toFixed(6)} ${b.cy.toFixed(6)} ${b.w.toFixed(6)} ${b.h.toFixed(6)}`).join('\n');
+    await writeFH(lbd, frame.id+'.txt', txt);
+    toast('💾 Saved → '+frame.split+'/'+frame.id);
+  } catch(e) { toast('Save error: '+e.message); }
+}
+
+async function saveAndNext() {
+  await saveFrame();
+  nextFrame();
+}
+
+async function deleteFromFS(frame) {
+  if(!boatDir) return;
+  try {
+    const sd  = await boatDir.getDirectoryHandle(frame.split);
+    const imd = await sd.getDirectoryHandle('images');
+    const lbd = await sd.getDirectoryHandle('labels');
+    try { await imd.removeEntry(frame.id+'.jpg'); } catch{}
+    try { await lbd.removeEntry(frame.id+'.txt'); } catch{}
+  } catch{}
+}
+
+async function exportYaml() {
+  if(!boatDir) { toast('No dataset folder'); return; }
+  const yaml=`train: ./train/images\nval: ./valid/images\ntest: ./test/images\n\nnc: ${CLASSES.length}\nnames: [${CLASSES.map(c=>'"'+c+'"').join(', ')}]\n`;
+  await writeFH(boatDir,'data.yaml',yaml);
+  toast('✓ data.yaml written to boat/');
+}
+
+// ═══════════════════════════════════════════════
+// FRAME SELECTION & REDRAW
+// ═══════════════════════════════════════════════
 function selectFrame(idx) {
-  state.currentFrameIdx = idx;
-  state.selectedBox = -1;
-
-  // highlight strip
-  document.querySelectorAll('.frame-thumb').forEach((el, i) => {
-    el.classList.toggle('active', i === idx);
-  });
-
-  const frame = state.frames[idx];
-  if (!frame) return;
-
-  // draw on canvas
-  const img = new Image();
-  img.onload = () => {
-    canvas.width  = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    redrawCanvas();
-  };
-  img.src = frame.dataURL;
-
-  frameLabel.textContent = `${frame.id} · ${frame.split}`;
-  renderBoxesList();
+  curIdx=idx; selBox=-1;
+  document.querySelectorAll('.fth').forEach((el,i)=>el.classList.toggle('active',i===idx));
+  const fr=frames[idx]; if(!fr) return;
+  document.getElementById('frameName').textContent=fr.id+' · ['+fr.split+']';
+  document.getElementById('chkMirror').checked=!!fr.mirrored;
+  document.getElementById('emptyMsg').classList.add('hidden');
+  const img=new Image();
+  img.onload=()=>{ mc.width=img.naturalWidth; mc.height=img.naturalHeight; redraw(); };
+  img.src=fr.dataURL;
+  renderBoxList();
+  const th=document.querySelectorAll('.fth')[idx];
+  if(th) th.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
 
-function redrawCanvas() {
-  const frame = state.frames[state.currentFrameIdx];
-  if (!frame) return;
+function redraw() {
+  const fr=frames[curIdx];
+  if(!fr) { drawLive(); return; }
+  const img=new Image();
+  img.onload=()=>{
+    ctx.clearRect(0,0,mc.width,mc.height);
+    ctx.drawImage(img,0,0); // stored frames are already baked (mirrored/cropped)
 
-  const img = new Image();
-  img.onload = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0);
-
-    // Draw boxes
-    frame.boxes.forEach((box, i) => {
-      const color = CLASS_COLORS[box.cls % CLASS_COLORS.length];
-      const x = (box.cx - box.w/2) * canvas.width;
-      const y = (box.cy - box.h/2) * canvas.height;
-      const w = box.w * canvas.width;
-      const h = box.h * canvas.height;
-
-      ctx.strokeStyle = color;
-      ctx.lineWidth   = i === state.selectedBox ? 3 : 1.5;
-      ctx.setLineDash(i === state.selectedBox ? [6,3] : []);
-      ctx.strokeRect(x, y, w, h);
-
-      // label bg
-      ctx.fillStyle = color + 'cc';
-      const label = (state.classes[box.cls] || `cls${box.cls}`) + (i===state.selectedBox?' ◀':'');
-      ctx.font = 'bold 11px JetBrains Mono, monospace';
-      const tw = ctx.measureText(label).width;
-      ctx.fillRect(x, y - 16, tw + 8, 16);
-      ctx.fillStyle = '#000';
-      ctx.fillText(label, x + 4, y - 4);
+    // boxes
+    fr.boxes.forEach((b,i)=>{
+      const col=COLORS[b.cls%COLORS.length];
+      const x=(b.cx-b.w/2)*mc.width, y=(b.cy-b.h/2)*mc.height;
+      const w=b.w*mc.width, h=b.h*mc.height;
+      ctx.strokeStyle=col;
+      ctx.lineWidth=i===selBox?3:1.5;
+      ctx.setLineDash(i===selBox?[6,3]:[]);
+      ctx.strokeRect(x,y,w,h);
+      const lbl=CLASSES[b.cls]||'c'+b.cls;
+      ctx.font='bold 11px JetBrains Mono,monospace';
+      const tw=ctx.measureText(lbl).width;
+      ctx.fillStyle=col+'cc';
+      ctx.fillRect(x, y>14?y-15:y+h, tw+8, 15);
+      ctx.fillStyle='#000';
+      ctx.fillText(lbl, x+4, y>14?y-3:y+h+11);
       ctx.setLineDash([]);
     });
 
-    // Draw in-progress box
-    if (isDrawing && drawStart && drawCurrent) {
-      const color = CLASS_COLORS[state.currentClass % CLASS_COLORS.length];
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4,2]);
-      const rect = getCanvasRect();
-      const x1 = drawStart.x / rect.scale;
-      const y1 = drawStart.y / rect.scale;
-      const x2 = drawCurrent.x / rect.scale;
-      const y2 = drawCurrent.y / rect.scale;
-      ctx.strokeRect(x1, y1, x2-x1, y2-y1);
-      ctx.setLineDash([]);
+    // in-progress draw
+    if(drawing&&dp0&&dp1) {
+      const sc=scale();
+      const rx=Math.min(dp0.x,dp1.x)/sc, ry=Math.min(dp0.y,dp1.y)/sc;
+      const rw=Math.abs(dp1.x-dp0.x)/sc, rh=Math.abs(dp1.y-dp0.y)/sc;
+      ctx.strokeStyle=COLORS[curCls%COLORS.length];
+      ctx.lineWidth=1.5; ctx.setLineDash([4,2]);
+      ctx.strokeRect(rx,ry,rw,rh); ctx.setLineDash([]);
     }
-
-    // Crop rect
-    if (state.tool === 'crop' && cropStart && cropCurrent) {
-      const rect = getCanvasRect();
-      ctx.strokeStyle = '#ff6b35';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6,3]);
-      const x1 = cropStart.x / rect.scale;
-      const y1 = cropStart.y / rect.scale;
-      const x2 = cropCurrent.x / rect.scale;
-      const y2 = cropCurrent.y / rect.scale;
-      ctx.strokeRect(x1, y1, x2-x1, y2-y1);
-      ctx.fillStyle = 'rgba(255,107,53,0.1)';
-      ctx.fillRect(x1, y1, x2-x1, y2-y1);
-      ctx.setLineDash([]);
-    }
+    // crop overlay on stored frame view
+    drawCropOv();
   };
-  img.src = frame.dataURL;
+  img.src=fr.dataURL;
 }
 
-// ─── CANVAS INTERACTION ───────────────────────────────────────────────────────
-function getCanvasRect() {
-  const rect = canvas.getBoundingClientRect();
-  const scale = rect.width / canvas.width;
-  return { ...rect, scale };
-}
-
-function evToCanvas(e) {
-  const rect = canvas.getBoundingClientRect();
-  const scale = rect.width / canvas.width;
-  return { x: (e.clientX - rect.left), y: (e.clientY - rect.top), scale };
-}
-
-canvas.addEventListener('mousedown', e => {
-  if (state.currentFrameIdx < 0) return;
-  const pt = evToCanvas(e);
-
-  if (state.tool === 'crop') {
-    isCropDrawing = true;
-    cropStart = pt;
-    cropCurrent = pt;
-    return;
+// crop overlay
+function drawCropOv() {
+  // show pending crop draw
+  if(cdrawing&&cp0&&cp1) {
+    const sc=scale();
+    const rx=Math.min(cp0.x,cp1.x)/sc, ry=Math.min(cp0.y,cp1.y)/sc;
+    const rw=Math.abs(cp1.x-cp0.x)/sc, rh=Math.abs(cp1.y-cp0.y)/sc;
+    ctx.strokeStyle='#ff6b35'; ctx.lineWidth=2; ctx.setLineDash([6,3]);
+    ctx.strokeRect(rx,ry,rw,rh);
+    ctx.fillStyle='rgba(255,107,53,.09)'; ctx.fillRect(rx,ry,rw,rh);
+    ctx.setLineDash([]);
   }
+  // show committed crop on live view
+  if(cropRect&&curIdx<0) {
+    ctx.strokeStyle='#ff6b35'; ctx.lineWidth=2; ctx.setLineDash([6,3]);
+    ctx.strokeRect(cropRect.x,cropRect.y,cropRect.w,cropRect.h);
+    ctx.fillStyle='rgba(255,107,53,.07)'; ctx.fillRect(cropRect.x,cropRect.y,cropRect.w,cropRect.h);
+    ctx.setLineDash([]);
+  }
+}
 
-  // Check if clicking existing box to select
-  if (e.button === 0) {
-    const frame = state.frames[state.currentFrameIdx];
-    const cx = pt.x / pt.scale / canvas.width;
-    const cy = pt.y / pt.scale / canvas.height;
-    let hit = -1;
-    for (let i = frame.boxes.length-1; i >= 0; i--) {
-      const b = frame.boxes[i];
-      if (cx >= b.cx-b.w/2 && cx <= b.cx+b.w/2 && cy >= b.cy-b.h/2 && cy <= b.cy+b.h/2) {
-        hit = i; break;
+// ═══════════════════════════════════════════════
+// CANVAS EVENTS
+// ═══════════════════════════════════════════════
+function scale() { return mc.getBoundingClientRect().width/mc.width; }
+function evPt(e) {
+  const r=mc.getBoundingClientRect(), sc=r.width/mc.width;
+  return {x:e.clientX-r.left, y:e.clientY-r.top, sc};
+}
+
+mc.addEventListener('mousedown', e=>{
+  if(e.button!==0) return;
+  const pt=evPt(e);
+
+  if(cropMode) { cdrawing=true; cp0={x:pt.x,y:pt.y}; cp1={x:pt.x,y:pt.y}; return; }
+
+  // try to select existing box
+  if(curIdx>=0) {
+    const fr=frames[curIdx];
+    const nx=pt.x/pt.sc/mc.width, ny=pt.y/pt.sc/mc.height;
+    for(let i=fr.boxes.length-1;i>=0;i--) {
+      const b=fr.boxes[i];
+      if(nx>=b.cx-b.w/2&&nx<=b.cx+b.w/2&&ny>=b.cy-b.h/2&&ny<=b.cy+b.h/2) {
+        selBox=i; curCls=b.cls; renderBoxList(); renderCls(); redraw(); return;
       }
     }
-    if (hit >= 0 && !e.shiftKey) {
-      state.selectedBox = hit;
-      renderBoxesList();
-      redrawCanvas();
-      return;
-    }
-    isDrawing = true;
-    drawStart = pt;
-    drawCurrent = pt;
   }
+  // start new box
+  drawing=true; dp0={x:pt.x,y:pt.y}; dp1={x:pt.x,y:pt.y};
 });
 
-canvas.addEventListener('mousemove', e => {
-  if (isCropDrawing) { cropCurrent = evToCanvas(e); redrawCanvas(); return; }
-  if (!isDrawing) return;
-  drawCurrent = evToCanvas(e);
-  redrawCanvas();
+mc.addEventListener('mousemove', e=>{
+  const pt=evPt(e);
+  if(cdrawing) { cp1={x:pt.x,y:pt.y}; curIdx>=0?redraw():drawLive(); return; }
+  if(!drawing) return;
+  dp1={x:pt.x,y:pt.y};
+  curIdx>=0?redraw():drawLive();
 });
 
-canvas.addEventListener('mouseup', e => {
-  if (isCropDrawing) {
-    isCropDrawing = false;
-    cropCurrent = evToCanvas(e);
-    redrawCanvas();
+mc.addEventListener('mouseup', e=>{
+  const pt=evPt(e);
+  if(cdrawing) {
+    cdrawing=false;
+    const sc=scale();
+    const x=Math.min(cp0.x,pt.x)/sc, y=Math.min(cp0.y,pt.y)/sc;
+    const w=Math.abs(pt.x-cp0.x)/sc, h=Math.abs(pt.y-cp0.y)/sc;
+    cp0=cp1=null;
+    if(w>8&&h>8) {
+      cropRect={x,y,w,h};
+      document.getElementById('btnCropClear').classList.remove('hidden');
+      document.getElementById('cropInfo').textContent=`Crop: ${Math.round(w)}×${Math.round(h)}px`;
+      toast('Crop set — next capture will use this region');
+    }
+    if(cropMode) toggleCropMode(); // auto-exit crop mode
+    curIdx>=0?redraw():drawLive();
     return;
   }
-  if (!isDrawing) return;
-  isDrawing = false;
+  if(!drawing) return;
+  drawing=false;
+  const sc=pt.sc;
+  const x1=Math.min(dp0.x,pt.x)/sc/mc.width, y1=Math.min(dp0.y,pt.y)/sc/mc.height;
+  const x2=Math.max(dp0.x,pt.x)/sc/mc.width, y2=Math.max(dp0.y,pt.y)/sc/mc.height;
+  dp0=dp1=null;
+  const bw=x2-x1, bh=y2-y1;
+  if(bw<0.004||bh<0.004) { curIdx>=0?redraw():drawLive(); return; }
+  if(curIdx<0) { toast('Capture a frame first, then draw boxes'); drawLive(); return; }
 
-  const pt = evToCanvas(e);
-  const frame = state.frames[state.currentFrameIdx];
-  const scale = pt.scale;
-  const W = canvas.width, H = canvas.height;
-
-  const x1 = Math.min(drawStart.x, pt.x) / scale / W;
-  const y1 = Math.min(drawStart.y, pt.y) / scale / H;
-  const x2 = Math.max(drawStart.x, pt.x) / scale / W;
-  const y2 = Math.max(drawStart.y, pt.y) / scale / H;
-  const w  = x2 - x1;
-  const h  = y2 - y1;
-
-  if (w < 0.005 || h < 0.005) { redrawCanvas(); return; } // too small
-
-  const cx = x1 + w/2;
-  const cy = y1 + h/2;
-
-  frame.boxes.push({ cls: state.currentClass, cx, cy, w, h });
-  state.selectedBox = frame.boxes.length - 1;
-  drawStart = drawCurrent = null;
-  redrawCanvas();
-  renderBoxesList();
-  updateStats();
-  updateFrameThumb(state.currentFrameIdx);
+  // clamp
+  const cx=Math.max(bw/2,Math.min(1-bw/2, x1+bw/2));
+  const cy=Math.max(bh/2,Math.min(1-bh/2, y1+bh/2));
+  frames[curIdx].boxes.push({cls:curCls, cx, cy, w:bw, h:bh});
+  selBox=frames[curIdx].boxes.length-1;
+  redraw(); renderBoxList(); updateStats(); updateThumb(curIdx);
 });
 
-// ─── TOOL ─────────────────────────────────────────────────────────────────────
-function setTool(t) {
-  state.tool = t;
-  document.getElementById('toolBox').classList.toggle('active', t==='box');
-  document.getElementById('toolCrop').classList.toggle('active', t==='crop');
-  cropModeIndicator.classList.toggle('hidden', t!=='crop');
-  canvas.style.cursor = t==='crop' ? 'crosshair' : 'crosshair';
+// ═══════════════════════════════════════════════
+// CROP MODE
+// ═══════════════════════════════════════════════
+function toggleCropMode() {
+  cropMode=!cropMode;
+  const b=document.getElementById('btnCrop');
+  b.classList.toggle('on',cropMode);
+  b.textContent=cropMode?'✂ Drawing... click canvas':'✂ Draw crop region';
+  document.getElementById('modeBadge').style.display=cropMode?'block':'none';
+}
+function clearCrop() {
+  cropRect=null;
+  if(cropMode) toggleCropMode();
+  document.getElementById('btnCropClear').classList.add('hidden');
+  document.getElementById('cropInfo').textContent='Full frame (no crop)';
+  curIdx>=0?redraw():drawLive();
+  toast('Crop cleared');
 }
 
-// ─── CLASSES ─────────────────────────────────────────────────────────────────
-function renderClassList() {
-  classList.innerHTML = '';
-  state.classes.forEach((cls, i) => {
-    const color = CLASS_COLORS[i % CLASS_COLORS.length];
-    const el = document.createElement('div');
-    el.className = 'class-item' + (i===state.currentClass ? ' active' : '');
-    el.onclick = () => selectClass(i);
-    el.innerHTML = `
-      <div class="class-dot" style="background:${color}"></div>
-      <input class="class-name-input" value="${cls}" onclick="event.stopPropagation()" 
-        onchange="renameClass(${i}, this.value)" title="Click to rename">
-      <span class="class-key">${i}</span>
-      ${i < 1 ? '' : `<span class="class-delete" onclick="deleteClass(${i});event.stopPropagation()">✕</span>`}
-    `;
-    classList.appendChild(el);
-  });
+// ═══════════════════════════════════════════════
+// CLASSES
+// ═══════════════════════════════════════════════
+function renderCls() {
+  document.getElementById('clsList').innerHTML = CLASSES.map((n,i)=>`
+    <div class="ci${i===curCls?' sel':''}" onclick="selectCls(${i})">
+      <div class="cdot" style="background:${COLORS[i%COLORS.length]}"></div>
+      <span>${n}</span>
+      <span class="ckey">${i}</span>
+    </div>
+  `).join('');
 }
-
-function selectClass(i) {
-  state.currentClass = i;
-  // also update selected box's class if one is selected
-  const frame = state.frames[state.currentFrameIdx];
-  if (frame && state.selectedBox >= 0 && state.selectedBox < frame.boxes.length) {
-    frame.boxes[state.selectedBox].cls = i;
-    redrawCanvas();
-    renderBoxesList();
-    updateFrameThumb(state.currentFrameIdx);
+function selectCls(i) {
+  curCls=i;
+  if(curIdx>=0&&selBox>=0&&selBox<frames[curIdx].boxes.length) {
+    frames[curIdx].boxes[selBox].cls=i;
+    updateThumb(curIdx); redraw(); renderBoxList();
   }
-  renderClassList();
+  renderCls();
 }
 
-function renameClass(i, val) {
-  state.classes[i] = val.trim() || state.classes[i];
-  redrawCanvas();
+// ═══════════════════════════════════════════════
+// BOX LIST
+// ═══════════════════════════════════════════════
+function renderBoxList() {
+  const fr=frames[curIdx];
+  if(!fr) { document.getElementById('boxList').innerHTML=''; return; }
+  document.getElementById('boxList').innerHTML=fr.boxes.map((b,i)=>`
+    <div class="bi${i===selBox?' sel':''}" onclick="pickBox(${i})">
+      <div class="bdot" style="background:${COLORS[b.cls%COLORS.length]}"></div>
+      <span>${CLASSES[b.cls]||'c'+b.cls}</span>
+      <span style="font-size:9px;color:var(--mut)">${(b.w*100).toFixed(0)}×${(b.h*100).toFixed(0)}%</span>
+      <span class="bdel" onclick="removeBox(${i});event.stopPropagation()">✕</span>
+    </div>
+  `).join('');
 }
-
-function addClass() {
-  const input = document.getElementById('newClassName');
-  const name = input.value.trim();
-  if (!name) return;
-  if (state.classes.length >= 10) { toast('Max 10 classes'); return; }
-  state.classes.push(name);
-  input.value = '';
-  renderClassList();
-  toast(`Class "${name}" added (key: ${state.classes.length-1})`);
-}
-
-function deleteClass(i) {
-  if (!confirm(`Delete class "${state.classes[i]}"? All boxes with this class will be removed.`)) return;
-  state.classes.splice(i, 1);
-  // remove boxes with this class, remap others
-  state.frames.forEach(f => {
-    f.boxes = f.boxes.filter(b => b.cls !== i).map(b => ({ ...b, cls: b.cls > i ? b.cls-1 : b.cls }));
-  });
-  if (state.currentClass >= state.classes.length) state.currentClass = state.classes.length - 1;
-  renderClassList();
-  redrawCanvas();
-  renderBoxesList();
-  updateStats();
-}
-
-// ─── BOXES LIST ───────────────────────────────────────────────────────────────
-function renderBoxesList() {
-  boxesList.innerHTML = '';
-  const frame = state.frames[state.currentFrameIdx];
-  if (!frame) return;
-  frame.boxes.forEach((box, i) => {
-    const color = CLASS_COLORS[box.cls % CLASS_COLORS.length];
-    const name  = state.classes[box.cls] || `cls${box.cls}`;
-    const el = document.createElement('div');
-    el.className = 'box-item' + (i===state.selectedBox ? ' selected' : '');
-    el.onclick = () => { state.selectedBox = i; state.currentClass = box.cls; renderBoxesList(); renderClassList(); redrawCanvas(); };
-    el.innerHTML = `
-      <div class="box-color-dot" style="background:${color}"></div>
-      <span style="font-size:11px">${name}</span>
-      <span style="font-size:9px;color:var(--muted);margin-left:4px">${(box.w*100).toFixed(0)}×${(box.h*100).toFixed(0)}%</span>
-      <span class="box-delete" onclick="removeBox(${i});event.stopPropagation()">✕</span>
-    `;
-    boxesList.appendChild(el);
-  });
-}
-
+function pickBox(i) { selBox=i; curCls=frames[curIdx].boxes[i].cls; renderBoxList(); renderCls(); redraw(); }
 function removeBox(i) {
-  const frame = state.frames[state.currentFrameIdx];
-  if (!frame) return;
-  frame.boxes.splice(i, 1);
-  if (state.selectedBox >= frame.boxes.length) state.selectedBox = frame.boxes.length - 1;
-  renderBoxesList();
-  redrawCanvas();
-  updateStats();
-  updateFrameThumb(state.currentFrameIdx);
+  frames[curIdx].boxes.splice(i,1);
+  if(selBox>=frames[curIdx].boxes.length) selBox=frames[curIdx].boxes.length-1;
+  renderBoxList(); redraw(); updateStats(); updateThumb(curIdx);
 }
-
 function clearBoxes() {
-  const frame = state.frames[state.currentFrameIdx];
-  if (!frame) return;
-  if (!confirm('Clear all annotations on this frame?')) return;
-  frame.boxes = [];
-  state.selectedBox = -1;
-  renderBoxesList();
-  redrawCanvas();
-  updateStats();
-  updateFrameThumb(state.currentFrameIdx);
+  if(curIdx<0) return;
+  if(!confirm('Clear all boxes on this frame?')) return;
+  frames[curIdx].boxes=[]; selBox=-1;
+  renderBoxList(); redraw(); updateStats(); updateThumb(curIdx);
 }
 
-// ─── FRAME STRIP ─────────────────────────────────────────────────────────────
-function renderFrameStrip() {
-  frameStrip.innerHTML = '';
-  state.frames.forEach((f, i) => addFrameThumb(f, i, true));
-  frameCount.textContent = state.frames.length;
+// ═══════════════════════════════════════════════
+// FRAME NAV
+// ═══════════════════════════════════════════════
+function prevFrame() { if(curIdx>0) selectFrame(curIdx-1); }
+function nextFrame() { if(curIdx<frames.length-1) selectFrame(curIdx+1); }
+
+// ═══════════════════════════════════════════════
+// FRAME STRIP
+// ═══════════════════════════════════════════════
+function renderStrip() {
+  document.getElementById('fstrip').innerHTML='';
+  frames.forEach((f,i)=>addThumb(f,i,true));
+  document.getElementById('fCount').textContent=frames.length;
 }
+function addThumb(frame, idx, noScroll) {
+  const el=document.createElement('div');
+  el.className='fth'+(frame.boxes.length?' hbox':'');
+  el.onclick=()=>selectFrame(idx);
 
-function addFrameThumb(frame, idx, noScroll) {
-  const el = document.createElement('div');
-  el.className = 'frame-thumb' + (frame.boxes.length > 0 ? ' labeled' : '');
-  el.dataset.idx = idx;
-  el.onclick = () => selectFrame(idx);
+  const tc=document.createElement('canvas'); tc.width=160; tc.height=90;
+  paintThumb(tc,frame);
 
-  const tc = document.createElement('canvas');
-  tc.width = 160; tc.height = 90;
-  const tctx = tc.getContext('2d');
-  const img = new Image();
-  img.onload = () => {
-    tctx.drawImage(img, 0, 0, 160, 90);
-    // draw mini boxes
-    frame.boxes.forEach(box => {
-      tctx.strokeStyle = CLASS_COLORS[box.cls % CLASS_COLORS.length];
-      tctx.lineWidth = 1.5;
-      tctx.strokeRect(box.cx*160-box.w*80, box.cy*90-box.h*45, box.w*160, box.h*90);
+  const badge=document.createElement('div'); badge.className='fbadge';
+  badge.textContent=frame.boxes.length>0?frame.boxes.length+'🏷':idx;
+
+  const sp=document.createElement('div');
+  sp.className='fsp '+spClass(frame.split);
+  sp.textContent=spShort(frame.split);
+
+  const del=document.createElement('button'); del.className='fdel'; del.textContent='✕';
+  del.onclick=async e=>{ e.stopPropagation(); await deleteFrameAt(idx); };
+
+  el.append(tc,badge,sp,del);
+  document.getElementById('fstrip').appendChild(el);
+  document.getElementById('fCount').textContent=frames.length;
+  if(!noScroll) el.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function paintThumb(tc,frame) {
+  const tctx=tc.getContext('2d');
+  const img=new Image();
+  img.onload=()=>{
+    tctx.clearRect(0,0,160,90); tctx.drawImage(img,0,0,160,90);
+    frame.boxes.forEach(b=>{
+      tctx.strokeStyle=COLORS[b.cls%COLORS.length]; tctx.lineWidth=1.5;
+      tctx.strokeRect((b.cx-b.w/2)*160,(b.cy-b.h/2)*90,b.w*160,b.h*90);
     });
   };
-  img.src = frame.dataURL;
-
-  const badge = document.createElement('div');
-  badge.className = 'frame-thumb-badge';
-  badge.textContent = frame.boxes.length > 0 ? frame.boxes.length + '🏷' : idx;
-
-  const splitBadge = document.createElement('div');
-  splitBadge.className = 'frame-split-badge split-' + frame.split;
-  splitBadge.textContent = frame.split === 'train' ? 'TR' : frame.split === 'valid' ? 'VA' : 'TE';
-
-  const delBtn = document.createElement('button');
-  delBtn.className = 'frame-delete-btn';
-  delBtn.textContent = '✕';
-  delBtn.onclick = (e) => { e.stopPropagation(); deleteFrame(idx); };
-
-  el.appendChild(tc);
-  el.appendChild(badge);
-  el.appendChild(splitBadge);
-  el.appendChild(delBtn);
-
-  frameStrip.appendChild(el);
-  frameCount.textContent = state.frames.length;
-  if (!noScroll) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  img.src=frame.dataURL;
 }
-
-function updateFrameThumb(idx) {
-  const thumbs = document.querySelectorAll('.frame-thumb');
-  const el = thumbs[idx];
-  if (!el) return;
-  const frame = state.frames[idx];
-  el.classList.toggle('labeled', frame.boxes.length > 0);
-  const badge = el.querySelector('.frame-thumb-badge');
-  if (badge) badge.textContent = frame.boxes.length > 0 ? frame.boxes.length + '🏷' : idx;
-  const tc = el.querySelector('canvas');
-  if (tc) {
-    const tctx = tc.getContext('2d');
-    const img = new Image();
-    img.onload = () => {
-      tctx.clearRect(0,0,160,90);
-      tctx.drawImage(img, 0, 0, 160, 90);
-      frame.boxes.forEach(box => {
-        tctx.strokeStyle = CLASS_COLORS[box.cls % CLASS_COLORS.length];
-        tctx.lineWidth = 1.5;
-        tctx.strokeRect(box.cx*160-box.w*80, box.cy*90-box.h*45, box.w*160, box.h*90);
-      });
-    };
-    img.src = frame.dataURL;
-  }
+function updateThumb(idx) {
+  const ths=document.querySelectorAll('.fth'); const el=ths[idx]; if(!el) return;
+  const fr=frames[idx];
+  el.classList.toggle('hbox',fr.boxes.length>0);
+  const badge=el.querySelector('.fbadge');
+  if(badge) badge.textContent=fr.boxes.length>0?fr.boxes.length+'🏷':idx;
+  const tc=el.querySelector('canvas'); if(tc) paintThumb(tc,fr);
 }
-
-function deleteFrame(idx) {
-  if (!confirm('Remove this frame from the dataset?')) return;
-  state.frames.splice(idx, 1);
-  if (state.currentFrameIdx >= state.frames.length) state.currentFrameIdx = state.frames.length - 1;
-  reassignSplits();
-  renderFrameStrip();
+async function deleteFrameAt(idx) {
+  if(!confirm('Remove frame from dataset and filesystem?')) return;
+  const fr=frames[idx];
+  await deleteFromFS(fr);
+  frames.splice(idx,1);
+  if(curIdx>=frames.length) curIdx=frames.length-1;
+  reAssignSplits(false);
+  renderStrip();
   updateStats();
-  if (state.frames.length > 0) selectFrame(state.currentFrameIdx);
-  else { ctx.clearRect(0,0,canvas.width,canvas.height); }
+  if(frames.length>0) selectFrame(Math.max(0,curIdx));
+  else { ctx.clearRect(0,0,mc.width,mc.height); document.getElementById('emptyMsg').classList.remove('hidden'); curIdx=-1; }
 }
 
-// ─── SPLIT ASSIGNMENT ─────────────────────────────────────────────────────────
-function reassignSplits() {
-  const train = parseInt(document.getElementById('splitTrain').value) || 7;
-  const valid  = parseInt(document.getElementById('splitValid').value)  || 2;
-  const test   = parseInt(document.getElementById('splitTest').value)   || 1;
-  const total  = train + valid + test;
-
-  state.frames.forEach((f, i) => {
-    const pos = i % total;
-    if (pos < train)              f.split = 'train';
-    else if (pos < train + valid) f.split = 'valid';
-    else                          f.split = 'test';
+// ═══════════════════════════════════════════════
+// SPLIT
+// ═══════════════════════════════════════════════
+function spClass(s){ return s==='train'?'sbtr':s==='valid'?'sbva':'sbte'; }
+function spShort(s){ return s==='train'?'TR':s==='valid'?'VA':'TE'; }
+function reAssignSplits(updateThumbsFlag=true) {
+  const tr=parseInt(document.getElementById('spTr').value)||7;
+  const va=parseInt(document.getElementById('spVa').value)||2;
+  const te=parseInt(document.getElementById('spTe').value)||1;
+  const total=tr+va+te;
+  frames.forEach((f,i)=>{
+    const p=i%total;
+    f.split=p<tr?'train':p<tr+va?'valid':'test';
   });
-
-  // Update strip badges
-  document.querySelectorAll('.frame-split-badge').forEach((el, i) => {
-    if (!state.frames[i]) return;
-    el.className = 'frame-split-badge split-' + state.frames[i].split;
-    el.textContent = state.frames[i].split === 'train' ? 'TR' : state.frames[i].split === 'valid' ? 'VA' : 'TE';
-  });
-
-  updateSplitPreview();
+  if(updateThumbsFlag) {
+    document.querySelectorAll('.fth').forEach((el,i)=>{
+      if(!frames[i]) return;
+      const sp=el.querySelector('.fsp');
+      if(sp){ sp.className='fsp '+spClass(frames[i].split); sp.textContent=spShort(frames[i].split); }
+    });
+  }
+  updateStats();
 }
+['spTr','spVa','spTe'].forEach(id=>document.getElementById(id).oninput=()=>reAssignSplits());
 
-function updateSplitPreview() {
-  const counts = { train:0, valid:0, test:0 };
-  state.frames.forEach(f => counts[f.split]++);
-  document.getElementById('splitPreview').innerHTML = `
-    <span class="split-badge split-train">Train: ${counts.train}</span>
-    <span class="split-badge split-valid">Valid: ${counts.valid}</span>
-    <span class="split-badge split-test">Test: ${counts.test}</span>
-  `;
-  document.getElementById('statSplit').textContent = `${counts.train}/${counts.valid}/${counts.test}`;
-}
-
-document.getElementById('splitTrain').oninput =
-document.getElementById('splitValid').oninput =
-document.getElementById('splitTest').oninput  = () => reassignSplits();
-
-// ─── STATS ───────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════
 function updateStats() {
-  document.getElementById('statTotal').textContent   = state.frames.length;
-  document.getElementById('statLabeled').textContent = state.frames.filter(f => f.boxes.length > 0).length;
-  updateSplitPreview();
+  const c={train:0,valid:0,test:0};
+  frames.forEach(f=>c[f.split]++);
+  document.getElementById('hTotal').textContent=frames.length;
+  document.getElementById('hLbl').textContent=frames.filter(f=>f.boxes.length>0).length;
+  document.getElementById('hSplit').textContent=c.train+'/'+c.valid+'/'+c.test;
+  document.getElementById('sbadges').innerHTML=
+    `<span class="sb sbtr">TR:${c.train}</span><span class="sb sbva">VA:${c.valid}</span><span class="sb sbte">TE:${c.test}</span>`;
 }
 
-// ─── EXPORT ───────────────────────────────────────────────────────────────────
-async function exportDataset() {
-  if (!state.datasetDirHandle) {
-    // Ask for folder
-    try {
-      const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
-      state.datasetDirHandle = handle;
-      document.getElementById('datasetPath').textContent = handle.name;
-    } catch(e) {
-      toast('Export cancelled'); return;
-    }
-  }
-
-  const root = state.datasetDirHandle;
-  let saved = 0;
-
-  toast('Exporting…');
-
-  for (const split of ['train','valid','test']) {
-    const frames = state.frames.filter(f => f.split === split);
-    if (frames.length === 0) continue;
-
-    const splitDir = await ensureDir(root, split);
-    const imgDir   = await ensureDir(splitDir, 'images');
-    const lblDir   = await ensureDir(splitDir, 'labels');
-
-    for (const frame of frames) {
-      // Write image
-      const imgHandle = await imgDir.getFileHandle(frame.id + '.jpg', { create: true });
-      const imgWritable = await imgHandle.createWritable();
-      const blob = await dataURLToBlob(frame.dataURL);
-      await imgWritable.write(blob);
-      await imgWritable.close();
-
-      // Write label
-      const lblHandle = await lblDir.getFileHandle(frame.id + '.txt', { create: true });
-      const lblWritable = await lblHandle.createWritable();
-      const txt = frame.boxes.map(b => `${b.cls} ${b.cx.toFixed(6)} ${b.cy.toFixed(6)} ${b.w.toFixed(6)} ${b.h.toFixed(6)}`).join('\n');
-      await lblWritable.write(txt);
-      await lblWritable.close();
-      saved++;
-    }
-  }
-
-  // Write data.yaml
-  const yamlHandle = await root.getFileHandle('data.yaml', { create: true });
-  const yamlWritable = await yamlHandle.createWritable();
-  const yaml = `train: ./train/images\nval: ./valid/images\ntest: ./test/images\n\nnc: ${state.classes.length}\nnames: [${state.classes.map(c => '"'+c+'"').join(', ')}]\n`;
-  await yamlWritable.write(yaml);
-  await yamlWritable.close();
-
-  toast(`✓ Exported ${saved} frames + data.yaml`);
-}
-
-function dataURLToBlob(dataURL) {
-  return fetch(dataURL).then(r => r.blob());
-}
-
-// ─── PREVIEW ─────────────────────────────────────────────────────────────────
-function showPreview() {
-  const modal = document.getElementById('previewModal');
-  const content = document.getElementById('previewContent');
-
-  const counts = { train:0, valid:0, test:0 };
-  state.frames.forEach(f => counts[f.split]++);
-
-  let html = `<div style="font-size:12px;color:var(--muted);margin-bottom:12px">
-    ${state.frames.length} frames · ${state.frames.filter(f=>f.boxes.length>0).length} labeled ·
-    <span style="color:var(--green)">Train: ${counts.train}</span> ·
-    <span style="color:var(--yellow)">Valid: ${counts.valid}</span> ·
-    <span style="color:var(--red)">Test: ${counts.test}</span>
-  </div>`;
-
-  for (const split of ['train','valid','test']) {
-    const frames = state.frames.filter(f => f.split === split);
-    if (frames.length === 0) continue;
-    html += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:12px 0 6px">${split} (${frames.length})</div>`;
-    html += `<div class="preview-grid">`;
-    frames.forEach(frame => {
-      html += `<div class="preview-item"><canvas id="prev_${frame.id}" width="160" height="90"></canvas>
-        <div class="frame-split-badge split-${frame.split}" style="position:absolute;bottom:4px;left:4px">${split==='train'?'TR':split==='valid'?'VA':'TE'}</div>
-        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.7);border-radius:3px;font-size:9px;padding:1px 4px">${frame.boxes.length}🏷</div>
+// ═══════════════════════════════════════════════
+// BROWSER
+// ═══════════════════════════════════════════════
+function showBrowser() {
+  const c=document.getElementById('browserContent');
+  let html=`<div style="font-size:12px;color:var(--mut);margin-bottom:10px">${frames.length} frames · ${frames.filter(f=>f.boxes.length>0).length} labeled</div>`;
+  for(const split of ['train','valid','test']) {
+    const sf=frames.filter(f=>f.split===split);
+    if(!sf.length) continue;
+    html+=`<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--mut);margin:12px 0 5px">${split} (${sf.length})</div><div class="pgrid">`;
+    sf.forEach(fr=>{
+      html+=`<div class="pitem" onclick="jumpTo('${fr.id}');closeOv('browserOv')">
+        <canvas id="pv_${fr.id}" width="150" height="85"></canvas>
+        <div class="psp ${spClass(fr.split)}">${spShort(fr.split)}</div>
+        <div class="plbl">${fr.boxes.length}🏷</div>
       </div>`;
     });
-    html += `</div>`;
+    html+=`</div>`;
   }
-
-  content.innerHTML = html;
-  modal.classList.add('open');
-
-  // Render canvases
-  state.frames.forEach(frame => {
-    const c = document.getElementById('prev_' + frame.id);
-    if (!c) return;
-    const tctx = c.getContext('2d');
-    const img = new Image();
-    img.onload = () => {
-      tctx.drawImage(img, 0, 0, 160, 90);
-      frame.boxes.forEach(box => {
-        tctx.strokeStyle = CLASS_COLORS[box.cls % CLASS_COLORS.length];
-        tctx.lineWidth = 1.5;
-        tctx.strokeRect(box.cx*160-box.w*80, box.cy*90-box.h*45, box.w*160, box.h*90);
-      });
-    };
-    img.src = frame.dataURL;
-  });
+  c.innerHTML=html;
+  document.getElementById('browserOv').classList.add('open');
+  frames.forEach(fr=>{ const cv=document.getElementById('pv_'+fr.id); if(cv) paintThumb(cv,fr); });
 }
+function jumpTo(id) { const i=frames.findIndex(f=>f.id===id); if(i>=0) selectFrame(i); }
+function closeOv(id) { document.getElementById(id).classList.remove('open'); }
 
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
-
-// ─── KEYBOARD ─────────────────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  const tag = document.activeElement.tagName;
-  if (tag === 'INPUT') return;
-
-  if (e.key >= '0' && e.key <= '9') {
-    const i = parseInt(e.key);
-    if (i < state.classes.length) selectClass(i);
-    return;
-  }
-
-  switch (e.key) {
-    case ' ':
-      e.preventDefault();
-      if (state.videoLoaded) togglePlay();
-      else captureCurrentFrame();
+// ═══════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════
+document.addEventListener('keydown', e=>{
+  if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if(e.key>='0'&&e.key<='6') { selectCls(+e.key); return; }
+  switch(e.key) {
+    case ' ':         e.preventDefault(); if(vid.src) togglePlay(); break;
+    case 'f':case'F': captureFrame(); break;
+    case 'ArrowLeft': e.preventDefault(); prevFrame(); break;
+    case 'ArrowRight':e.preventDefault(); nextFrame(); break;
+    case 'Delete':case'Backspace': if(selBox>=0) removeBox(selBox); break;
+    case 'c':case'C': toggleCropMode(); break;
+    case 'm':case'M': document.getElementById('chkMirror').click(); break;
+    case 'Enter':     saveAndNext(); break;
+    case 's':
+      if(e.ctrlKey||e.metaKey){ e.preventDefault(); saveFrame(); }
       break;
-    case 'Delete':
-    case 'Backspace':
-      if (state.selectedBox >= 0) removeBox(state.selectedBox);
-      break;
-    case 'c': case 'C':
-      setTool(state.tool === 'crop' ? 'box' : 'crop');
-      break;
-    case 'ArrowLeft':
-      if (state.currentFrameIdx > 0) selectFrame(state.currentFrameIdx - 1);
-      break;
-    case 'ArrowRight':
-      if (state.currentFrameIdx < state.frames.length - 1) selectFrame(state.currentFrameIdx + 1);
-      break;
-    case 'f': case 'F':
-      captureCurrentFrame();
-      break;
-    case 'Escape':
-      closeModal('previewModal');
-      if (state.tool === 'crop') setTool('box');
-      break;
+    case 'Escape': closeOv('browserOv'); if(cropMode) toggleCropMode(); break;
   }
 });
 
-// ─── TOAST ───────────────────────────────────────────────────────────────────
-let toastTimer;
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+let toastT;
 function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2800);
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-renderClassList();
-updateSplitPreview();
-
-// If File System Access API not available
-if (!window.showDirectoryPicker) {
-  document.getElementById('openFolderBtn').onclick = () => {
-    toast('File System Access API not available — use Chrome/Edge');
-  };
-}
-
-// Drag-drop video
-document.body.addEventListener('dragover', e => e.preventDefault());
-document.body.addEventListener('drop', e => {
+// ═══════════════════════════════════════════════
+// DRAG & DROP
+// ═══════════════════════════════════════════════
+document.body.addEventListener('dragover',e=>e.preventDefault());
+document.body.addEventListener('drop',e=>{
   e.preventDefault();
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('video/')) {
-    loadVideo(file);
-  }
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('video/')) loadVid(f);
 });
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+renderCls();
+updateStats();
+if(!window.showDirectoryPicker) alert('⚠️ Requires Chrome or Edge (File System Access API).');
 </script>
 </body>
 </html>
