@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TWR2025 · YOLO Dataset Annotator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;800&display=swap');
+
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111418;
+    --surface2: #181c22;
+    --border: #232830;
+    --border2: #2e3540;
+    --text: #e8eaf0;
+    --muted: #5a6272;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --green: #39d98a;
+    --yellow: #ffd166;
+    --red: #ef4565;
+    --purple: #c084fc;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --label-colors: #ef4565, #ff6b35, #ffd166, #39d98a, #c084fc;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+  }
+  .logo span { color: var(--muted); }
+
+  .header-stats {
+    display: flex;
+    gap: 16px;
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .stat-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stat-pill b { color: var(--text); }
+
+  .btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+  .btn.primary:hover { background: #00b8cc; border-color: #00b8cc; color: #000; }
+  .btn.danger { border-color: var(--red); color: var(--red); }
+  .btn.danger:hover { background: var(--red); color: #fff; }
+  .btn.success { border-color: var(--green); color: var(--green); }
+  .btn.success:hover { background: var(--green); color: #000; }
+
+  /* MAIN LAYOUT */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* LEFT PANEL */
+  .panel-left {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-section {
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* CLASSES */
+  .class-list { display: flex; flex-direction: column; gap: 3px; }
+  .class-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.1s;
+    font-size: 12px;
+  }
+  .class-item:hover { background: var(--surface2); }
+  .class-item.active { border-color: var(--border2); background: var(--surface2); }
+  .class-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .class-key {
+    margin-left: auto;
+    font-size: 9px;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+  .class-name-input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    flex: 1;
+    outline: none;
+    cursor: pointer;
+    min-width: 0;
+  }
+  .class-name-input:focus { cursor: text; }
+  .class-delete {
+    opacity: 0;
+    cursor: pointer;
+    color: var(--red);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+    transition: opacity 0.1s;
+  }
+  .class-item:hover .class-delete { opacity: 1; }
+
+  .add-class-row {
+    display: flex; gap: 4px; margin-top: 6px;
+  }
+  .add-class-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 8px;
+    outline: none;
+  }
+  .add-class-input:focus { border-color: var(--accent); }
+
+  /* FRAME STRIP */
+  .panel-right {
+    width: 180px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .frame-strip {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .frame-strip::-webkit-scrollbar { width: 4px; }
+  .frame-strip::-webkit-scrollbar-track { background: transparent; }
+  .frame-strip::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .frame-thumb {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color 0.1s;
+    aspect-ratio: 16/9;
+  }
+  .frame-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .frame-thumb canvas { width: 100%; height: 100%; display: block; }
+  .frame-thumb.active { border-color: var(--accent); }
+  .frame-thumb.labeled { border-color: var(--green); }
+  .frame-thumb.active.labeled { border-color: var(--accent); }
+  .frame-thumb-badge {
+    position: absolute;
+    top: 3px; right: 3px;
+    background: rgba(0,0,0,0.75);
+    border-radius: 3px;
+    font-size: 9px;
+    padding: 1px 4px;
+    color: var(--muted);
+  }
+  .frame-delete-btn {
+    position: absolute;
+    top: 3px; left: 3px;
+    background: rgba(239,69,101,0.85);
+    border: none;
+    border-radius: 3px;
+    color: #fff;
+    font-size: 10px;
+    padding: 1px 4px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.1s;
+    font-family: var(--mono);
+  }
+  .frame-thumb:hover .frame-delete-btn { opacity: 1; }
+  .frame-split-badge {
+    position: absolute;
+    bottom: 3px; left: 3px;
+    border-radius: 3px;
+    font-size: 8px;
+    padding: 1px 4px;
+    font-weight: 700;
+    font-family: var(--mono);
+  }
+
+  /* CENTER CANVAS AREA */
+  .center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+
+  .tool-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .tool-btn:hover, .tool-btn.active { color: var(--text); border-color: var(--accent); }
+  .tool-btn.active { background: rgba(0,229,255,0.08); }
+
+  .canvas-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    background: #060809;
+  }
+
+  #mainCanvas {
+    cursor: crosshair;
+    image-rendering: pixelated;
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+  }
+
+  /* VIDEO CONTROLS */
+  .video-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .seek-bar {
+    flex: 1;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  .seek-bar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .time-display { font-size: 11px; color: var(--muted); white-space: nowrap; min-width: 80px; }
+  .vc-btn {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 14px; padding: 4px; transition: color 0.1s;
+  }
+  .vc-btn:hover { color: var(--accent); }
+
+  /* BOX LAYER */
+  .box-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 6px; border-radius: 3px;
+    font-size: 11px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .box-item:hover { background: var(--surface2); }
+  .box-item.selected { border-color: var(--border2); background: var(--surface2); }
+  .box-color-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .box-delete { margin-left: auto; color: var(--red); opacity: 0; cursor: pointer; font-size: 13px; }
+  .box-item:hover .box-delete { opacity: 1; }
+
+  .boxes-scroll { overflow-y: auto; flex: 1; padding: 4px; }
+  .boxes-scroll::-webkit-scrollbar { width: 3px; }
+  .boxes-scroll::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* MODALS */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 24px;
+    min-width: 400px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: translateY(8px);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal h2 { font-family: var(--sans); font-size: 18px; font-weight: 800; margin-bottom: 16px; color: var(--accent); }
+  .modal p { font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 12px; }
+
+  /* WELCOME SCREEN */
+  #welcomeScreen {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .welcome-logo {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 36px;
+    color: var(--accent);
+    letter-spacing: -2px;
+  }
+  .welcome-logo span { color: var(--muted); font-weight: 400; }
+  .welcome-sub {
+    font-size: 13px; color: var(--muted); text-align: center;
+    max-width: 400px; line-height: 1.7;
+  }
+  .welcome-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    width: 360px;
+  }
+  .welcome-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .welcome-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .welcome-icon { font-size: 28px; }
+  .welcome-card-title { font-family: var(--sans); font-weight: 700; font-size: 13px; }
+  .welcome-card-desc { font-size: 10px; color: var(--muted); line-height: 1.5; }
+
+  /* PREVIEW MODAL */
+  .preview-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px; margin-top: 12px;
+  }
+  .preview-item { position: relative; border-radius: 4px; overflow: hidden; }
+  .preview-item canvas { width: 100%; display: block; }
+  .preview-split {
+    position: absolute; top: 4px; left: 4px;
+    background: rgba(0,0,0,0.7); border-radius: 3px;
+    font-size: 9px; padding: 2px 5px; font-weight: 700;
+  }
+
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 8px 16px; font-size: 12px;
+    z-index: 2000; opacity: 0; transition: opacity 0.2s;
+    pointer-events: none; color: var(--text);
+  }
+  #toast.show { opacity: 1; }
+
+  /* PROGRESS */
+  .progress-bar-wrap {
+    height: 3px; background: var(--border);
+    border-radius: 2px; overflow: hidden; margin-top: 6px;
+  }
+  .progress-bar-fill {
+    height: 100%; background: var(--accent);
+    border-radius: 2px; transition: width 0.3s;
+  }
+
+  /* Scrollbar global */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  .panel-section-inner { padding: 8px 10px 10px; }
+
+  input[type=number] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 8px;
+    width: 60px;
+    outline: none;
+  }
+  input[type=number]:focus { border-color: var(--accent); }
+
+  .shortcut-hint {
+    font-size: 9px; color: var(--muted);
+    margin-top: 4px; line-height: 1.6;
+  }
+
+  .split-info {
+    display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;
+  }
+  .split-badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 3px; font-weight: 700;
+  }
+  .split-train { background: rgba(57,217,138,0.2); color: var(--green); }
+  .split-valid { background: rgba(255,209,102,0.2); color: var(--yellow); }
+  .split-test  { background: rgba(239,69,101,0.2); color: var(--red); }
+
+  .hidden { display: none !important; }
+
+  video { display: none; }
+
+  /* Crop rect overlay */
+  .crop-mode-indicator {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,107,53,0.9); color: #fff;
+    padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700;
+    pointer-events: none;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<!-- HIDDEN VIDEO -->
+<video id="videoEl" preload="metadata"></video>
+
+<!-- WELCOME SCREEN -->
+<div id="welcomeScreen">
+  <div>
+    <div class="welcome-logo">TWR<span>2025</span></div>
+  </div>
+  <div class="welcome-sub">YOLOv8 Dataset Annotator · Fast clean workflow for drowning detection AI</div>
+  <div class="welcome-grid">
+    <div class="welcome-card" id="openVideoBtn">
+      <div class="welcome-icon">🎬</div>
+      <div class="welcome-card-title">Open Video</div>
+      <div class="welcome-card-desc">Extract frames from any video file</div>
+    </div>
+    <div class="welcome-card" id="openFolderBtn">
+      <div class="welcome-icon">📁</div>
+      <div class="welcome-card-title">Open twr2025</div>
+      <div class="welcome-card-desc">Load existing dataset folder</div>
+    </div>
+  </div>
+  <div style="font-size:10px;color:var(--muted);text-align:center">
+    Shortcut keys: <b>0–4</b> = select class · <b>Del</b> = remove selected box · <b>C</b> = crop mode · <b>Space</b> = play/pause
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until opened) -->
+<header id="mainHeader" class="hidden">
+  <div class="logo">TWR<span>2025</span> ·</div>
+  <div style="font-size:11px;color:var(--muted)" id="datasetPath">no dataset folder</div>
+  <div class="header-stats">
+    <div class="stat-pill">🖼 <b id="statTotal">0</b> frames</div>
+    <div class="stat-pill">🏷 <b id="statLabeled">0</b> labeled</div>
+    <div class="stat-pill" title="train / valid / test">📦 <b id="statSplit">0/0/0</b></div>
+  </div>
+  <button class="btn" onclick="showPreview()">Preview Dataset</button>
+  <button class="btn success" onclick="exportDataset()">Export YOLO</button>
+  <button class="btn" onclick="document.getElementById('videoFileInput').click()">+ Video</button>
+  <button class="btn" onclick="showWelcome()">⌂</button>
+</header>
+
+<div class="main hidden" id="mainUI">
+  <!-- LEFT PANEL -->
+  <div class="panel-left">
+    <!-- CLASSES -->
+    <div class="panel-section">
+      <div class="panel-label">Classes</div>
+      <div class="class-list" id="classList"></div>
+      <div class="add-class-row">
+        <input class="add-class-input" id="newClassName" placeholder="new class…" maxlength="30">
+        <button class="btn" onclick="addClass()">+</button>
+      </div>
+      <div class="shortcut-hint">Keys 0–9 to select · click name to rename</div>
+    </div>
+
+    <!-- CURRENT FRAME BOXES -->
+    <div class="panel-section" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div class="panel-label">Annotations</div>
+      <div class="boxes-scroll" id="boxesList"></div>
+    </div>
+
+    <!-- SPLIT RATIOS -->
+    <div class="panel-section">
+      <div class="panel-label">Dataset Split</div>
+      <div style="font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:6px">
+        <label style="display:flex;align-items:center;gap:8px">
+          <span style="width:32px">Train</span>
+          <input type="number" id="splitTrain" value="7" min="1" max="90" style="width:48px"> per 10
+        </label>
+        <label style="display:flex;align-items:center;gap:8px">
+          <span style="width:32px">Valid</span>
+          <input type="number" id="splitValid" value="2" min="1" max="90" style="width:48px"> per 10
+        </label>
+        <label style="display:flex;align-items:center;gap:8px">
+          <span style="width:32px">Test</span>
+          <input type="number" id="splitTest"  value="1" min="1" max="90" style="width:48px"> per 10
+        </label>
+      </div>
+      <div class="split-info" id="splitPreview"></div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center">
+    <div class="toolbar">
+      <div style="font-size:11px;color:var(--muted)">Mode:</div>
+      <button class="tool-btn active" id="toolBox" onclick="setTool('box')">◻ Box</button>
+      <button class="tool-btn" id="toolCrop" onclick="setTool('crop')" title="Crop region from frame (C)">✂ Crop</button>
+      <div class="toolbar-sep"></div>
+      <button class="btn" onclick="captureCurrentFrame()" title="Capture current video frame">⊕ Frame</button>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)">
+        Interval:
+        <input type="number" id="captureInterval" value="1" min="0.1" max="60" step="0.1" style="width:52px"> s
+        <button class="btn" id="autoCapBtn" onclick="toggleAutoCapture()">Auto</button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <button class="btn danger" onclick="clearBoxes()" title="Clear all boxes on current frame">Clear</button>
+      <div style="margin-left:auto;font-size:11px;color:var(--muted)" id="frameLabel">No frame</div>
+    </div>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <div id="cropModeIndicator" class="crop-mode-indicator hidden">CROP MODE — draw region to crop</div>
+      <canvas id="mainCanvas"></canvas>
+    </div>
+
+    <!-- VIDEO CONTROLS -->
+    <div class="video-controls" id="videoControls">
+      <button class="vc-btn" onclick="stepFrame(-1)">⏮</button>
+      <button class="vc-btn" id="playPauseBtn" onclick="togglePlay()">▶</button>
+      <button class="vc-btn" onclick="stepFrame(1)">⏭</button>
+      <input type="range" class="seek-bar" id="seekBar" value="0" min="0" max="100" step="0.01">
+      <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)">
+        Speed:
+        <select id="speedSelect" onchange="setSpeed()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;padding:2px 4px;border-radius:3px;outline:none">
+          <option value="0.25">0.25×</option>
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+          <option value="4">4×</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: frame strip -->
+  <div class="panel-right">
+    <div class="panel-section" style="flex-shrink:0">
+      <div class="panel-label">Frames (<span id="frameCount">0</span>)</div>
+    </div>
+    <div class="frame-strip" id="frameStrip"></div>
+  </div>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div class="modal-overlay" id="previewModal">
+  <div class="modal" style="min-width:600px;max-width:90vw">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <h2 style="margin:0">Dataset Preview</h2>
+      <button class="btn" onclick="closeModal('previewModal')" style="margin-left:auto">✕ Close</button>
+    </div>
+    <div id="previewContent"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- HIDDEN INPUTS -->
+<input type="file" id="videoFileInput" accept="video/*" style="display:none">
+<input type="file" id="folderInput" webkitdirectory style="display:none">
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const DEFAULT_CLASSES = ["Drowning","Struggling","Unsure","Playing","Standing","Swimming","Rettungsboot"];
+const CLASS_COLORS = ["#ef4565","#ff6b35","#ffd166","#39d98a","#c084fc","#00e5ff","#f472b6","#fb923c","#a3e635","#38bdf8"];
+
+let state = {
+  classes: [...DEFAULT_CLASSES],
+  frames: [],        // { id, dataURL, canvas_el, boxes:[], split:'train'|'valid'|'test', cropRect:null }
+  currentFrameIdx: -1,
+  currentClass: 0,
+  tool: 'box',       // 'box' | 'crop'
+  selectedBox: -1,
+  datasetDirHandle: null,
+  videoLoaded: false,
+};
+
+// Drawing state
+let isDrawing = false;
+let drawStart = null;
+let drawCurrent = null;
+let isCropDrawing = false;
+let cropStart = null;
+let cropCurrent = null;
+let autoCapturing = false;
+let autoCaptureTimer = null;
+
+// ─── DOM ──────────────────────────────────────────────────────────────────────
+const videoEl       = document.getElementById('videoEl');
+const canvas        = document.getElementById('mainCanvas');
+const ctx           = canvas.getContext('2d');
+const seekBar       = document.getElementById('seekBar');
+const timeDisplay   = document.getElementById('timeDisplay');
+const playPauseBtn  = document.getElementById('playPauseBtn');
+const frameStrip    = document.getElementById('frameStrip');
+const classList     = document.getElementById('classList');
+const boxesList     = document.getElementById('boxesList');
+const frameCount    = document.getElementById('frameCount');
+const frameLabel    = document.getElementById('frameLabel');
+const cropModeIndicator = document.getElementById('cropModeIndicator');
+
+// ─── WELCOME ─────────────────────────────────────────────────────────────────
+document.getElementById('openVideoBtn').onclick = () => document.getElementById('videoFileInput').click();
+document.getElementById('openFolderBtn').onclick = openDatasetFolder;
+
+document.getElementById('videoFileInput').onchange = (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  loadVideo(f);
+  e.target.value = '';
+};
+
+function showWelcome() {
+  document.getElementById('welcomeScreen').classList.remove('hidden');
+  document.getElementById('mainHeader').classList.add('hidden');
+  document.getElementById('mainUI').classList.add('hidden');
+}
+
+function showApp() {
+  document.getElementById('welcomeScreen').classList.add('hidden');
+  document.getElementById('mainHeader').classList.remove('hidden');
+  document.getElementById('mainUI').classList.remove('hidden');
+}
+
+// ─── DATASET FOLDER ───────────────────────────────────────────────────────────
+async function openDatasetFolder() {
+  try {
+    const handle = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'documents' });
+    state.datasetDirHandle = handle;
+    document.getElementById('datasetPath').textContent = handle.name;
+    showApp();
+    toast(`📁 Folder "${handle.name}" opened with read/write access`);
+    await loadExistingDataset(handle);
+  } catch(e) {
+    if (e.name !== 'AbortError') toast('Could not open folder: ' + e.message);
+  }
+}
+
+async function ensureDir(parentHandle, name) {
+  return await parentHandle.getDirectoryHandle(name, { create: true });
+}
+
+async function loadExistingDataset(handle) {
+  // Try to find existing images
+  let loaded = 0;
+  for (const split of ['train','valid','test']) {
+    try {
+      const splitDir = await handle.getDirectoryHandle(split, { create: false });
+      const imgDir   = await splitDir.getDirectoryHandle('images', { create: false });
+      for await (const [name, fh] of imgDir.entries()) {
+        if (!name.match(/\.(jpg|jpeg|png|webp)$/i)) continue;
+        const file = await fh.getFile();
+        const dataURL = await fileToDataURL(file);
+        const frameId = name.replace(/\.[^.]+$/, '');
+        const frame = { id: frameId, dataURL, boxes: [], split };
+
+        // Try to load label
+        try {
+          const lblDir = await splitDir.getDirectoryHandle('labels', { create: false });
+          const lblFh  = await lblDir.getFileHandle(frameId + '.txt', { create: false });
+          const lblFile = await lblFh.getFile();
+          const txt = await lblFile.text();
+          frame.boxes = parseLabelFile(txt);
+        } catch {}
+
+        state.frames.push(frame);
+        loaded++;
+      }
+    } catch {}
+  }
+  if (loaded > 0) {
+    reassignSplits();
+    renderFrameStrip();
+    updateStats();
+    toast(`Loaded ${loaded} existing frames`);
+    if (state.frames.length > 0) selectFrame(0);
+  }
+}
+
+function parseLabelFile(txt) {
+  return txt.trim().split('\n').filter(l => l.trim()).map(line => {
+    const parts = line.trim().split(/\s+/).map(Number);
+    if (parts.length < 5) return null;
+    return { cls: parts[0], cx: parts[1], cy: parts[2], w: parts[3], h: parts[4] };
+  }).filter(Boolean);
+}
+
+function fileToDataURL(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ─── VIDEO LOADING ────────────────────────────────────────────────────────────
+function loadVideo(file) {
+  const url = URL.createObjectURL(file);
+  videoEl.src = url;
+  videoEl.onloadedmetadata = () => {
+    seekBar.max = videoEl.duration;
+    updateTimeDisplay();
+    state.videoLoaded = true;
+    showApp();
+    document.getElementById('videoControls').style.display = 'flex';
+    toast(`🎬 Loaded: ${file.name} (${formatTime(videoEl.duration)})`);
+  };
+}
+
+videoEl.ontimeupdate = () => {
+  if (!videoEl.seeking) {
+    seekBar.value = videoEl.currentTime;
+    updateTimeDisplay();
+    if (state.currentFrameIdx === -1) drawVideoFrame();
+  }
+};
+
+videoEl.onplay  = () => playPauseBtn.textContent = '⏸';
+videoEl.onpause = () => playPauseBtn.textContent = '▶';
+videoEl.onended = () => playPauseBtn.textContent = '▶';
+
+seekBar.oninput = () => {
+  videoEl.currentTime = seekBar.value;
+  updateTimeDisplay();
+  setTimeout(drawVideoFrame, 50);
+};
+
+function togglePlay() {
+  if (videoEl.paused) videoEl.play(); else videoEl.pause();
+}
+
+function stepFrame(dir) {
+  videoEl.currentTime = Math.max(0, Math.min(videoEl.duration, videoEl.currentTime + dir / 30));
+  setTimeout(drawVideoFrame, 50);
+}
+
+function setSpeed() {
+  videoEl.playbackRate = parseFloat(document.getElementById('speedSelect').value);
+}
+
+function updateTimeDisplay() {
+  timeDisplay.textContent = `${formatTime(videoEl.currentTime)} / ${formatTime(videoEl.duration || 0)}`;
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60).toString().padStart(2,'0');
+  return `${m}:${sec}`;
+}
+
+function drawVideoFrame() {
+  if (!videoEl.src) return;
+  canvas.width  = videoEl.videoWidth  || 640;
+  canvas.height = videoEl.videoHeight || 360;
+  ctx.drawImage(videoEl, 0, 0);
+}
+
+// ─── FRAME CAPTURE ────────────────────────────────────────────────────────────
+function captureCurrentFrame() {
+  if (!videoEl.src) { toast('No video loaded'); return; }
+
+  const tmpCanvas = document.createElement('canvas');
+  let srcX=0, srcY=0, srcW, srcH;
+
+  if (state.tool === 'crop' && cropStart && cropCurrent) {
+    const rect = getCanvasRect();
+    srcX = Math.min(cropStart.x, cropCurrent.x) / rect.scale;
+    srcY = Math.min(cropStart.y, cropCurrent.y) / rect.scale;
+    srcW = Math.abs(cropCurrent.x - cropStart.x) / rect.scale;
+    srcH = Math.abs(cropCurrent.y - cropStart.y) / rect.scale;
+    if (srcW < 10 || srcH < 10) { toast('Draw a crop region first'); return; }
+  } else {
+    srcW = videoEl.videoWidth;
+    srcH = videoEl.videoHeight;
+  }
+
+  tmpCanvas.width  = Math.round(srcW);
+  tmpCanvas.height = Math.round(srcH);
+  const tctx = tmpCanvas.getContext('2d');
+  tctx.drawImage(videoEl, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
+  const dataURL = tmpCanvas.toDataURL('image/jpeg', 0.92);
+
+  const id = `frame_${Date.now()}`;
+  const frame = { id, dataURL, boxes: [], split: 'train', cropRect: state.tool==='crop' ? {srcX,srcY,srcW,srcH} : null };
+  state.frames.push(frame);
+  reassignSplits();
+  addFrameThumb(frame, state.frames.length - 1);
+  updateStats();
+  selectFrame(state.frames.length - 1);
+  toast(`✓ Frame captured${frame.cropRect ? ' (cropped)' : ''}`);
+
+  // clear crop
+  cropStart = cropCurrent = null;
+  setTool('box');
+}
+
+function toggleAutoCapture() {
+  autoCapturing = !autoCapturing;
+  const btn = document.getElementById('autoCapBtn');
+  if (autoCapturing) {
+    btn.classList.add('btn');
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.color = 'var(--accent)';
+    btn.textContent = '■ Stop';
+    scheduleAutoCapture();
+  } else {
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    btn.textContent = 'Auto';
+    clearTimeout(autoCaptureTimer);
+  }
+}
+
+function scheduleAutoCapture() {
+  if (!autoCapturing) return;
+  const interval = parseFloat(document.getElementById('captureInterval').value) * 1000;
+  autoCaptureTimer = setTimeout(() => {
+    if (!videoEl.paused && !videoEl.ended) captureCurrentFrame();
+    scheduleAutoCapture();
+  }, interval);
+}
+
+// ─── FRAME SELECTION ─────────────────────────────────────────────────────────
+function selectFrame(idx) {
+  state.currentFrameIdx = idx;
+  state.selectedBox = -1;
+
+  // highlight strip
+  document.querySelectorAll('.frame-thumb').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+  });
+
+  const frame = state.frames[idx];
+  if (!frame) return;
+
+  // draw on canvas
+  const img = new Image();
+  img.onload = () => {
+    canvas.width  = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    redrawCanvas();
+  };
+  img.src = frame.dataURL;
+
+  frameLabel.textContent = `${frame.id} · ${frame.split}`;
+  renderBoxesList();
+}
+
+function redrawCanvas() {
+  const frame = state.frames[state.currentFrameIdx];
+  if (!frame) return;
+
+  const img = new Image();
+  img.onload = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+
+    // Draw boxes
+    frame.boxes.forEach((box, i) => {
+      const color = CLASS_COLORS[box.cls % CLASS_COLORS.length];
+      const x = (box.cx - box.w/2) * canvas.width;
+      const y = (box.cy - box.h/2) * canvas.height;
+      const w = box.w * canvas.width;
+      const h = box.h * canvas.height;
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = i === state.selectedBox ? 3 : 1.5;
+      ctx.setLineDash(i === state.selectedBox ? [6,3] : []);
+      ctx.strokeRect(x, y, w, h);
+
+      // label bg
+      ctx.fillStyle = color + 'cc';
+      const label = (state.classes[box.cls] || `cls${box.cls}`) + (i===state.selectedBox?' ◀':'');
+      ctx.font = 'bold 11px JetBrains Mono, monospace';
+      const tw = ctx.measureText(label).width;
+      ctx.fillRect(x, y - 16, tw + 8, 16);
+      ctx.fillStyle = '#000';
+      ctx.fillText(label, x + 4, y - 4);
+      ctx.setLineDash([]);
+    });
+
+    // Draw in-progress box
+    if (isDrawing && drawStart && drawCurrent) {
+      const color = CLASS_COLORS[state.currentClass % CLASS_COLORS.length];
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4,2]);
+      const rect = getCanvasRect();
+      const x1 = drawStart.x / rect.scale;
+      const y1 = drawStart.y / rect.scale;
+      const x2 = drawCurrent.x / rect.scale;
+      const y2 = drawCurrent.y / rect.scale;
+      ctx.strokeRect(x1, y1, x2-x1, y2-y1);
+      ctx.setLineDash([]);
+    }
+
+    // Crop rect
+    if (state.tool === 'crop' && cropStart && cropCurrent) {
+      const rect = getCanvasRect();
+      ctx.strokeStyle = '#ff6b35';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6,3]);
+      const x1 = cropStart.x / rect.scale;
+      const y1 = cropStart.y / rect.scale;
+      const x2 = cropCurrent.x / rect.scale;
+      const y2 = cropCurrent.y / rect.scale;
+      ctx.strokeRect(x1, y1, x2-x1, y2-y1);
+      ctx.fillStyle = 'rgba(255,107,53,0.1)';
+      ctx.fillRect(x1, y1, x2-x1, y2-y1);
+      ctx.setLineDash([]);
+    }
+  };
+  img.src = frame.dataURL;
+}
+
+// ─── CANVAS INTERACTION ───────────────────────────────────────────────────────
+function getCanvasRect() {
+  const rect = canvas.getBoundingClientRect();
+  const scale = rect.width / canvas.width;
+  return { ...rect, scale };
+}
+
+function evToCanvas(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scale = rect.width / canvas.width;
+  return { x: (e.clientX - rect.left), y: (e.clientY - rect.top), scale };
+}
+
+canvas.addEventListener('mousedown', e => {
+  if (state.currentFrameIdx < 0) return;
+  const pt = evToCanvas(e);
+
+  if (state.tool === 'crop') {
+    isCropDrawing = true;
+    cropStart = pt;
+    cropCurrent = pt;
+    return;
+  }
+
+  // Check if clicking existing box to select
+  if (e.button === 0) {
+    const frame = state.frames[state.currentFrameIdx];
+    const cx = pt.x / pt.scale / canvas.width;
+    const cy = pt.y / pt.scale / canvas.height;
+    let hit = -1;
+    for (let i = frame.boxes.length-1; i >= 0; i--) {
+      const b = frame.boxes[i];
+      if (cx >= b.cx-b.w/2 && cx <= b.cx+b.w/2 && cy >= b.cy-b.h/2 && cy <= b.cy+b.h/2) {
+        hit = i; break;
+      }
+    }
+    if (hit >= 0 && !e.shiftKey) {
+      state.selectedBox = hit;
+      renderBoxesList();
+      redrawCanvas();
+      return;
+    }
+    isDrawing = true;
+    drawStart = pt;
+    drawCurrent = pt;
+  }
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (isCropDrawing) { cropCurrent = evToCanvas(e); redrawCanvas(); return; }
+  if (!isDrawing) return;
+  drawCurrent = evToCanvas(e);
+  redrawCanvas();
+});
+
+canvas.addEventListener('mouseup', e => {
+  if (isCropDrawing) {
+    isCropDrawing = false;
+    cropCurrent = evToCanvas(e);
+    redrawCanvas();
+    return;
+  }
+  if (!isDrawing) return;
+  isDrawing = false;
+
+  const pt = evToCanvas(e);
+  const frame = state.frames[state.currentFrameIdx];
+  const scale = pt.scale;
+  const W = canvas.width, H = canvas.height;
+
+  const x1 = Math.min(drawStart.x, pt.x) / scale / W;
+  const y1 = Math.min(drawStart.y, pt.y) / scale / H;
+  const x2 = Math.max(drawStart.x, pt.x) / scale / W;
+  const y2 = Math.max(drawStart.y, pt.y) / scale / H;
+  const w  = x2 - x1;
+  const h  = y2 - y1;
+
+  if (w < 0.005 || h < 0.005) { redrawCanvas(); return; } // too small
+
+  const cx = x1 + w/2;
+  const cy = y1 + h/2;
+
+  frame.boxes.push({ cls: state.currentClass, cx, cy, w, h });
+  state.selectedBox = frame.boxes.length - 1;
+  drawStart = drawCurrent = null;
+  redrawCanvas();
+  renderBoxesList();
+  updateStats();
+  updateFrameThumb(state.currentFrameIdx);
+});
+
+// ─── TOOL ─────────────────────────────────────────────────────────────────────
+function setTool(t) {
+  state.tool = t;
+  document.getElementById('toolBox').classList.toggle('active', t==='box');
+  document.getElementById('toolCrop').classList.toggle('active', t==='crop');
+  cropModeIndicator.classList.toggle('hidden', t!=='crop');
+  canvas.style.cursor = t==='crop' ? 'crosshair' : 'crosshair';
+}
+
+// ─── CLASSES ─────────────────────────────────────────────────────────────────
+function renderClassList() {
+  classList.innerHTML = '';
+  state.classes.forEach((cls, i) => {
+    const color = CLASS_COLORS[i % CLASS_COLORS.length];
+    const el = document.createElement('div');
+    el.className = 'class-item' + (i===state.currentClass ? ' active' : '');
+    el.onclick = () => selectClass(i);
+    el.innerHTML = `
+      <div class="class-dot" style="background:${color}"></div>
+      <input class="class-name-input" value="${cls}" onclick="event.stopPropagation()" 
+        onchange="renameClass(${i}, this.value)" title="Click to rename">
+      <span class="class-key">${i}</span>
+      ${i < 1 ? '' : `<span class="class-delete" onclick="deleteClass(${i});event.stopPropagation()">✕</span>`}
+    `;
+    classList.appendChild(el);
+  });
+}
+
+function selectClass(i) {
+  state.currentClass = i;
+  // also update selected box's class if one is selected
+  const frame = state.frames[state.currentFrameIdx];
+  if (frame && state.selectedBox >= 0 && state.selectedBox < frame.boxes.length) {
+    frame.boxes[state.selectedBox].cls = i;
+    redrawCanvas();
+    renderBoxesList();
+    updateFrameThumb(state.currentFrameIdx);
+  }
+  renderClassList();
+}
+
+function renameClass(i, val) {
+  state.classes[i] = val.trim() || state.classes[i];
+  redrawCanvas();
+}
+
+function addClass() {
+  const input = document.getElementById('newClassName');
+  const name = input.value.trim();
+  if (!name) return;
+  if (state.classes.length >= 10) { toast('Max 10 classes'); return; }
+  state.classes.push(name);
+  input.value = '';
+  renderClassList();
+  toast(`Class "${name}" added (key: ${state.classes.length-1})`);
+}
+
+function deleteClass(i) {
+  if (!confirm(`Delete class "${state.classes[i]}"? All boxes with this class will be removed.`)) return;
+  state.classes.splice(i, 1);
+  // remove boxes with this class, remap others
+  state.frames.forEach(f => {
+    f.boxes = f.boxes.filter(b => b.cls !== i).map(b => ({ ...b, cls: b.cls > i ? b.cls-1 : b.cls }));
+  });
+  if (state.currentClass >= state.classes.length) state.currentClass = state.classes.length - 1;
+  renderClassList();
+  redrawCanvas();
+  renderBoxesList();
+  updateStats();
+}
+
+// ─── BOXES LIST ───────────────────────────────────────────────────────────────
+function renderBoxesList() {
+  boxesList.innerHTML = '';
+  const frame = state.frames[state.currentFrameIdx];
+  if (!frame) return;
+  frame.boxes.forEach((box, i) => {
+    const color = CLASS_COLORS[box.cls % CLASS_COLORS.length];
+    const name  = state.classes[box.cls] || `cls${box.cls}`;
+    const el = document.createElement('div');
+    el.className = 'box-item' + (i===state.selectedBox ? ' selected' : '');
+    el.onclick = () => { state.selectedBox = i; state.currentClass = box.cls; renderBoxesList(); renderClassList(); redrawCanvas(); };
+    el.innerHTML = `
+      <div class="box-color-dot" style="background:${color}"></div>
+      <span style="font-size:11px">${name}</span>
+      <span style="font-size:9px;color:var(--muted);margin-left:4px">${(box.w*100).toFixed(0)}×${(box.h*100).toFixed(0)}%</span>
+      <span class="box-delete" onclick="removeBox(${i});event.stopPropagation()">✕</span>
+    `;
+    boxesList.appendChild(el);
+  });
+}
+
+function removeBox(i) {
+  const frame = state.frames[state.currentFrameIdx];
+  if (!frame) return;
+  frame.boxes.splice(i, 1);
+  if (state.selectedBox >= frame.boxes.length) state.selectedBox = frame.boxes.length - 1;
+  renderBoxesList();
+  redrawCanvas();
+  updateStats();
+  updateFrameThumb(state.currentFrameIdx);
+}
+
+function clearBoxes() {
+  const frame = state.frames[state.currentFrameIdx];
+  if (!frame) return;
+  if (!confirm('Clear all annotations on this frame?')) return;
+  frame.boxes = [];
+  state.selectedBox = -1;
+  renderBoxesList();
+  redrawCanvas();
+  updateStats();
+  updateFrameThumb(state.currentFrameIdx);
+}
+
+// ─── FRAME STRIP ─────────────────────────────────────────────────────────────
+function renderFrameStrip() {
+  frameStrip.innerHTML = '';
+  state.frames.forEach((f, i) => addFrameThumb(f, i, true));
+  frameCount.textContent = state.frames.length;
+}
+
+function addFrameThumb(frame, idx, noScroll) {
+  const el = document.createElement('div');
+  el.className = 'frame-thumb' + (frame.boxes.length > 0 ? ' labeled' : '');
+  el.dataset.idx = idx;
+  el.onclick = () => selectFrame(idx);
+
+  const tc = document.createElement('canvas');
+  tc.width = 160; tc.height = 90;
+  const tctx = tc.getContext('2d');
+  const img = new Image();
+  img.onload = () => {
+    tctx.drawImage(img, 0, 0, 160, 90);
+    // draw mini boxes
+    frame.boxes.forEach(box => {
+      tctx.strokeStyle = CLASS_COLORS[box.cls % CLASS_COLORS.length];
+      tctx.lineWidth = 1.5;
+      tctx.strokeRect(box.cx*160-box.w*80, box.cy*90-box.h*45, box.w*160, box.h*90);
+    });
+  };
+  img.src = frame.dataURL;
+
+  const badge = document.createElement('div');
+  badge.className = 'frame-thumb-badge';
+  badge.textContent = frame.boxes.length > 0 ? frame.boxes.length + '🏷' : idx;
+
+  const splitBadge = document.createElement('div');
+  splitBadge.className = 'frame-split-badge split-' + frame.split;
+  splitBadge.textContent = frame.split === 'train' ? 'TR' : frame.split === 'valid' ? 'VA' : 'TE';
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'frame-delete-btn';
+  delBtn.textContent = '✕';
+  delBtn.onclick = (e) => { e.stopPropagation(); deleteFrame(idx); };
+
+  el.appendChild(tc);
+  el.appendChild(badge);
+  el.appendChild(splitBadge);
+  el.appendChild(delBtn);
+
+  frameStrip.appendChild(el);
+  frameCount.textContent = state.frames.length;
+  if (!noScroll) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function updateFrameThumb(idx) {
+  const thumbs = document.querySelectorAll('.frame-thumb');
+  const el = thumbs[idx];
+  if (!el) return;
+  const frame = state.frames[idx];
+  el.classList.toggle('labeled', frame.boxes.length > 0);
+  const badge = el.querySelector('.frame-thumb-badge');
+  if (badge) badge.textContent = frame.boxes.length > 0 ? frame.boxes.length + '🏷' : idx;
+  const tc = el.querySelector('canvas');
+  if (tc) {
+    const tctx = tc.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      tctx.clearRect(0,0,160,90);
+      tctx.drawImage(img, 0, 0, 160, 90);
+      frame.boxes.forEach(box => {
+        tctx.strokeStyle = CLASS_COLORS[box.cls % CLASS_COLORS.length];
+        tctx.lineWidth = 1.5;
+        tctx.strokeRect(box.cx*160-box.w*80, box.cy*90-box.h*45, box.w*160, box.h*90);
+      });
+    };
+    img.src = frame.dataURL;
+  }
+}
+
+function deleteFrame(idx) {
+  if (!confirm('Remove this frame from the dataset?')) return;
+  state.frames.splice(idx, 1);
+  if (state.currentFrameIdx >= state.frames.length) state.currentFrameIdx = state.frames.length - 1;
+  reassignSplits();
+  renderFrameStrip();
+  updateStats();
+  if (state.frames.length > 0) selectFrame(state.currentFrameIdx);
+  else { ctx.clearRect(0,0,canvas.width,canvas.height); }
+}
+
+// ─── SPLIT ASSIGNMENT ─────────────────────────────────────────────────────────
+function reassignSplits() {
+  const train = parseInt(document.getElementById('splitTrain').value) || 7;
+  const valid  = parseInt(document.getElementById('splitValid').value)  || 2;
+  const test   = parseInt(document.getElementById('splitTest').value)   || 1;
+  const total  = train + valid + test;
+
+  state.frames.forEach((f, i) => {
+    const pos = i % total;
+    if (pos < train)              f.split = 'train';
+    else if (pos < train + valid) f.split = 'valid';
+    else                          f.split = 'test';
+  });
+
+  // Update strip badges
+  document.querySelectorAll('.frame-split-badge').forEach((el, i) => {
+    if (!state.frames[i]) return;
+    el.className = 'frame-split-badge split-' + state.frames[i].split;
+    el.textContent = state.frames[i].split === 'train' ? 'TR' : state.frames[i].split === 'valid' ? 'VA' : 'TE';
+  });
+
+  updateSplitPreview();
+}
+
+function updateSplitPreview() {
+  const counts = { train:0, valid:0, test:0 };
+  state.frames.forEach(f => counts[f.split]++);
+  document.getElementById('splitPreview').innerHTML = `
+    <span class="split-badge split-train">Train: ${counts.train}</span>
+    <span class="split-badge split-valid">Valid: ${counts.valid}</span>
+    <span class="split-badge split-test">Test: ${counts.test}</span>
+  `;
+  document.getElementById('statSplit').textContent = `${counts.train}/${counts.valid}/${counts.test}`;
+}
+
+document.getElementById('splitTrain').oninput =
+document.getElementById('splitValid').oninput =
+document.getElementById('splitTest').oninput  = () => reassignSplits();
+
+// ─── STATS ───────────────────────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('statTotal').textContent   = state.frames.length;
+  document.getElementById('statLabeled').textContent = state.frames.filter(f => f.boxes.length > 0).length;
+  updateSplitPreview();
+}
+
+// ─── EXPORT ───────────────────────────────────────────────────────────────────
+async function exportDataset() {
+  if (!state.datasetDirHandle) {
+    // Ask for folder
+    try {
+      const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      state.datasetDirHandle = handle;
+      document.getElementById('datasetPath').textContent = handle.name;
+    } catch(e) {
+      toast('Export cancelled'); return;
+    }
+  }
+
+  const root = state.datasetDirHandle;
+  let saved = 0;
+
+  toast('Exporting…');
+
+  for (const split of ['train','valid','test']) {
+    const frames = state.frames.filter(f => f.split === split);
+    if (frames.length === 0) continue;
+
+    const splitDir = await ensureDir(root, split);
+    const imgDir   = await ensureDir(splitDir, 'images');
+    const lblDir   = await ensureDir(splitDir, 'labels');
+
+    for (const frame of frames) {
+      // Write image
+      const imgHandle = await imgDir.getFileHandle(frame.id + '.jpg', { create: true });
+      const imgWritable = await imgHandle.createWritable();
+      const blob = await dataURLToBlob(frame.dataURL);
+      await imgWritable.write(blob);
+      await imgWritable.close();
+
+      // Write label
+      const lblHandle = await lblDir.getFileHandle(frame.id + '.txt', { create: true });
+      const lblWritable = await lblHandle.createWritable();
+      const txt = frame.boxes.map(b => `${b.cls} ${b.cx.toFixed(6)} ${b.cy.toFixed(6)} ${b.w.toFixed(6)} ${b.h.toFixed(6)}`).join('\n');
+      await lblWritable.write(txt);
+      await lblWritable.close();
+      saved++;
+    }
+  }
+
+  // Write data.yaml
+  const yamlHandle = await root.getFileHandle('data.yaml', { create: true });
+  const yamlWritable = await yamlHandle.createWritable();
+  const yaml = `train: ./train/images\nval: ./valid/images\ntest: ./test/images\n\nnc: ${state.classes.length}\nnames: [${state.classes.map(c => '"'+c+'"').join(', ')}]\n`;
+  await yamlWritable.write(yaml);
+  await yamlWritable.close();
+
+  toast(`✓ Exported ${saved} frames + data.yaml`);
+}
+
+function dataURLToBlob(dataURL) {
+  return fetch(dataURL).then(r => r.blob());
+}
+
+// ─── PREVIEW ─────────────────────────────────────────────────────────────────
+function showPreview() {
+  const modal = document.getElementById('previewModal');
+  const content = document.getElementById('previewContent');
+
+  const counts = { train:0, valid:0, test:0 };
+  state.frames.forEach(f => counts[f.split]++);
+
+  let html = `<div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+    ${state.frames.length} frames · ${state.frames.filter(f=>f.boxes.length>0).length} labeled ·
+    <span style="color:var(--green)">Train: ${counts.train}</span> ·
+    <span style="color:var(--yellow)">Valid: ${counts.valid}</span> ·
+    <span style="color:var(--red)">Test: ${counts.test}</span>
+  </div>`;
+
+  for (const split of ['train','valid','test']) {
+    const frames = state.frames.filter(f => f.split === split);
+    if (frames.length === 0) continue;
+    html += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:12px 0 6px">${split} (${frames.length})</div>`;
+    html += `<div class="preview-grid">`;
+    frames.forEach(frame => {
+      html += `<div class="preview-item"><canvas id="prev_${frame.id}" width="160" height="90"></canvas>
+        <div class="frame-split-badge split-${frame.split}" style="position:absolute;bottom:4px;left:4px">${split==='train'?'TR':split==='valid'?'VA':'TE'}</div>
+        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.7);border-radius:3px;font-size:9px;padding:1px 4px">${frame.boxes.length}🏷</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  content.innerHTML = html;
+  modal.classList.add('open');
+
+  // Render canvases
+  state.frames.forEach(frame => {
+    const c = document.getElementById('prev_' + frame.id);
+    if (!c) return;
+    const tctx = c.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      tctx.drawImage(img, 0, 0, 160, 90);
+      frame.boxes.forEach(box => {
+        tctx.strokeStyle = CLASS_COLORS[box.cls % CLASS_COLORS.length];
+        tctx.lineWidth = 1.5;
+        tctx.strokeRect(box.cx*160-box.w*80, box.cy*90-box.h*45, box.w*160, box.h*90);
+      });
+    };
+    img.src = frame.dataURL;
+  });
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ─── KEYBOARD ─────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName;
+  if (tag === 'INPUT') return;
+
+  if (e.key >= '0' && e.key <= '9') {
+    const i = parseInt(e.key);
+    if (i < state.classes.length) selectClass(i);
+    return;
+  }
+
+  switch (e.key) {
+    case ' ':
+      e.preventDefault();
+      if (state.videoLoaded) togglePlay();
+      else captureCurrentFrame();
+      break;
+    case 'Delete':
+    case 'Backspace':
+      if (state.selectedBox >= 0) removeBox(state.selectedBox);
+      break;
+    case 'c': case 'C':
+      setTool(state.tool === 'crop' ? 'box' : 'crop');
+      break;
+    case 'ArrowLeft':
+      if (state.currentFrameIdx > 0) selectFrame(state.currentFrameIdx - 1);
+      break;
+    case 'ArrowRight':
+      if (state.currentFrameIdx < state.frames.length - 1) selectFrame(state.currentFrameIdx + 1);
+      break;
+    case 'f': case 'F':
+      captureCurrentFrame();
+      break;
+    case 'Escape':
+      closeModal('previewModal');
+      if (state.tool === 'crop') setTool('box');
+      break;
+  }
+});
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderClassList();
+updateSplitPreview();
+
+// If File System Access API not available
+if (!window.showDirectoryPicker) {
+  document.getElementById('openFolderBtn').onclick = () => {
+    toast('File System Access API not available — use Chrome/Edge');
+  };
+}
+
+// Drag-drop video
+document.body.addEventListener('dragover', e => e.preventDefault());
+document.body.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('video/')) {
+    loadVideo(file);
+  }
+});
+</script>
+</body>
+</html>
