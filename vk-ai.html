@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✦ KI Visitenkarten Generator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #a78bfa;
+    --accent2: #34d399;
+    --bg: #080808;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #222222;
+    --text: #f0f0f0;
+    --muted: #666666;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow: hidden; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+  .input-field {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: 'Syne', sans-serif;
+    font-size: 14px; transition: border-color .2s, box-shadow .2s; outline: none;
+  }
+  .input-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(167,139,250,.1); }
+  .input-field::placeholder { color: var(--muted); }
+
+  .btn-primary {
+    background: var(--accent); color: #000; border: none; border-radius: 8px;
+    padding: 12px 20px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;
+    cursor: pointer; transition: transform .15s, box-shadow .15s, opacity .15s; display: flex;
+    align-items: center; gap: 8px; justify-content: center; width: 100%;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(167,139,250,.35); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-ghost {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 14px; font-family: 'Syne', sans-serif; font-size: 13px;
+    cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: #444; background: var(--surface2); }
+
+  .tab-btn {
+    background: transparent; border: none; color: var(--muted); font-family: 'Syne', sans-serif;
+    font-weight: 600; font-size: 13px; padding: 8px 14px; cursor: pointer; border-radius: 6px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .tab-btn.active { background: var(--surface2); color: var(--text); }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+
+  .label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .08em; margin-bottom: 6px; display: block; }
+
+  .field-group { margin-bottom: 16px; }
+
+  .upload-zone {
+    border: 1.5px dashed var(--border); border-radius: 10px; padding: 16px;
+    text-align: center; cursor: pointer; transition: all .2s; position: relative;
+  }
+  .upload-zone:hover { border-color: var(--accent); background: rgba(167,139,250,.04); }
+  .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+  .history-item {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px; cursor: pointer; transition: all .2s; margin-bottom: 8px;
+  }
+  .history-item:hover { border-color: var(--accent); }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.85); backdrop-filter: blur(8px);
+    z-index: 100; display: flex; align-items: center; justify-content: center;
+  }
+  .modal-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 36px; width: 100%; max-width: 460px;
+  }
+
+  .loading-ring {
+    width: 20px; height: 20px; border: 2px solid rgba(0,0,0,.3);
+    border-top-color: #000; border-radius: 50%;
+    animation: spin .7s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .tag {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 4px 10px; font-size: 12px; color: var(--muted); font-weight: 500;
+    cursor: pointer; transition: all .15s; display: inline-block;
+  }
+  .tag.selected { background: rgba(167,139,250,.15); border-color: var(--accent); color: var(--accent); }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px;
+    font-size: 14px; z-index: 200; animation: slideIn .3s ease; max-width: 320px;
+  }
+  .toast.success { border-color: var(--accent2); color: var(--accent2); }
+  .toast.error { border-color: #f87171; color: #f87171; }
+  @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  #cardFrame { border: none; display: block; }
+
+  .guide-overlay {
+    position: absolute; pointer-events: none; z-index: 10;
+  }
+
+  select.input-field { cursor: pointer; }
+  textarea.input-field { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+  .section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .preview-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em;
+    padding: 2px 6px; border-radius: 4px; position: absolute; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== API KEY MODAL ===== -->
+<div id="apiModal" class="modal-backdrop">
+  <div class="modal-card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;">
+      <div style="width:40px;height:40px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;">✦</div>
+      <div>
+        <h2 style="font-size:20px;font-weight:800;">KI Visitenkarten</h2>
+        <p style="font-size:13px;color:var(--muted);">Generator · Powered by Gemini</p>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="label">Gemini API Key</label>
+      <input type="password" id="apiKeyInput" class="input-field" placeholder="AIzaSy..." autocomplete="off">
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;">
+        Kostenlos bei <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent);">aistudio.google.com</a> · 1000 Req/Tag gratis
+      </p>
+    </div>
+
+    <div class="field-group">
+      <label class="label">Modell</label>
+      <select id="modelSelect" class="input-field">
+        <option value="gemini-2.5-flash-lite-preview-06-17">Gemini 2.5 Flash-Lite — 1000 Req/Tag (Empfohlen)</option>
+        <option value="gemini-2.5-flash">Gemini 2.5 Flash — 250 Req/Tag (Besser)</option>
+        <option value="gemini-2.5-pro">Gemini 2.5 Pro — 100 Req/Tag (Am Besten)</option>
+      </select>
+    </div>
+
+    <button class="btn-primary" onclick="saveApiKey()">
+      <span>Weiter</span> <span>→</span>
+    </button>
+    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px;">Key wird nur lokal gespeichert (localStorage)</p>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="mainApp" style="display:none;height:100vh;display:flex;flex-direction:column;">
+
+  <!-- Header -->
+  <header style="border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:16px;">✦</span>
+      <span style="font-weight:800;font-size:15px;">Visitenkarten Generator</span>
+      <span id="modelBadge" class="mono" style="font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;"></span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-ghost" onclick="showApiModal()" style="padding:6px 12px;font-size:12px;">⚙ API Key</button>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <div style="flex:1;display:grid;grid-template-columns:420px 1fr;overflow:hidden;">
+
+    <!-- ===== LEFT PANEL (Form) ===== -->
+    <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+
+      <!-- Tabs -->
+      <div style="padding:12px 16px 0;border-bottom:1px solid var(--border);display:flex;gap:4px;background:var(--bg);flex-shrink:0;">
+        <button class="tab-btn active" id="tab-Kontakt" onclick="setTab('Kontakt')">Kontakt</button>
+        <button class="tab-btn" id="tab-Design" onclick="setTab('Design')">Design</button>
+        <button class="tab-btn" id="tab-Prompt" onclick="setTab('Prompt')">Prompt</button>
+      </div>
+
+      <!-- Tab Content -->
+      <div style="flex:1;overflow-y:auto;padding:20px 16px;">
+
+        <!-- === KONTAKT TAB === -->
+        <div id="content-Kontakt">
+          <div class="section-title">Persönliche Daten</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="field-group" style="grid-column:1/-1;">
+              <label class="label">Vollständiger Name *</label>
+              <input type="text" id="f-name" class="input-field" placeholder="Max Mustermann">
+            </div>
+            <div class="field-group">
+              <label class="label">Berufsbezeichnung</label>
+              <input type="text" id="f-title" class="input-field" placeholder="Senior Designer">
+            </div>
+            <div class="field-group">
+              <label class="label">Unternehmen</label>
+              <input type="text" id="f-company" class="input-field" placeholder="Musterfirma GmbH">
+            </div>
+            <div class="field-group">
+              <label class="label">Telefon</label>
+              <input type="text" id="f-phone" class="input-field" placeholder="+49 123 456789">
+            </div>
+            <div class="field-group">
+              <label class="label">E-Mail</label>
+              <input type="text" id="f-email" class="input-field" placeholder="max@firma.de">
+            </div>
+            <div class="field-group">
+              <label class="label">Website</label>
+              <input type="text" id="f-website" class="input-field" placeholder="www.firma.de">
+            </div>
+            <div class="field-group">
+              <label class="label">LinkedIn / Social</label>
+              <input type="text" id="f-social" class="input-field" placeholder="linkedin.com/in/max">
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="label">Adresse</label>
+            <input type="text" id="f-address" class="input-field" placeholder="Musterstr. 1, 12345 Berlin">
+          </div>
+
+          <div class="field-group">
+            <label class="label">Tagline / Slogan</label>
+            <input type="text" id="f-tagline" class="input-field" placeholder="Gestalte die Zukunft.">
+          </div>
+
+          <div class="section-title" style="margin-top:20px;">Medien (Optional)</div>
+
+          <div class="field-group">
+            <label class="label">Logo</label>
+            <div class="upload-zone" id="logoZone">
+              <input type="file" id="logoInput" accept="image/*" onchange="handleFileUpload('logo', this)">
+              <div id="logoPreview">
+                <span style="font-size:22px;">🖼</span>
+                <p style="font-size:13px;color:var(--muted);margin-top:6px;">Logo hochladen</p>
+                <p style="font-size:11px;color:var(--muted);">PNG, JPG, SVG, WebP</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="label">Hintergrundbild</label>
+            <div class="upload-zone" id="bgZone">
+              <input type="file" id="bgInput" accept="image/*" onchange="handleFileUpload('bg', this)">
+              <div id="bgPreview">
+                <span style="font-size:22px;">🌄</span>
+                <p style="font-size:13px;color:var(--muted);margin-top:6px;">Hintergrundbild hochladen</p>
+                <p style="font-size:11px;color:var(--muted);">Optional · PNG, JPG</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- === DESIGN TAB === -->
+        <div id="content-Design" style="display:none;">
+          <div class="section-title">Stil</div>
+          <div class="chip-row" style="margin-bottom:20px;">
+            <span class="tag selected" data-group="style" data-val="modern-minimal">Modern Minimal</span>
+            <span class="tag" data-group="style" data-val="bold-geometric">Bold Geometric</span>
+            <span class="tag" data-group="style" data-val="luxury-elegant">Luxury Elegant</span>
+            <span class="tag" data-group="style" data-val="tech-dark">Tech Dark</span>
+            <span class="tag" data-group="style" data-val="creative-gradient">Creative Gradient</span>
+            <span class="tag" data-group="style" data-val="corporate-clean">Corporate Clean</span>
+            <span class="tag" data-group="style" data-val="retro-futuristic">Retro-Futuristic</span>
+            <span class="tag" data-group="style" data-val="nature-organic">Nature Organic</span>
+          </div>
+
+          <div class="section-title">Farbschema</div>
+          <div class="chip-row" style="margin-bottom:20px;">
+            <span class="tag selected" data-group="color" data-val="dark">Dark</span>
+            <span class="tag" data-group="color" data-val="light">Light</span>
+            <span class="tag" data-group="color" data-val="monochrome">Monochrome</span>
+            <span class="tag" data-group="color" data-val="colorful">Bunt</span>
+            <span class="tag" data-group="color" data-val="gradient">Multi-Gradient</span>
+            <span class="tag" data-group="color" data-val="pastel">Pastel</span>
+            <span class="tag" data-group="color" data-val="neon">Neon</span>
+          </div>
+
+          <div class="field-group">
+            <label class="label">Wunschfarbe / Akzent</label>
+            <input type="text" id="f-color" class="input-field" placeholder="z.B. 'Smaragdgrün', '#2D6A4F', 'Navy & Gold'">
+          </div>
+
+          <div class="section-title">Layout</div>
+          <div class="chip-row" style="margin-bottom:20px;">
+            <span class="tag selected" data-group="layout" data-val="front-only">Nur Vorderseite</span>
+            <span class="tag" data-group="layout" data-val="front-back">Vorder + Rückseite</span>
+          </div>
+
+          <div class="section-title">Sprache</div>
+          <div class="chip-row" style="margin-bottom:20px;">
+            <span class="tag selected" data-group="lang" data-val="de">Deutsch</span>
+            <span class="tag" data-group="lang" data-val="en">Englisch</span>
+            <span class="tag" data-group="lang" data-val="de-en">Zweisprachig</span>
+          </div>
+
+          <div class="field-group">
+            <label class="label">Zusätzliche Design-Wünsche</label>
+            <textarea id="f-designwish" class="input-field" placeholder="z.B. 'Architektur-Stil, klare Linien, viel Weißraum', 'QR Code für Website', 'Icons für Kontaktdaten'..." style="height:80px;"></textarea>
+          </div>
+        </div>
+
+        <!-- === PROMPT TAB === -->
+        <div id="content-Prompt" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div class="section-title" style="margin:0;">System Prompt</div>
+            <button class="btn-ghost" onclick="resetSystemPrompt()" style="font-size:11px;padding:4px 10px;">↺ Reset</button>
+          </div>
+          <textarea id="systemPromptTA" class="input-field mono" style="font-size:11px;line-height:1.6;height:320px;resize:vertical;" oninput="saveSystemPrompt()"></textarea>
+
+          <div class="section-title" style="margin-top:20px;">User Prompt Vorschau</div>
+          <div id="userPromptPreview" class="mono" style="font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;white-space:pre-wrap;max-height:200px;overflow-y:auto;line-height:1.6;"></div>
+        </div>
+
+      </div><!-- end tab content -->
+
+      <!-- Generate Button (sticky bottom) -->
+      <div style="padding:16px;border-top:1px solid var(--border);background:var(--bg);flex-shrink:0;">
+        <button class="btn-primary" id="generateBtn" onclick="generateCard()">
+          <span id="genBtnIcon">✦</span>
+          <span id="genBtnText">Visitenkarte generieren</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== RIGHT PANEL (Preview + History) ===== -->
+    <div style="overflow-y:auto;padding:28px;">
+
+      <!-- Empty State -->
+      <div id="emptyState" style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;opacity:.4;">
+        <div style="font-size:48px;">✦</div>
+        <p style="font-size:15px;font-weight:600;">Noch keine Visitenkarte</p>
+        <p style="font-size:13px;color:var(--muted);">Daten eingeben und generieren</p>
+      </div>
+
+      <!-- Card Preview -->
+      <div id="previewSection" style="display:none;">
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h2 style="font-size:16px;font-weight:700;">Vorschau</h2>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-ghost" onclick="downloadHTML()" style="font-size:12px;">↓ HTML</button>
+            <button class="btn-ghost" onclick="printCard()" style="font-size:12px;">⎙ Drucken</button>
+            <button class="btn-ghost" onclick="generateCard()" style="font-size:12px;color:var(--accent);border-color:var(--accent);">✦ Neu</button>
+          </div>
+        </div>
+
+        <!-- Card preview with scale wrapper -->
+        <div id="cardWrapper" style="margin-bottom:24px;">
+          <!-- Dynamic content injected by JS -->
+        </div>
+
+        <!-- Dimensions info -->
+        <div style="display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:12px;">
+            <span style="color:var(--muted);">Karte:</span> <span class="mono">85 × 55 mm</span>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:12px;">
+            <span style="color:var(--muted);">Mit Beschnitt:</span> <span class="mono">91 × 61 mm</span>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:12px;">
+            <span style="color:var(--muted);">Sicherheitszone:</span> <span class="mono">3mm Innen</span>
+          </div>
+          <div style="background:rgba(167,139,250,.1);border:1px solid var(--accent);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--accent);">
+            ✦ Druckfertig (300 DPI via CSS mm)
+          </div>
+        </div>
+
+        <!-- Guides legend -->
+        <div style="display:flex;gap:16px;margin-bottom:28px;font-size:11px;color:var(--muted);">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="width:20px;height:1px;border-top:1px dashed #ef4444;"></div>
+            <span>Beschnitt (3mm)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="width:20px;height:1px;border-top:1px dotted #60a5fa;"></div>
+            <span>Sicherheitszone (3mm)</span>
+          </div>
+        </div>
+
+        <!-- History -->
+        <div id="historySection" style="display:none;">
+          <div class="section-title">Verlauf</div>
+          <div id="historyList"></div>
+        </div>
+
+      </div><!-- end previewSection -->
+
+    </div><!-- end right panel -->
+  </div><!-- end grid -->
+</div><!-- end mainApp -->
+
+<div id="toastContainer"></div>
+
+<script>
+// ============================================================
+// CONSTANTS & CONFIG
+// ============================================================
+
+const LS = {
+  API_KEY: 'vkg_api_key',
+  MODEL: 'vkg_model',
+  FORM: 'vkg_form',
+  DESIGN: 'vkg_design',
+  SYSTEM_PROMPT: 'vkg_sysprompt',
+  HISTORY: 'vkg_history',
+};
+
+const DEFAULT_SYSTEM_PROMPT = `Du bist ein weltklasse Visitenkarten-Designer und Frontend-Entwickler. Erstelle ein vollständiges, selbstständiges HTML-Dokument für eine professionelle Visitenkarte.
+
+═══ TECHNISCHE MASSE ═══
+- Gesamtgröße mit Beschnitt: 91mm × 61mm (85×55mm Karte + 3mm Beschnitt an jeder Seite)
+- Sicherheitsabstand: 3mm innerhalb des Kartenrandes – alle Texte und Logos MÜSSEN hier bleiben
+- Inhaltsfläche (sicher): 79mm × 49mm, zentriert auf der Karte
+- Body: margin:0; padding:0; overflow:hidden; width:91mm; height:61mm;
+- Der Hauptcontainer: position:relative; width:91mm; height:61mm; overflow:hidden;
+- Verwende CSS mm-Einheiten für alle Positionierungen
+
+═══ BESCHNITT & FÜHRUNGSLINIEN ═══
+Füge folgende Guide-Linien ein (pointer-events:none; z-index:999; print:hidden):
+1. Rote gestrichelte Linie bei 3mm von außen (= Karten-Rand):
+   position:absolute; top:3mm; left:3mm; right:3mm; bottom:3mm; border:0.3px dashed rgba(239,68,68,0.6);
+2. Blaue gepunktete Linie bei 6mm von außen (= Sicherheitszone innen):
+   position:absolute; top:6mm; left:6mm; right:6mm; bottom:6mm; border:0.3px dotted rgba(96,165,250,0.5);
+Beide Linien: class="vkg-guide"
+
+═══ CDN RESSOURCEN ═══
+- Tailwind CSS: <script src="https://cdn.tailwindcss.com"><\/script>
+- Google Fonts: Wähle 1-2 MARKANTE, UNGEWÖHNLICHE Schriften (NIEMALS Inter, Roboto, Arial, Helvetica)
+  Empfehlungen: Playfair Display, Cormorant Garamond, Space Mono, DM Serif Display, Bebas Neue, Raleway, Josefin Sans, Outfit, Instrument Serif, Plus Jakarta Sans, Fraunces, Cabinet Grotesk
+
+═══ BILD-PLATZHALTER ═══
+- Falls Logo vorhanden: <img src="LOGO_PLACEHOLDER" style="max-height:Xmm; object-fit:contain;">
+- Falls Hintergrundbild: background-image: url('BG_PLACEHOLDER'); background-size:cover; background-position:center;
+- Verwende diese EXAKTEN Strings als Platzhalter (werden nach der Generierung ersetzt)
+
+═══ DESIGN-PRINZIPIEN ═══
+- Erstrecke Hintergrundfarben/-gradienten bis zum äußersten Rand (Beschnittbereich)
+- Außergewöhnliche, mutige Designentscheidungen – nicht generisch
+- Kontrastreiche Typographie: Große Display-Schrift für Name, feine Body-Schrift für Details
+- Moderne Techniken: Glassmorphismus, geometrische Patterns, SVG-Dekorationen, Gradienten-Maschen
+- Perfekte Proportionen und Abstände
+- Icons für Kontaktdaten (UTF-8 Symbole: ✉ ☎ 🌐 oder SVG)
+
+═══ AUSGABE ═══
+Gib NUR den rohen HTML-Code zurück. KEIN Markdown. KEINE Backticks. KEINE Erklärungen davor oder danach.
+Das HTML beginnt direkt mit <!DOCTYPE html> und endet mit </html>.`;
+
+// ============================================================
+// STATE
+// ============================================================
+
+const state = {
+  apiKey: '',
+  model: 'gemini-2.5-flash-lite-preview-06-17',
+  logoBase64: null,
+  bgBase64: null,
+  currentHTML: '',
+  history: [],
+  generating: false,
+  designSelections: {
+    style: 'modern-minimal',
+    color: 'dark',
+    layout: 'front-only',
+    lang: 'de'
+  }
+};
+
+// ============================================================
+// INIT
+// ============================================================
+
+function init() {
+  // Load API key
+  state.apiKey = localStorage.getItem(LS.API_KEY) || '';
+  state.model = localStorage.getItem(LS.MODEL) || 'gemini-2.5-flash-lite-preview-06-17';
+
+  // Load system prompt
+  const savedPrompt = localStorage.getItem(LS.SYSTEM_PROMPT);
+  document.getElementById('systemPromptTA').value = savedPrompt || DEFAULT_SYSTEM_PROMPT;
+
+  // Load history
+  try {
+    state.history = JSON.parse(localStorage.getItem(LS.HISTORY) || '[]');
+  } catch(e) { state.history = []; }
+
+  // Load form data
+  try {
+    const fd = JSON.parse(localStorage.getItem(LS.FORM) || '{}');
+    Object.entries(fd).forEach(([k, v]) => {
+      const el = document.getElementById('f-' + k);
+      if (el) el.value = v;
+    });
+  } catch(e) {}
+
+  // Load design selections
+  try {
+    const ds = JSON.parse(localStorage.getItem(LS.DESIGN) || '{}');
+    Object.assign(state.designSelections, ds);
+    // Update chip UI
+    document.querySelectorAll('.tag').forEach(t => {
+      const group = t.dataset.group;
+      const val = t.dataset.val;
+      if (state.designSelections[group] === val) t.classList.add('selected');
+      else t.classList.remove('selected');
+    });
+  } catch(e) {}
+
+  // Update model badge
+  updateModelBadge();
+
+  if (!state.apiKey) {
+    showApiModal();
+  } else {
+    hideApiModal();
+  }
+
+  // Chip listeners
+  document.querySelectorAll('.tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+      const group = tag.dataset.group;
+      const val = tag.dataset.val;
+      document.querySelectorAll(`.tag[data-group="${group}"]`).forEach(t => t.classList.remove('selected'));
+      tag.classList.add('selected');
+      state.designSelections[group] = val;
+      localStorage.setItem(LS.DESIGN, JSON.stringify(state.designSelections));
+    });
+  });
+
+  // Auto-save form on input
+  document.querySelectorAll('[id^="f-"]').forEach(el => {
+    el.addEventListener('input', saveFormData);
+  });
+
+  // Show history
+  renderHistory();
+}
+
+function updateModelBadge() {
+  const names = {
+    'gemini-2.5-flash-lite-preview-06-17': 'Flash-Lite',
+    'gemini-2.5-flash': '2.5 Flash',
+    'gemini-2.5-pro': '2.5 Pro'
+  };
+  document.getElementById('modelBadge').textContent = names[state.model] || state.model;
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+
+function showApiModal() {
+  document.getElementById('apiModal').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+  if (state.apiKey) document.getElementById('apiKeyInput').value = state.apiKey;
+  document.getElementById('modelSelect').value = state.model;
+}
+
+function hideApiModal() {
+  document.getElementById('apiModal').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'flex';
+  document.getElementById('mainApp').style.flexDirection = 'column';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const model = document.getElementById('modelSelect').value;
+  if (!key) { toast('Bitte API Key eingeben', 'error'); return; }
+  state.apiKey = key;
+  state.model = model;
+  localStorage.setItem(LS.API_KEY, key);
+  localStorage.setItem(LS.MODEL, model);
+  updateModelBadge();
+  hideApiModal();
+  toast('API Key gespeichert ✓', 'success');
+}
+
+// ============================================================
+// TABS
+// ============================================================
+
+let activeTab = 'Kontakt';
+
+function setTab(tab) {
+  ['Kontakt','Design','Prompt'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('content-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+  activeTab = tab;
+  if (tab === 'Prompt') updateUserPromptPreview();
+}
+
+// ============================================================
+// FORM
+// ============================================================
+
+function saveFormData() {
+  const fields = ['name','title','company','phone','email','website','social','address','tagline','color','designwish'];
+  const data = {};
+  fields.forEach(k => {
+    const el = document.getElementById('f-' + k);
+    if (el) data[k] = el.value;
+  });
+  localStorage.setItem(LS.FORM, JSON.stringify(data));
+}
+
+function getFormData() {
+  return {
+    name: document.getElementById('f-name')?.value || '',
+    title: document.getElementById('f-title')?.value || '',
+    company: document.getElementById('f-company')?.value || '',
+    phone: document.getElementById('f-phone')?.value || '',
+    email: document.getElementById('f-email')?.value || '',
+    website: document.getElementById('f-website')?.value || '',
+    social: document.getElementById('f-social')?.value || '',
+    address: document.getElementById('f-address')?.value || '',
+    tagline: document.getElementById('f-tagline')?.value || '',
+    color: document.getElementById('f-color')?.value || '',
+    designwish: document.getElementById('f-designwish')?.value || '',
+  };
+}
+
+// ============================================================
+// FILE UPLOAD
+// ============================================================
+
+function handleFileUpload(type, input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 4 * 1024 * 1024) { toast('Bild zu groß (max 4MB)', 'error'); return; }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const b64 = e.target.result;
+    if (type === 'logo') {
+      state.logoBase64 = b64;
+      document.getElementById('logoPreview').innerHTML = `
+        <img src="${b64}" style="max-height:60px;max-width:100%;object-fit:contain;border-radius:4px;margin:0 auto;display:block;">
+        <p style="font-size:11px;color:var(--accent2);margin-top:6px;">${file.name}</p>
+        <button onclick="clearFile('logo')" style="margin-top:4px;font-size:11px;color:#f87171;background:none;border:none;cursor:pointer;">✕ Entfernen</button>
+      `;
+    } else {
+      state.bgBase64 = b64;
+      document.getElementById('bgPreview').innerHTML = `
+        <img src="${b64}" style="max-height:60px;max-width:100%;object-fit:cover;border-radius:4px;margin:0 auto;display:block;">
+        <p style="font-size:11px;color:var(--accent2);margin-top:6px;">${file.name}</p>
+        <button onclick="clearFile('bg')" style="margin-top:4px;font-size:11px;color:#f87171;background:none;border:none;cursor:pointer;">✕ Entfernen</button>
+      `;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearFile(type) {
+  if (type === 'logo') {
+    state.logoBase64 = null;
+    document.getElementById('logoPreview').innerHTML = `
+      <span style="font-size:22px;">🖼</span>
+      <p style="font-size:13px;color:var(--muted);margin-top:6px;">Logo hochladen</p>
+      <p style="font-size:11px;color:var(--muted);">PNG, JPG, SVG, WebP</p>`;
+    document.getElementById('logoInput').value = '';
+  } else {
+    state.bgBase64 = null;
+    document.getElementById('bgPreview').innerHTML = `
+      <span style="font-size:22px;">🌄</span>
+      <p style="font-size:13px;color:var(--muted);margin-top:6px;">Hintergrundbild hochladen</p>
+      <p style="font-size:11px;color:var(--muted);">Optional · PNG, JPG</p>`;
+    document.getElementById('bgInput').value = '';
+  }
+}
+
+// ============================================================
+// PROMPT BUILDING
+// ============================================================
+
+function buildUserPrompt() {
+  const fd = getFormData();
+  const ds = state.designSelections;
+
+  const styleMap = {
+    'modern-minimal': 'Modern Minimalistisch (viel Weißraum, saubere Linien)',
+    'bold-geometric': 'Bold Geometrisch (starke Formen, klare Blöcke)',
+    'luxury-elegant': 'Luxury Elegant (Premium-Gefühl, Gold/Silber-Akzente)',
+    'tech-dark': 'Tech Dark (dunkler Hintergrund, digitale Ästhetik)',
+    'creative-gradient': 'Kreativ mit Gradienten (farbenfrohe Übergänge)',
+    'corporate-clean': 'Corporate Clean (professionell, Business)',
+    'retro-futuristic': 'Retro-Futuristisch (80s/90s meets future)',
+    'nature-organic': 'Nature Organisch (Erdtöne, natürliche Formen)'
+  };
+
+  const colorMap = {
+    'dark': 'Dunkles Farbschema',
+    'light': 'Helles/Weißes Farbschema',
+    'monochrome': 'Monochrom (Schwarz/Weiß/Grau)',
+    'colorful': 'Bunt und farbenfroh',
+    'gradient': 'Multi-Gradient (mehrere Farben)',
+    'pastel': 'Pastell-Töne (sanft, hell)',
+    'neon': 'Neon/Leuchtfarben auf Schwarz'
+  };
+
+  let prompt = `Erstelle eine Visitenkarte für folgende Person:\n\n`;
+
+  if (fd.name) prompt += `NAME: ${fd.name}\n`;
+  if (fd.title) prompt += `TITEL: ${fd.title}\n`;
+  if (fd.company) prompt += `UNTERNEHMEN: ${fd.company}\n`;
+  if (fd.tagline) prompt += `TAGLINE: "${fd.tagline}"\n`;
+  prompt += `\n`;
+  if (fd.phone) prompt += `TELEFON: ${fd.phone}\n`;
+  if (fd.email) prompt += `E-MAIL: ${fd.email}\n`;
+  if (fd.website) prompt += `WEBSITE: ${fd.website}\n`;
+  if (fd.social) prompt += `SOCIAL: ${fd.social}\n`;
+  if (fd.address) prompt += `ADRESSE: ${fd.address}\n`;
+  prompt += `\n`;
+
+  prompt += `DESIGN-STIL: ${styleMap[ds.style] || ds.style}\n`;
+  prompt += `FARBSCHEMA: ${colorMap[ds.color] || ds.color}\n`;
+  if (fd.color) prompt += `WUNSCHFARBE: ${fd.color}\n`;
+  prompt += `LAYOUT: ${ds.layout === 'front-back' ? 'Vorder- und Rückseite (zwei Karten nebeneinander zeigen)' : 'Nur Vorderseite'}\n`;
+  prompt += `SPRACHE: ${ds.lang}\n`;
+  if (fd.designwish) prompt += `\nZUSÄTZLICHE WÜNSCHE: ${fd.designwish}\n`;
+
+  if (state.logoBase64) prompt += `\nLOGO: vorhanden – verwende LOGO_PLACEHOLDER als src\n`;
+  else prompt += `\nKEIN LOGO – erstelle ein stilisiertes Initial oder Typografie-Logo\n`;
+
+  if (state.bgBase64) prompt += `HINTERGRUNDBILD: vorhanden – verwende BG_PLACEHOLDER in background-image\n`;
+
+  return prompt;
+}
+
+function updateUserPromptPreview() {
+  document.getElementById('userPromptPreview').textContent = buildUserPrompt();
+}
+
+// ============================================================
+// SYSTEM PROMPT
+// ============================================================
+
+function saveSystemPrompt() {
+  localStorage.setItem(LS.SYSTEM_PROMPT, document.getElementById('systemPromptTA').value);
+}
+
+function resetSystemPrompt() {
+  document.getElementById('systemPromptTA').value = DEFAULT_SYSTEM_PROMPT;
+  localStorage.removeItem(LS.SYSTEM_PROMPT);
+  toast('System Prompt zurückgesetzt', 'success');
+}
+
+// ============================================================
+// GEMINI API
+// ============================================================
+
+async function callGemini(systemPrompt, userPrompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${state.model}:generateContent?key=${state.apiKey}`;
+
+  const body = {
+    systemInstruction: {
+      parts: [{ text: systemPrompt }]
+    },
+    contents: [{
+      role: 'user',
+      parts: [{ text: userPrompt }]
+    }],
+    generationConfig: {
+      maxOutputTokens: 8192,
+      temperature: 1.0,
+      topP: 0.95,
+    }
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err?.error?.message || `HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  let text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+  // Strip markdown code fences if present
+  text = text.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+
+  return text;
+}
+
+// ============================================================
+// GENERATE
+// ============================================================
+
+async function generateCard() {
+  if (state.generating) return;
+
+  const fd = getFormData();
+  if (!fd.name.trim()) { toast('Bitte mindestens den Namen eingeben', 'error'); return; }
+  if (!state.apiKey) { showApiModal(); return; }
+
+  state.generating = true;
+  const btn = document.getElementById('generateBtn');
+  const icon = document.getElementById('genBtnIcon');
+  const txt = document.getElementById('genBtnText');
+  btn.disabled = true;
+  icon.innerHTML = '<span class="loading-ring"></span>';
+  txt.textContent = 'Generiere...';
+
+  try {
+    const systemPrompt = document.getElementById('systemPromptTA').value || DEFAULT_SYSTEM_PROMPT;
+    const userPrompt = buildUserPrompt();
+
+    let html = await callGemini(systemPrompt, userPrompt);
+
+    // Replace image placeholders
+    if (state.logoBase64) html = html.replace(/LOGO_PLACEHOLDER/g, state.logoBase64);
+    if (state.bgBase64) html = html.replace(/BG_PLACEHOLDER/g, state.bgBase64);
+
+    state.currentHTML = html;
+    renderCard(html);
+    addToHistory(html, userPrompt, fd.name);
+    renderHistory();
+    toast('Visitenkarte generiert! ✦', 'success');
+
+  } catch(e) {
+    console.error(e);
+    toast('Fehler: ' + e.message, 'error');
+  } finally {
+    state.generating = false;
+    btn.disabled = false;
+    icon.textContent = '✦';
+    txt.textContent = 'Visitenkarte generieren';
+  }
+}
+
+// ============================================================
+// RENDER CARD
+// ============================================================
+
+function renderCard(html) {
+  // Calculate scale for preview
+  // Real card (with bleed) = 91mm = 344px at 96dpi
+  // Real card height = 61mm = 231px at 96dpi
+  // We want to display it at a good size
+
+  const CARD_W = 344; // px (91mm @ 96dpi)
+  const CARD_H = 231; // px (61mm @ 96dpi)
+
+  // Available width in right panel (rough estimate)
+  const availW = Math.min(window.innerWidth - 440 - 56, 900);
+  const scale = Math.min(Math.floor((availW / CARD_W) * 10) / 10, 2.4);
+  const scaledW = Math.round(CARD_W * scale);
+  const scaledH = Math.round(CARD_H * scale);
+
+  // Bleed/safety overlay at scale
+  const bleed3mm = Math.round(11.34 * scale); // 3mm * 3.78px/mm
+  const safe6mm = Math.round(22.68 * scale);  // 6mm * 3.78px/mm
+
+  const wrapper = document.getElementById('cardWrapper');
+  wrapper.innerHTML = `
+    <div style="position:relative;display:inline-block;border-radius:3px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);">
+      <!-- Iframe -->
+      <iframe id="cardFrame"
+        width="${CARD_W}"
+        height="${CARD_H}"
+        style="display:block;border:none;transform:scale(${scale});transform-origin:top left;width:${CARD_W}px;height:${CARD_H}px;"
+        sandbox="allow-scripts">
+      </iframe>
+      <!-- Transparent size correction for scaled iframe -->
+      <div style="position:absolute;top:0;left:0;width:${scaledW}px;height:${scaledH}px;pointer-events:none;">
+        <!-- Bleed line (card edge) -->
+        <div style="position:absolute;top:${bleed3mm}px;left:${bleed3mm}px;right:${bleed3mm}px;bottom:${bleed3mm}px;border:0.8px dashed rgba(239,68,68,0.7);pointer-events:none;"></div>
+        <!-- Safety line -->
+        <div style="position:absolute;top:${safe6mm}px;left:${safe6mm}px;right:${safe6mm}px;bottom:${safe6mm}px;border:0.8px dotted rgba(96,165,250,0.6);pointer-events:none;"></div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:10px;">Maßstab: ${scale}x · Klick auf ⎙ Drucken für 1:1 Ausgabe</p>
+  `;
+
+  // Inject HTML into iframe
+  const frame = document.getElementById('cardFrame');
+  frame.srcdoc = html;
+
+  // Show preview, hide empty state
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('previewSection').style.display = 'block';
+
+  // Scroll to preview (optional)
+  document.querySelector('.overflow-y-auto:last-child')?.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// DOWNLOAD & PRINT
+// ============================================================
+
+function downloadHTML() {
+  if (!state.currentHTML) return;
+  const blob = new Blob([state.currentHTML], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const fd = getFormData();
+  const name = (fd.name || 'visitenkarte').toLowerCase().replace(/\s+/g, '-');
+  a.download = `visitenkarte-${name}.html`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('HTML heruntergeladen', 'success');
+}
+
+function printCard() {
+  if (!state.currentHTML) return;
+  const printWin = window.open('', '_blank');
+  // Inject print-specific style: hide guides, set page size
+  const printHTML = state.currentHTML.replace(
+    '</head>',
+    `<style>
+      @page { size: 91mm 61mm; margin: 0; }
+      @media print { .vkg-guide { display: none !important; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    </style></head>`
+  );
+  printWin.document.write(printHTML);
+  printWin.document.close();
+  setTimeout(() => { printWin.print(); }, 500);
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+
+function addToHistory(html, prompt, name) {
+  const item = {
+    id: Date.now(),
+    ts: new Date().toLocaleString('de-DE'),
+    html,
+    prompt,
+    name: name || 'Visitenkarte',
+    model: state.model
+  };
+  state.history.unshift(item);
+  if (state.history.length > 15) state.history.pop();
+
+  // Save to localStorage (without full html to save space — save last 5 with html)
+  const toSave = state.history.map((h, i) => i < 5 ? h : { ...h, html: '' });
+  try {
+    localStorage.setItem(LS.HISTORY, JSON.stringify(toSave));
+  } catch(e) {
+    // Quota exceeded - save fewer items
+    try {
+      localStorage.setItem(LS.HISTORY, JSON.stringify(state.history.slice(0, 3).map(h => ({ ...h, html: h.html.substring(0, 50000) }))));
+    } catch(e2) {}
+  }
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const section = document.getElementById('historySection');
+
+  if (!state.history.length) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  list.innerHTML = state.history.map((item, i) => `
+    <div class="history-item" onclick="loadHistory(${i})">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <p style="font-size:13px;font-weight:600;">${escHtml(item.name)}</p>
+          <p class="mono" style="font-size:11px;color:var(--muted);margin-top:2px;">${item.ts}</p>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          ${item.html ? '<span style="font-size:10px;color:var(--accent2);background:rgba(52,211,153,.1);padding:2px 8px;border-radius:4px;">HTML ✓</span>' : '<span style="font-size:10px;color:var(--muted);padding:2px 8px;">Kein HTML</span>'}
+          <button onclick="event.stopPropagation();deleteHistory(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:2px 6px;font-size:14px;" title="Löschen">✕</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadHistory(index) {
+  const item = state.history[index];
+  if (!item) return;
+  if (!item.html) { toast('HTML für diesen Eintrag nicht gespeichert', 'error'); return; }
+  state.currentHTML = item.html;
+  renderCard(item.html);
+  toast(`"${item.name}" geladen`, 'success');
+}
+
+function deleteHistory(index) {
+  state.history.splice(index, 1);
+  try { localStorage.setItem(LS.HISTORY, JSON.stringify(state.history)); } catch(e) {}
+  renderHistory();
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
