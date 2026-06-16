@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GROQ AGENT</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0A0A0F;
+    --bg2:      #101018;
+    --bg3:      #16161F;
+    --border:   #1E1E2E;
+    --green:    #00FF9C;
+    --green-dim:#00CC7A;
+    --green-glow: rgba(0,255,156,0.12);
+    --red:      #FF4F6A;
+    --amber:    #FFB347;
+    --blue:     #7EB8FF;
+    --muted:    #4A4A6A;
+    --text:     #C8C8E0;
+    --text-dim: #6A6A8A;
+    --mono:     'JetBrains Mono', monospace;
+    --sans:     'Inter', sans-serif;
+  }
+
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOPBAR ── */
+  #topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+  }
+  #topbar .logo {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    color: var(--green);
+    text-transform: uppercase;
+  }
+  #topbar .sep { color: var(--border); }
+  #topbar #model-badge {
+    font-size: 10px;
+    color: var(--text-dim);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 7px;
+  }
+  #topbar .spacer { flex: 1; }
+  #topbar #status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  #topbar #status-dot.ready  { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  #topbar #status-dot.busy   { background: var(--amber); box-shadow: 0 0 8px var(--amber); animation: pulse 1s infinite; }
+  #topbar #status-dot.error  { background: var(--red);   box-shadow: 0 0 8px var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+
+  /* ── API KEY SETUP ── */
+  #setup-screen {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  #setup-card {
+    width: 100%;
+    max-width: 460px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 32px;
+  }
+  #setup-card h2 {
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--green);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  #setup-card p {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  #setup-card label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  #api-key-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 16px;
+  }
+  #api-key-input:focus { border-color: var(--green); }
+  #api-key-input::placeholder { color: var(--muted); }
+
+  #setup-model-select {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    margin-bottom: 20px;
+    cursor: pointer;
+  }
+  #setup-model-select:focus { border-color: var(--green); }
+
+  #connect-btn {
+    width: 100%;
+    background: var(--green);
+    color: var(--bg);
+    border: none;
+    border-radius: 4px;
+    padding: 11px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  #connect-btn:hover { opacity: 0.85; }
+  #setup-error {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--red);
+    display: none;
+  }
+
+  /* ── CHAT LAYOUT ── */
+  #chat-layout {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+    flex-direction: row;
+  }
+  #chat-layout.visible { display: flex; }
+
+  /* ── SIDEBAR: virtual filesystem ── */
+  #sidebar {
+    width: 210px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    background: var(--bg2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #sidebar-header {
+    padding: 10px 14px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  #file-tree {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+  .file-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 12px;
+    color: var(--text-dim);
+    user-select: none;
+  }
+  .file-entry:hover { background: var(--bg3); color: var(--text); }
+  .file-entry.active { color: var(--green); background: var(--green-glow); }
+  .file-icon { color: var(--muted); font-size: 11px; width: 14px; text-align: center; }
+  .file-new { animation: fileIn 0.3s ease; }
+  @keyframes fileIn { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:none} }
+
+  /* ── FILE VIEWER PANEL ── */
+  #file-panel {
+    width: 340px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+    display: none;
+    flex-direction: column;
+  }
+  #file-panel.open { display: flex; }
+  #file-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+  }
+  #file-panel-name { font-size: 12px; color: var(--green); }
+  #file-panel-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 2px 4px;
+    transition: color 0.15s;
+  }
+  #file-panel-close:hover { color: var(--text); }
+  #file-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    font-size: 12px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text);
+    font-family: var(--mono);
+  }
+  .dl-btn {
+    margin: 10px 14px;
+    padding: 7px 12px;
+    background: none;
+    border: 1px solid var(--green);
+    border-radius: 3px;
+    color: var(--green);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .dl-btn:hover { background: var(--green-glow); }
+
+  /* ── MAIN CHAT ── */
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    scroll-behavior: smooth;
+  }
+
+  .msg { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
+
+  .msg-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .msg-meta .role { text-transform: uppercase; font-weight: 500; }
+  .msg-meta .role.user  { color: var(--blue); }
+  .msg-meta .role.agent { color: var(--green); }
+  .msg-meta .role.tool  { color: var(--amber); }
+  .msg-meta .role.system-msg { color: var(--muted); }
+  .msg-meta .ts { font-size: 9px; }
+
+  .msg-body {
+    font-family: var(--sans);
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--text);
+    padding-left: 2px;
+  }
+  .msg-body.user-body {
+    background: var(--bg2);
+    border-left: 2px solid var(--blue);
+    padding: 10px 14px;
+    border-radius: 0 4px 4px 0;
+  }
+  .msg-body.tool-body {
+    background: var(--bg3);
+    border-left: 2px solid var(--amber);
+    padding: 10px 14px;
+    border-radius: 0 4px 4px 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .msg-body code {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--green);
+  }
+  .msg-body pre {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+  .msg-body pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text);
+    font-size: 12px;
+  }
+  .msg-body p { margin-bottom: 8px; }
+  .msg-body p:last-child { margin-bottom: 0; }
+  .msg-body ul, .msg-body ol { padding-left: 20px; margin-bottom: 8px; }
+  .msg-body li { margin-bottom: 2px; }
+  .msg-body h1,.msg-body h2,.msg-body h3 {
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 8px;
+    margin-top: 12px;
+  }
+  .msg-body h1 { font-size: 15px; }
+  .msg-body h2 { font-size: 14px; }
+  .msg-body h3 { font-size: 13px; }
+
+  /* thinking indicator */
+  .thinking-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .think-label { font-size: 11px; color: var(--text-dim); font-family: var(--mono); }
+  .think-step  { font-size: 11px; color: var(--amber); font-family: var(--mono); }
+  .think-dots  { display: flex; gap: 3px; }
+  .think-dots span {
+    width: 5px; height: 5px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: dotBounce 1s infinite;
+  }
+  .think-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .think-dots span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes dotBounce {
+    0%,80%,100%{transform:translateY(0);opacity:.4}
+    40%{transform:translateY(-4px);opacity:1}
+  }
+
+  /* ── INPUT BAR ── */
+  #input-area {
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 12px 16px;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  #user-input {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-family: var(--sans);
+    font-size: 13.5px;
+    color: var(--text);
+    outline: none;
+    resize: none;
+    min-height: 44px;
+    max-height: 160px;
+    overflow-y: auto;
+    transition: border-color 0.2s;
+    line-height: 1.5;
+  }
+  #user-input:focus { border-color: var(--green); }
+  #user-input::placeholder { color: var(--muted); }
+  #send-btn {
+    background: var(--green);
+    color: var(--bg);
+    border: none;
+    border-radius: 4px;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+  }
+  #send-btn:hover:not(:disabled) { opacity: 0.85; }
+  #send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  #loop-counter {
+    font-size: 10px;
+    color: var(--text-dim);
+    padding: 0 4px;
+    flex-shrink: 0;
+    display: none;
+    align-items: center;
+    gap: 4px;
+  }
+  #loop-counter.visible { display: flex; }
+  #loop-counter .lc-num { color: var(--amber); font-weight: 700; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo">⬡ Agent</div>
+  <div class="sep">|</div>
+  <div id="model-badge">—</div>
+  <div class="spacer"></div>
+  <div id="loop-counter"><span>loop</span><span class="lc-num" id="lc-num">0</span></div>
+  <div id="status-dot"></div>
+</div>
+
+<!-- SETUP -->
+<div id="setup-screen">
+  <div id="setup-card">
+    <h2>Initialize Agent</h2>
+    <p>Connect your Groq API key to start an autonomous coding and research loop with tool use, file creation, and web search.</p>
+    <label for="api-key-input">Groq API Key</label>
+    <input id="api-key-input" type="password" placeholder="gsk_..." autocomplete="off" spellcheck="false">
+    <label for="setup-model-select">Model</label>
+    <select id="setup-model-select">
+      <option value="moonshotai/kimi-k2-instruct">Kimi K2 Instruct (best for agent)</option>
+      <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile</option>
+      <option value="llama3-groq-70b-8192-tool-use-preview">Llama 3 70B Tool Use</option>
+      <option value="llama3-groq-8b-8192-tool-use-preview">Llama 3 8B Tool Use (fast)</option>
+      <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+    </select>
+    <button id="connect-btn">Connect →</button>
+    <div id="setup-error"></div>
+  </div>
+</div>
+
+<!-- CHAT LAYOUT -->
+<div id="chat-layout">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div id="sidebar-header">Files</div>
+    <div id="file-tree">
+      <div style="padding:14px;font-size:11px;color:var(--muted)">No files yet.</div>
+    </div>
+  </div>
+
+  <!-- File viewer -->
+  <div id="file-panel">
+    <div id="file-panel-header">
+      <span id="file-panel-name"></span>
+      <button id="file-panel-close">✕</button>
+    </div>
+    <pre id="file-panel-content"></pre>
+    <button class="dl-btn" id="dl-btn">⬇ Download</button>
+  </div>
+
+  <!-- Main chat -->
+  <div id="main">
+    <div id="messages"></div>
+    <div id="input-area">
+      <textarea id="user-input" placeholder="Ask anything — I'll think, search, code, and create files…" rows="1"></textarea>
+      <button id="send-btn">↑</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════ STATE ════════ */
+let GROQ_KEY = '';
+let GROQ_MODEL = 'moonshotai/kimi-k2-instruct';
+const MAX_LOOPS = 12;
+const virtualFS = {};
+let conversationHistory = [];
+let activeFile = null;
+let isRunning = false;
+
+/* ════════ TOOLS ════════ */
+const TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name: 'write_file',
+      description: 'Create or overwrite a file in the virtual filesystem. Use for code, configs, documents, scripts, etc. Always write complete, working content.',
+      parameters: {
+        type: 'object',
+        properties: {
+          filename: { type: 'string', description: 'File name with extension, e.g. app.py, index.html, config.json' },
+          content:  { type: 'string', description: 'Full file content to write' },
+          description: { type: 'string', description: 'One-line description of what this file does' }
+        },
+        required: ['filename', 'content', 'description']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'read_file',
+      description: 'Read the content of a file from the virtual filesystem.',
+      parameters: {
+        type: 'object',
+        properties: { filename: { type: 'string' } },
+        required: ['filename']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'list_files',
+      description: 'List all files currently in the virtual filesystem.',
+      parameters: { type: 'object', properties: {} }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'delete_file',
+      description: 'Delete a file from the virtual filesystem.',
+      parameters: {
+        type: 'object',
+        properties: { filename: { type: 'string' } },
+        required: ['filename']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'web_search',
+      description: 'Search the web for current information, documentation, APIs, examples, or error solutions. Always search when you need current or specific information you are not certain about.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query:   { type: 'string', description: 'Precise search query' },
+          purpose: { type: 'string', description: 'Why you need this information' }
+        },
+        required: ['query', 'purpose']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'analyze_code',
+      description: 'Analyze a file in the filesystem for bugs, security issues, performance problems, or improvements.',
+      parameters: {
+        type: 'object',
+        properties: {
+          filename: { type: 'string', description: 'File to analyze (must exist in filesystem)' },
+          focus:    { type: 'string', description: 'What to focus on: bugs, security, performance, style, all' }
+        },
+        required: ['filename', 'focus']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'run_calculation',
+      description: 'Evaluate a mathematical expression safely.',
+      parameters: {
+        type: 'object',
+        properties: {
+          expression: { type: 'string', description: 'JS math expression to evaluate, e.g. "2**32", "Math.PI * 5**2"' }
+        },
+        required: ['expression']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'finish',
+      description: 'Signal that all tasks are complete and present the final answer to the user. Call this when done.',
+      parameters: {
+        type: 'object',
+        properties: {
+          summary:       { type: 'string', description: 'Clear final summary of everything accomplished' },
+          files_created: { type: 'array', items: { type: 'string' }, description: 'List of files created or modified' }
+        },
+        required: ['summary']
+      }
+    }
+  }
+];
+
+/* ════════ SYSTEM PROMPT ════════ */
+const SYSTEM_PROMPT = `You are an elite autonomous software engineer and researcher operating in an agentic loop. You have access to a virtual filesystem and web search. Your job is to deeply understand what the user needs and deliver production-quality results autonomously.
+
+## Core Principles
+- **Think before acting**: Decompose complex requests into clear steps. Plan first, then execute methodically.
+- **Be thorough**: Write complete, working, well-commented code — never stubs or placeholders.
+- **Search proactively**: Use web_search when you need current docs, APIs, examples, or solutions. Don't guess library APIs — look them up.
+- **Create files for everything substantial**: Code, configs, scripts, documents, schemas — write them to the filesystem.
+- **Iterate to excellence**: After writing code, analyze it. If something could be better, improve it in a follow-up write.
+- **Think in systems**: When building, consider all the pieces — error handling, edge cases, tests, docs, configs.
+
+## Workflow
+1. Analyze the request thoroughly and plan your approach
+2. Search for relevant information / current docs if needed
+3. Create all necessary files (write complete, production-ready content)
+4. Verify your work: read files back, analyze code quality
+5. Iterate and improve where needed
+6. Call finish() with a clear, actionable summary
+
+## Code Quality Standards
+- Include proper error handling for all failure modes
+- Add helpful comments explaining non-obvious logic
+- Use modern, idiomatic patterns for the language
+- Consider security, performance, and maintainability
+- Write real, runnable code — no TODOs left unfulfilled
+- Structure code so it can be copied and run immediately
+
+## Communication
+- Be precise and technical
+- Explain important architectural decisions
+- Highlight anything the user needs to do (install deps, set env vars, configure ports)
+- Keep the finish summary focused and actionable — what was built, how to run it
+
+The user is technical and expects expert-level output. Deliver accordingly.`;
+
+/* ════════ TOOL EXECUTION ════════ */
+async function executeTool(name, args) {
+  switch (name) {
+
+    case 'write_file': {
+      const { filename, content, description } = args;
+      virtualFS[filename] = content;
+      renderFileTree();
+      return `OK: Wrote ${filename} (${content.length} chars) — ${description}`;
+    }
+
+    case 'read_file': {
+      const { filename } = args;
+      if (!virtualFS[filename]) {
+        const avail = Object.keys(virtualFS).join(', ') || 'none';
+        return `Error: File '${filename}' not found. Available: ${avail}`;
+      }
+      return `Contents of ${filename}:\n\`\`\`\n${virtualFS[filename]}\n\`\`\``;
+    }
+
+    case 'list_files': {
+      const files = Object.keys(virtualFS);
+      if (!files.length) return 'Filesystem is empty.';
+      return 'Files in virtual filesystem:\n' + files.map(f =>
+        `  ${f}  (${virtualFS[f].length} chars)`
+      ).join('\n');
+    }
+
+    case 'delete_file': {
+      const { filename } = args;
+      if (!virtualFS[filename]) return `Error: '${filename}' not found.`;
+      delete virtualFS[filename];
+      renderFileTree();
+      if (activeFile === filename) closeFilePanel();
+      return `OK: Deleted ${filename}`;
+    }
+
+    case 'web_search': {
+      const { query, purpose } = args;
+      try {
+        const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const parts = [];
+        if (data.AbstractText) {
+          parts.push(`SUMMARY: ${data.AbstractText}`);
+          if (data.AbstractURL) parts.push(`SOURCE: ${data.AbstractURL}`);
+        }
+        if (data.Answer) parts.push(`DIRECT ANSWER: ${data.Answer}`);
+        if (data.Definition) parts.push(`DEFINITION: ${data.Definition}`);
+        if (data.RelatedTopics?.length) {
+          const topics = data.RelatedTopics
+            .filter(t => t.Text)
+            .slice(0, 5)
+            .map(t => `• ${t.Text}${t.FirstURL ? '  →  ' + t.FirstURL : ''}`);
+          if (topics.length) parts.push('RELATED:\n' + topics.join('\n'));
+        }
+        if (!parts.length) {
+          return `Search for "${query}" returned no structured results. Proceed with your knowledge, noting this limitation.`;
+        }
+        return `Web search: "${query}"\nPurpose: ${purpose}\n\n${parts.join('\n\n')}`;
+      } catch (e) {
+        return `Search failed: ${e.message}. Proceed with your training knowledge for "${query}".`;
+      }
+    }
+
+    case 'analyze_code': {
+      const { filename, focus } = args;
+      if (!virtualFS[filename]) return `Error: '${filename}' not found.`;
+      const content = virtualFS[filename];
+      const lines = content.split('\n').length;
+      const checks = {
+        errorHandling: /try|catch|except|error|err\b|raise|throw|Result|Option/i.test(content),
+        todos:         /TODO|FIXME|HACK|XXX/i.test(content),
+        comments:      /(\/\/|\/\*|#\s|""")/m.test(content),
+        tests:         /test|spec|assert|expect|describe|it\(/i.test(content),
+        hardcoded:     /(password|secret|api_key)\s*=\s*['"][^'"]+['"]/i.test(content),
+      };
+      return [
+        `Code analysis: ${filename} (${lines} lines, focus: ${focus})`,
+        `  Error handling:  ${checks.errorHandling ? '✓ present' : '⚠ missing — add error handling'}`,
+        `  Comments:        ${checks.comments      ? '✓ present' : '⚠ add inline comments'}`,
+        `  Tests:           ${checks.tests         ? '✓ found'   : '⚠ no tests detected'}`,
+        `  TODOs/FIXMEs:    ${checks.todos         ? '⚠ unresolved items found' : '✓ clean'}`,
+        `  Secrets:         ${checks.hardcoded     ? '🚨 possible hardcoded credentials!' : '✓ no obvious hardcoded secrets'}`,
+        `  Size assessment: ${lines < 50 ? 'compact' : lines < 200 ? 'medium' : 'large — consider modularizing'}`,
+      ].join('\n');
+    }
+
+    case 'run_calculation': {
+      const { expression } = args;
+      try {
+        const result = Function('"use strict"; const Math=globalThis.Math; return (' + expression + ')')();
+        return `${expression}  =  ${result}`;
+      } catch (e) {
+        return `Calculation error for "${expression}": ${e.message}`;
+      }
+    }
+
+    case 'finish': {
+      const { summary, files_created } = args;
+      return '__FINISH__:' + JSON.stringify({ summary, files_created: files_created || [] });
+    }
+
+    default:
+      return `Unknown tool: ${name}`;
+  }
+}
+
+/* ════════ GROQ API ════════ */
+async function callGroq(messages) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_KEY}`
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages,
+      tools: TOOLS,
+      tool_choice: 'auto',
+      max_tokens: 4096,
+      temperature: 0.15
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+/* ════════ AGENT LOOP ════════ */
+async function runAgentLoop(userMessage) {
+  if (isRunning) return;
+  isRunning = true;
+  setStatus('busy');
+  setSendDisabled(true);
+
+  appendMessage('user', userMessage);
+  conversationHistory.push({ role: 'user', content: userMessage });
+
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...conversationHistory
+  ];
+
+  let loopCount = 0;
+  let thinkingEl = null;
+
+  try {
+    while (loopCount < MAX_LOOPS) {
+      loopCount++;
+      updateLoopCounter(loopCount);
+
+      if (thinkingEl) thinkingEl.remove();
+      thinkingEl = appendThinking(`loop ${loopCount} / ${MAX_LOOPS}`);
+
+      const response = await callGroq(messages);
+      const choice = response.choices[0];
+      const msg = choice.message;
+
+      thinkingEl.remove(); thinkingEl = null;
+
+      // Add to running messages
+      messages.push(msg);
+
+      // Show text content
+      if (msg.content && msg.content.trim()) {
+        appendMessage('agent', msg.content);
+        conversationHistory.push({ role: 'assistant', content: msg.content });
+      }
+
+      // No tools → done
+      if (!msg.tool_calls || msg.tool_calls.length === 0) {
+        if (!msg.content?.trim()) appendMessage('agent', '_Agent returned no content. Try rephrasing._');
+        break;
+      }
+
+      // Execute each tool call
+      for (const tc of msg.tool_calls) {
+        const toolName = tc.function.name;
+        let toolArgs = {};
+        try { toolArgs = JSON.parse(tc.function.arguments); } catch(e) {}
+
+        appendMessage('tool', `→ ${toolName}(${fmtArgs(toolArgs)})`, false);
+
+        const result = await executeTool(toolName, toolArgs);
+
+        // Finish signal
+        if (typeof result === 'string' && result.startsWith('__FINISH__:')) {
+          const fd = JSON.parse(result.slice('__FINISH__:'.length));
+          appendFinish(fd);
+          conversationHistory.push({ role: 'assistant', content: '[Task complete]\n' + fd.summary });
+          isRunning = false;
+          setStatus('ready');
+          setSendDisabled(false);
+          updateLoopCounter(0);
+          return;
+        }
+
+        appendMessage('tool', result, true);
+        messages.push({ role: 'tool', tool_call_id: tc.id, content: result });
+      }
+
+      if (choice.finish_reason === 'stop') break;
+    }
+
+    if (loopCount >= MAX_LOOPS) {
+      appendMessage('system-msg', `⚠ Max loops (${MAX_LOOPS}) reached.`);
+    }
+
+  } catch(e) {
+    if (thinkingEl) thinkingEl.remove();
+    appendMessage('system-msg', `⛔ Error: ${e.message}`);
+    setStatus('error');
+    console.error(e);
+  }
+
+  isRunning = false;
+  setStatus('ready');
+  setSendDisabled(false);
+  updateLoopCounter(0);
+}
+
+/* ════════ UI ════════ */
+function fmtArgs(args) {
+  const keys = Object.keys(args);
+  if (!keys.length) return '';
+  return keys.map(k => {
+    const v = args[k];
+    const s = typeof v === 'string' ? v : JSON.stringify(v);
+    return `${k}=${JSON.stringify(s.length > 50 ? s.slice(0,50)+'…' : s)}`;
+  }).join(', ');
+}
+
+function now() {
+  return new Date().toLocaleTimeString('en', { hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+function appendMessage(role, content, isResult = false) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg';
+
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  const roleEl = document.createElement('span');
+  roleEl.className = 'role ' + role;
+  roleEl.textContent = role === 'tool' ? (isResult ? 'result' : 'tool') :
+                       role === 'system-msg' ? 'system' : role;
+  const ts = document.createElement('span');
+  ts.className = 'ts';
+  ts.textContent = now();
+  meta.appendChild(roleEl);
+  meta.appendChild(ts);
+
+  const body = document.createElement('div');
+  body.className = 'msg-body';
+
+  if (role === 'user') {
+    body.classList.add('user-body');
+    body.textContent = content;
+  } else if (role === 'tool') {
+    body.classList.add('tool-body');
+    body.textContent = content;
+  } else if (role === 'agent') {
+    body.innerHTML = renderMarkdown(content);
+  } else {
+    body.style.cssText = 'color:var(--text-dim);font-size:12px';
+    body.textContent = content;
+  }
+
+  wrap.appendChild(meta);
+  wrap.appendChild(body);
+  document.getElementById('messages').appendChild(wrap);
+  scrollBottom();
+  return wrap;
+}
+
+function appendThinking(step) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg';
+  const body = document.createElement('div');
+  body.className = 'thinking-row';
+  body.innerHTML = `<div class="think-dots"><span></span><span></span><span></span></div>
+    <span class="think-label">thinking</span>
+    <span class="think-step">${step}</span>`;
+  wrap.appendChild(body);
+  document.getElementById('messages').appendChild(wrap);
+  scrollBottom();
+  return wrap;
+}
+
+function appendFinish(data) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg';
+
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  meta.innerHTML = `<span class="role agent">✓ complete</span><span class="ts">${now()}</span>`;
+
+  const body = document.createElement('div');
+  body.className = 'msg-body';
+
+  let html = renderMarkdown(data.summary);
+
+  if (data.files_created?.length) {
+    html += `<div style="margin-top:14px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.12em">Created Files</div>`;
+    for (const f of data.files_created) {
+      if (virtualFS[f]) {
+        html += `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;">
+          <span>${getFileIcon(f)}</span>
+          <span style="color:var(--green);cursor:pointer;text-decoration:underline;font-family:var(--mono);font-size:12px"
+                onclick="openFile('${escAttr(f)}')">${escHtml(f)}</span>
+        </div>`;
+      }
+    }
+    html += '</div>';
+  }
+
+  body.innerHTML = html;
+  wrap.appendChild(meta);
+  wrap.appendChild(body);
+  document.getElementById('messages').appendChild(wrap);
+  scrollBottom();
+}
+
+function renderMarkdown(text) {
+  let html = text
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+      `<pre><code class="lang-${lang}">${escHtml(code.trim())}</code></pre>`)
+    .replace(/`([^`\n]+)`/g, (_, c) => `<code>${escHtml(c)}</code>`)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/^[-*•] (.+)$/gm, '<li>$1</li>')
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>(\n|$))+/g, m => `<ul>${m}</ul>`);
+
+  return html.split('\n\n').map(p => {
+    if (/^<(pre|ul|ol|h[123])/.test(p.trim()) || !p.trim()) return p;
+    return `<p>${p.replace(/\n/g,'<br>')}</p>`;
+  }).join('\n');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escAttr(s) {
+  return String(s).replace(/'/g,"\\'");
+}
+function scrollBottom() {
+  const m = document.getElementById('messages');
+  m.scrollTop = m.scrollHeight;
+}
+function setStatus(s) { document.getElementById('status-dot').className = s; }
+function setSendDisabled(v) { document.getElementById('send-btn').disabled = v; }
+function updateLoopCounter(n) {
+  const el = document.getElementById('loop-counter');
+  document.getElementById('lc-num').textContent = n;
+  el.classList.toggle('visible', n > 0);
+}
+
+/* ════════ FILESYSTEM UI ════════ */
+function getFileIcon(f) {
+  const ext = f.split('.').pop().toLowerCase();
+  return { py:'🐍',js:'⚡',ts:'⚡',html:'🌐',css:'🎨',json:'📋',md:'📝',
+           txt:'📄',sh:'⚙',yml:'⚙',yaml:'⚙',sql:'🗄',rs:'🦀',go:'🐹',
+           rb:'💎',php:'🐘',java:'☕',cpp:'⚙',c:'⚙',dockerfile:'🐳',
+           toml:'📋',env:'🔑',csv:'📊',xml:'📋' }[ext] || '📄';
+}
+
+function renderFileTree() {
+  const tree = document.getElementById('file-tree');
+  const files = Object.keys(virtualFS);
+  if (!files.length) {
+    tree.innerHTML = '<div style="padding:14px;font-size:11px;color:var(--muted)">No files yet.</div>';
+    return;
+  }
+  tree.innerHTML = files.map(f => `
+    <div class="file-entry file-new ${activeFile===f?'active':''}" onclick="openFile('${escAttr(f)}')">
+      <span class="file-icon">${getFileIcon(f)}</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f)}</span>
+    </div>`).join('');
+}
+
+function openFile(filename) {
+  if (!virtualFS[filename]) return;
+  activeFile = filename;
+  renderFileTree();
+  document.getElementById('file-panel').classList.add('open');
+  document.getElementById('file-panel-name').textContent = filename;
+  document.getElementById('file-panel-content').textContent = virtualFS[filename];
+  document.getElementById('dl-btn').onclick = () => downloadFile(filename);
+}
+
+function closeFilePanel() {
+  activeFile = null;
+  document.getElementById('file-panel').classList.remove('open');
+  renderFileTree();
+}
+
+function downloadFile(filename) {
+  const blob = new Blob([virtualFS[filename] || ''], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ════════ SETUP ════════ */
+document.getElementById('connect-btn').addEventListener('click', async () => {
+  const key   = document.getElementById('api-key-input').value.trim();
+  const model = document.getElementById('setup-model-select').value;
+  const errEl = document.getElementById('setup-error');
+  errEl.style.display = 'none';
+
+  if (!key.startsWith('gsk_')) {
+    errEl.textContent = 'Enter a valid Groq API key (starts with gsk_)';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('connect-btn');
+  btn.textContent = 'Connecting…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: { 'Authorization': `Bearer ${key}` }
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.error?.message || `HTTP ${res.status}`);
+    }
+  } catch(e) {
+    errEl.textContent = `Connection failed: ${e.message}`;
+    errEl.style.display = 'block';
+    btn.textContent = 'Connect →';
+    btn.disabled = false;
+    return;
+  }
+
+  GROQ_KEY = key;
+  GROQ_MODEL = model;
+  document.getElementById('model-badge').textContent = model.split('/').pop();
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('chat-layout').classList.add('visible');
+  setStatus('ready');
+  document.getElementById('user-input').focus();
+
+  appendMessage('agent',
+    `## Agent ready\n\nConnected to **${model.split('/').pop()}** with tool access:\n- **write_file / read_file / list_files / delete_file** — virtual filesystem\n- **web_search** — live web search via DuckDuckGo\n- **analyze_code** — static code analysis\n- **run_calculation** — math expressions\n- **finish** — signals task completion\n\nFiles created during a session appear in the sidebar — click to view or download.\n\nWhat would you like me to build or research?`);
+});
+
+document.getElementById('user-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+document.getElementById('user-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+});
+document.getElementById('send-btn').addEventListener('click', handleSend);
+document.getElementById('file-panel-close').addEventListener('click', closeFilePanel);
+
+function handleSend() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text || isRunning) return;
+  input.value = '';
+  input.style.height = 'auto';
+  runAgentLoop(text);
+}
+
+document.getElementById('api-key-input').focus();
+</script>
+</body>
+</html>
