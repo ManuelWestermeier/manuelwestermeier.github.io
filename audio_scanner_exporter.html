@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Audio Scanner Export</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.4;
+      padding: 20px;
+      max-width: 900px;
+    }
+    h1 { font-size: 1.25rem; margin: 0 0 12px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    button {
+      border: 1px solid #8886;
+      background: #8882;
+      color: inherit;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    label { display: inline-flex; align-items: center; gap: 8px; }
+    input[type="number"] { width: 90px; padding: 8px; }
+    textarea {
+      width: 100%;
+      min-height: 260px;
+      box-sizing: border-box;
+      margin-top: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #8886;
+      background: transparent;
+      color: inherit;
+      resize: vertical;
+    }
+    progress { width: 100%; height: 18px; }
+    .meta { margin-top: 10px; font-size: 0.95rem; opacity: 0.85; }
+    .small { font-size: 0.9rem; opacity: 0.8; }
+    .ok { white-space: pre-wrap; word-break: break-word; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <h1>Audio Scanner Export</h1>
+  <div class="small">
+    Scannt einen Ordner rekursiv, filtert Audiodateien mit Laufzeit ab 10 Sekunden und exportiert nur <code>filename.ext</code> als JSON.
+  </div>
+
+  <div class="row">
+    <button id="pickDir">Ordner wählen und scannen</button>
+    <button id="exportBtn" disabled>JSON exportieren</button>
+    <button id="copyBtn" disabled>JSON kopieren</button>
+    <button id="clearBtn">Leeren</button>
+  </div>
+
+  <div class="row">
+    <label>
+      Mindestdauer (Sekunden)
+      <input id="minDuration" type="number" min="0" step="1" value="10" />
+    </label>
+    <label>
+      Parallelität
+      <input id="concurrency" type="number" min="1" max="8" step="1" value="3" />
+    </label>
+  </div>
+
+  <progress id="progress" value="0" max="1"></progress>
+  <div id="status" class="meta">Bereit.</div>
+
+  <textarea id="output" spellcheck="false" placeholder="Treffer erscheinen hier als JSON."></textarea>
+
+  <script>
+    'use strict';
+
+    const elPickDir = document.getElementById('pickDir');
+    const elExportBtn = document.getElementById('exportBtn');
+    const elCopyBtn = document.getElementById('copyBtn');
+    const elClearBtn = document.getElementById('clearBtn');
+    const elOutput = document.getElementById('output');
+    const elStatus = document.getElementById('status');
+    const elProgress = document.getElementById('progress');
+    const elMinDuration = document.getElementById('minDuration');
+    const elConcurrency = document.getElementById('concurrency');
+
+    const audioExts = new Set([
+      'mp3', 'm4a', 'aac', 'wav', 'flac', 'ogg', 'oga', 'opus', 'wma', 'alac', 'aiff', 'aif', 'amr', 'mid', 'midi'
+    ]);
+
+    let results = [];
+    let abortRequested = false;
+
+    function setStatus(text) {
+      elStatus.textContent = text;
+    }
+
+    function setProgress(done, total) {
+      elProgress.max = Math.max(1, total || 1);
+      elProgress.value = Math.min(done, elProgress.max);
+    }
+
+    function sanitizeName(name) {
+      return String(name || '').trim();
+    }
+
+    function getExt(name) {
+      const idx = name.lastIndexOf('.');
+      if (idx <= 0 || idx === name.length - 1) return '';
+      return name.slice(idx + 1).toLowerCase();
+    }
+
+    function stem(name) {
+      const idx = name.lastIndexOf('.');
+      return idx > 0 ? name.slice(0, idx) : name;
+    }
+
+    function isHexLike(s) {
+      return /^[0-9a-fA-F]{12,}$/.test(s);
+    }
+
+    function isUuidLike(s) {
+      return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s);
+    }
+
+    function isBase64Like(s) {
+      return /^[A-Za-z0-9+/=_-]{24,}$/.test(s) && /[A-Za-z]/.test(s) && /[0-9]/.test(s);
+    }
+
+    function isMostlyDigits(s) {
+      const digits = (s.match(/[0-9]/g) || []).length;
+      return s.length > 0 && digits / s.length >= 0.8;
+    }
+
+    function looksRandomToken(s) {
+      const cleaned = s.replace(/[^A-Za-z0-9]/g, '');
+      if (cleaned.length < 8) return false;
+      const uniq = new Set(cleaned.toLowerCase()).size / cleaned.length;
+      return uniq >= 0.7 && (isHexLike(cleaned) || isBase64Like(cleaned) || isUuidLike(cleaned) || isMostlyDigits(cleaned));
+    }
+
+    function isLikelyHumanTitle(name) {
+      const base = stem(name)
+        .replace(/[_\-.]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!base) return false;
+      if (base.length < 3) return false;
+
+      const lower = base.toLowerCase();
+      if (/^(track|audio|song|recording|file|unknown|untitled)(\b|_)/i.test(lower)) return false;
+      if (looksRandomToken(base)) return false;
+
+      const letters = (base.match(/[A-Za-zÄÖÜäöüß]/g) || []).length;
+      const vowels = (base.match(/[AEIOUYaeiouyäöüÄÖÜ]/g) || []).length;
+      const words = base.split(' ').filter(Boolean).length;
+      const digitCount = (base.match(/[0-9]/g) || []).length;
+      const symbolCount = (base.match(/[^A-Za-zÄÖÜäöüß0-9\s]/g) || []).length;
+      const alphaRatio = letters / base.length;
+      const symbolRatio = symbolCount / base.length;
+      const digitRatio = digitCount / base.length;
+
+      if (alphaRatio < 0.45) return false;
+      if (symbolRatio > 0.25) return false;
+      if (digitRatio > 0.45) return false;
+      if (words === 1 && base.length > 20 && vowels === 0) return false;
+      if (vowels === 0 && letters >= 5) return false;
+      return true;
+    }
+
+    function isLikelyAudioByName(name) {
+      const ext = getExt(name);
+      if (audioExts.has(ext)) return true;
+      return false;
+    }
+
+    async function fileDurationSeconds(file) {
+      const url = URL.createObjectURL(file);
+      try {
+        const audio = document.createElement('audio');
+        audio.preload = 'metadata';
+        audio.src = url;
+
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('metadata timeout')), 10000);
+          audio.addEventListener('loadedmetadata', () => {
+            clearTimeout(timeout);
+            resolve();
+          }, { once: true });
+          audio.addEventListener('error', () => {
+            clearTimeout(timeout);
+            reject(new Error('invalid audio'));
+          }, { once: true });
+        });
+
+        const dur = Number(audio.duration);
+        if (!Number.isFinite(dur) || dur <= 0) return null;
+        return dur;
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    async function* walkDir(dirHandle, prefix = '') {
+      for await (const [name, handle] of dirHandle.entries()) {
+        if (abortRequested) return;
+        const path = prefix ? `${prefix}/${name}` : name;
+        if (handle.kind === 'directory') {
+          yield* walkDir(handle, path);
+        } else {
+          yield { name, path, handle };
+        }
+      }
+    }
+
+    async function collectFiles(dirHandle) {
+      const all = [];
+      for await (const entry of walkDir(dirHandle)) {
+        all.push(entry);
+      }
+      return all;
+    }
+
+    async function mapLimit(items, limit, worker, onProgress) {
+      const queue = items.slice();
+      const workers = [];
+      let done = 0;
+
+      const run = async () => {
+        while (queue.length && !abortRequested) {
+          const item = queue.shift();
+          try {
+            await worker(item);
+          } finally {
+            done += 1;
+            if (onProgress) onProgress(done, items.length);
+          }
+        }
+      };
+
+      const count = Math.max(1, Math.min(8, limit | 0 || 1));
+      for (let i = 0; i < count; i += 1) workers.push(run());
+      await Promise.all(workers);
+    }
+
+    function updateOutput() {
+      elOutput.value = JSON.stringify(results, null, 2);
+      elExportBtn.disabled = results.length === 0;
+      elCopyBtn.disabled = results.length === 0;
+    }
+
+    async function scanDirectory(dirHandle) {
+      results = [];
+      abortRequested = false;
+      updateOutput();
+
+      const minDuration = Math.max(0, Number(elMinDuration.value) || 10);
+      const concurrency = Math.max(1, Math.min(8, Number(elConcurrency.value) || 3));
+
+      setStatus('Ordner wird gelesen...');
+      setProgress(0, 1);
+
+      const allEntries = await collectFiles(dirHandle);
+      const candidates = allEntries.filter(({ name }) => isLikelyAudioByName(name));
+      const total = candidates.length;
+
+      setStatus(`Kandidaten: ${total} Dateien. Prüfe Metadaten...`);
+      setProgress(0, total);
+
+      await mapLimit(candidates, concurrency, async ({ name, path, handle }) => {
+        if (abortRequested) return;
+
+        const file = await handle.getFile();
+        const extOk = isLikelyAudioByName(file.name) || (file.type && file.type.startsWith('audio/'));
+        if (!extOk) return;
+
+        let dur = null;
+        try {
+          dur = await fileDurationSeconds(file);
+        } catch {
+          return;
+        }
+
+        if (dur === null || dur < minDuration) return;
+        if (!isLikelyHumanTitle(file.name)) return;
+
+        results.push(file.name);
+        if (results.length % 25 === 0) updateOutput();
+      }, (done, totalCount) => {
+        setProgress(done, totalCount);
+        setStatus(`Geprüft: ${done}/${totalCount}. Treffer: ${results.length}`);
+      });
+
+      results = Array.from(new Set(results)).sort((a, b) => a.localeCompare(b));
+      updateOutput();
+      setProgress(total, total);
+      setStatus(`Fertig. Treffer: ${results.length}`);
+    }
+
+    async function saveJson() {
+      const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+      const fileName = 'audio-files.json';
+
+      if (window.showSaveFilePicker) {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: fileName,
+          types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        setStatus('JSON gespeichert.');
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      setStatus('Download gestartet.');
+    }
+
+    elPickDir.addEventListener('
