@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Groq Agent Workspace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['ui-monospace','SFMono-Regular','Menlo','Monaco','Consolas','Liberation Mono','monospace']
+          },
+          boxShadow: {
+            frame: '0 0 0 1px #000',
+            insetline: 'inset 0 0 0 1px #000'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: #fff;
+      color: #000;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    ::selection { background: #000; color: #fff; }
+    textarea { resize: vertical; }
+  </style>
+</head>
+<body class="min-h-screen bg-white text-black">
+  <div class="min-h-screen flex flex-col">
+    <header class="sticky top-0 z-20 border-b border-black bg-white/95 backdrop-blur">
+      <div class="mx-auto w-full max-w-[1800px] px-3 py-3">
+        <div class="grid grid-cols-1 gap-3 xl:grid-cols-[1.4fr_1fr_0.9fr_auto]">
+          <div class="rounded-3xl border border-black bg-gradient-to-b from-white to-zinc-100 p-4 shadow-frame">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <div class="text-[14px] uppercase tracking-[0.12em]">Groq Agent Workspace</div>
+                <div class="mt-1 text-[11px] uppercase tracking-[0.12em] text-zinc-600">
+                  Minimal black/white chat, files, research, and looped actions
+                </div>
+              </div>
+              <div class="rounded-full border border-black px-3 py-1 text-[11px] uppercase tracking-[0.12em]" id="loopPill">idle</div>
+            </div>
+          </div>
+
+          <div class="grid gap-2">
+            <label class="text-[11px] uppercase tracking-[0.12em] text-zinc-600">Groq API key</label>
+            <input id="apiKey" type="password" placeholder="gsk_..." autocomplete="off"
+              class="w-full rounded-2xl border border-black bg-white px-4 py-3 outline-none focus:bg-zinc-100" />
+          </div>
+
+          <div class="grid gap-2">
+            <label class="text-[11px] uppercase tracking-[0.12em] text-zinc-600">Model</label>
+            <select id="model"
+              class="w-full rounded-2xl border border-black bg-white px-4 py-3 outline-none focus:bg-zinc-100"></select>
+          </div>
+
+          <div class="flex items-end gap-2">
+            <button id="refreshModels"
+              class="rounded-2xl border border-black bg-white px-4 py-3 text-[13px] uppercase tracking-[0.10em] hover:bg-black hover:text-white">
+              Load models
+            </button>
+            <button id="saveSettings"
+              class="rounded-2xl border border-black bg-white px-4 py-3 text-[13px] uppercase tracking-[0.10em] hover:bg-black hover:text-white">
+              Save
+            </button>
+            <button id="clearAll"
+              class="rounded-2xl border border-black bg-white px-4 py-3 text-[13px] uppercase tracking-[0.10em] hover:bg-black hover:text-white">
+              Reset
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto grid w-full max-w-[1800px] flex-1 min-h-0 grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)_360px]">
+      <section class="flex min-h-0 flex-col border-r border-black">
+        <div class="flex items-center justify-between border-b border-black bg-gradient-to-b from-white to-zinc-100 px-4 py-3 text-[11px] uppercase tracking-[0.12em]">
+          <span>Files</span>
+          <span class="rounded-full border border-black px-2 py-1" id="workspaceStats">0 files</span>
+        </div>
+
+        <div class="min-h-0 flex-1 overflow-auto p-3">
+          <div class="rounded-3xl border border-black bg-zinc-50 p-4 shadow-frame">
+            <div class="grid gap-3">
+              <div class="grid gap-2">
+                <label class="text-[11px] uppercase tracking-[0.12em] text-zinc-600">Filter</label>
+                <input id="fileFilter" placeholder="search files"
+                  class="w-full rounded-2xl border border-black bg-white px-4 py-3 outline-none focus:bg-zinc-100" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <button id="newFile"
+                  class="rounded-2xl border border-black bg-white px-4 py-3 text-[13px] uppercase tracking-[0.10em] hover:bg-black hover:text-white">New file</button>
+                <button id="importWorkspace"
+                  class="rounded-2xl border border-black bg-white px-4 py-3 text-[13px] uppercase tracking-[0.10em] hover:bg-black hover:text-white">Import</button>
+                <button id="exportWorkspace"
+                  class="rounded-2xl border border-black bg-white px-4 py-3 text-[13px] uppercase tracking-[0.10em] hover:bg-black hover:text-white">Export</button>
+                <button id="downloadFile"
+                  class="rounded-2xl border border-black bg-white px-4 py-3 text-[13px] uppercase tracking-[0.10em] hover:bg-black hover:text-white">Download</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 grid gap-2" id="fileList"></div>
+        </div>
+      </section>
+
+      <section class="flex min-h-0 flex-col border-r border-black">
+        <div class="flex items-center justify-between border-b border-black bg-gradient-to-b from-white to-zinc-100 px-4 py-3 text-[11px] uppercase tracking-[0.12em]">
+          <span>Chat</span>
+          <div class="flex items-center gap-2">
+            <span class="rounded-full border border-black px-2 py-1" id="modePill">agent</span>
+            <span class="rounded-full border border-black px-2 py-1" id="searchPill">web on</span>
+          </div>
+        </div>
+
+        <div class="min-h-0 flex-1 overflow-auto p-3">
+          <div class="grid gap-3" id="messages"></div>
+        </div>
+
+        <div class="border-t border-black bg-white p-3">
+          <div class="rounded-3xl border border-black bg-white p-4 shadow-frame">
+            <textarea id="userInput" placeholder="Describe the task. The agent can research, create files, and edit the workspace in loops."
+              class="min-h-[120px] w-full rounded-2xl border border-black bg-white px-4 py-3 outline-none focus:bg-zinc-100"></textarea>
+            <div class="mt-3 flex gap-2">
+              <button id="send"
+                class="flex-1 rounded-2xl border border-black bg-white px-4 py-3 text-[13px] uppercase tracking-[0.10em] hover:bg-black hover:text-white">Run</button>
+              <button id="stop"
+                class="flex-1 rounded-2xl border border-black bg-white px-4 py-3 text-[13px] uppercase tracking-[0.10em] hover:bg-black hover:text-white">Stop</button>
+            </div>
+            <div class="mt-3 text-[11px] uppercase tracking-[0.10em] text-zinc-600">
+              Agent responses must be JSON. File operations are applied locally and persisted.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="flex min-h-0 flex-col">
+        <div class="flex items-center justify-between border-b border-black bg-gradient-to-b from-white to-zinc-100 px-4 py-3 text-[11px] uppercase tracking-[0.12em]">
+          <span>Workspace</span>
+          <span class="rounded-full border border-black px-2 py-1" id="selectedPath">none</span>
+        </div>
+
+        <div class="min-h-0 flex-1 overflow-auto p-3">
+          <div class="grid gap-3">
+            <div class="rounded-3xl border border-black bg-white p-4 shadow-frame">
+              <div class="grid gap-2">
+                <div class="text-[11px] uppercase tracking-[0.12em] text-zinc-600">Mode</div>
+                <select id="mode"
+                  class="w-full rounded-2xl border border-black bg-white px-4 py-3 outline-none focus:bg-zinc-100">
+                  <option value="agent">Agent loop</option>
+                  <option value="chat">Chat only</option>
+                  <option value="research">Research only</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="rounded-3xl border border-black bg-zinc-50 p-4 shadow-frame">
+              <div class="grid gap-3">
+                <div class="text-[11px] uppercase tracking-[0.12em] text-zinc-600">Selected file</div>
+                <input id="filePath" placeholder="path/to/file.txt"
+                  class="w-full rounded-2xl border border-black bg-white px-4 py-3 outline-none focus:bg-zinc-100" />
+                <textarea id="fileContent" placeholder="File content"
+                  class="min-h-[320px] w-full rounded-2xl border border-black bg-white px-4 py-3 outline-none focus:bg-zinc-100"></textarea>
+                <div class="grid grid-cols-2 gap-2">
+                  <button id="saveFile"
+                    class="rounded-2xl border border-black bg-white px-4 py-3 text-[13px] uppercase tracking-[0.10em] hover:bg-black hover:text-white">Save file</button>
+                  <button id="deleteFile"
+                    class="rounded-2xl border border-black bg-white px-4 py-3 text-[13px] uppercase tracking-[0.10em] hover:bg-black hover:text-white">Delete file</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-3xl border border-black bg-white p-4 shadow-frame">
+              <div class="mb-3 text-[11px] uppercase tracking-[0.12em] text-zinc-600">Activity log</div>
+              <div id="log" class="max-h-[260px] overflow-auto whitespace-pre-wrap break-words text-[12px] leading-6"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-black px-4 py-3 text-[11px] uppercase tracking-[0.12em] text-zinc-600 flex items-center justify-between">
+          <span id="statusText">idle</span>
+          <span id="modelPill">model</span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <input id="importInput" type="file" accept="application/json" hidden />
+
+<script>
+(() => {
+  const GROQ_BASE = "https://api.groq.com/openai/v1";
+  const STORAGE_KEY = "groq_agent_workspace_state_v3_tailwind";
+  const PRESET_MODELS = [
+    "groq/compound-mini",
+    "groq/compound",
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b",
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant"
+  ];
+
+  const els = {
+    apiKey: document.getElementById("apiKey"),
+    model: document.getElementById("model"),
+    mode: document.getElementById("mode"),
+    refreshModels: document.getElementById("refreshModels"),
+    saveSettings: document.getElementById("saveSettings"),
+    clearAll: document.getElementById("clearAll"),
+    newFile: document.getElementById("newFile"),
+    importWorkspace: document.getElementById("importWorkspace"),
+    exportWorkspace: document.getElementById("exportWorkspace"),
+    downloadFile: document.getElementById("downloadFile"),
+    fileFilter: document.getElementById("fileFilter"),
+    fileList: document.getElementById("fileList"),
+    messages: document.getElementById("messages"),
+    userInput: document.getElementById("userInput"),
+    send: document.getElementById("send"),
+    stop: document.getElementById("stop"),
+    loopPill: document.getElementById("loopPill"),
+    modePill: document.getElementById("modePill"),
+    searchPill: document.getElementById("searchPill"),
+    modelPill: document.getElementById("modelPill"),
+    workspaceStats: document.getElementById("workspaceStats"),
+    selectedPath: document.getElementById("selectedPath"),
+    filePath: document.getElementById("filePath"),
+    fileContent: document.getElementById("fileContent"),
+    saveFile: document.getElementById("saveFile"),
+    deleteFile: document.getElementById("deleteFile"),
+    log: document.getElementById("log"),
+    statusText: document.getElementById("statusText"),
+    importInput: document.getElementById("importInput")
+  };
+
+  const state = {
+    messages: [],
+    workspace: { files: {} },
+    selected: "",
+    running: false,
+    abort: null,
+    loop: 0,
+    modelInfo: [],
+    filter: "",
+    settings: {
+      apiKey: "",
+      model: PRESET_MODELS[0],
+      mode: "agent"
+    }
+  };
+
+  let saveTimer = null;
+
+  function now() {
+    return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }
+
+  function log(line) {
+    const prefix = `[${now()}] `;
+    els.log.textContent = (els.log.textContent ? els.log.textContent + "\n" : "") + prefix + line;
+    els.log.scrollTop = els.log.scrollHeight;
+  }
+
+  function setStatus(text) {
+    els.statusText.textContent = text;
+    els.loopPill.textContent = state.running ? `loop ${state.loop}` : "idle";
+    els.modePill.textContent = state.settings.mode;
+    els.searchPill.textContent = state.settings.mode === "chat" ? "web off" : "web on";
+    els.modelPill.textContent = state.settings.model || "model";
+  }
+
+  function esc(s) {
+    return String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
+
+  function normalizeFilePath(path) {
+    return String(path || "").trim().replaceAll("\\", "/");
+  }
+
+  function fileEntries() {
+    return Object.values(state.workspace.files)
+      .sort((a, b) => a.path.localeCompare(b.path))
+      .filter(f => !state.filter || f.path.toLowerCase().includes(state.filter.toLowerCase()));
+  }
+
+  function saveAll() {
+    const payload = {
+      settings: state.settings,
+      workspace: state.workspace,
+      selected: state.selected,
+      messages: state.messages.slice(-100),
+      filter: state.filter
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }
+
+  function scheduleSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveAll, 120);
+  }
+
+  function hydrate() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      if (saved && typeof saved === "object") {
+        if (saved.settings && typeof saved.settings === "object") state.settings = { ...state.settings, ...saved.settings };
+        if (saved.workspace && saved.workspace.files && typeof saved.workspace.files === "object") state.workspace = saved.workspace;
+        if (Array.isArray(saved.messages)) state.messages = saved.messages;
+        if (typeof saved.selected === "string") state.selected = saved.selected;
+        if (typeof saved.filter === "string") state.filter = saved.filter;
+      }
+    } catch {}
+  }
+
+  function populateModels(models) {
+    const current = els.model.value || state.settings.model;
+    const list = [...new Set(models)].filter(Boolean);
+    els.model.innerHTML = list.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join("");
+    if (list.includes(current)) els.model.value = current;
+    if (!els.model.value && list.length) els.model.value = list[0];
+  }
+
+  function renderMessages() {
+    els.messages.innerHTML = state.messages.map(m => `
+      <div class="rounded-3xl border border-black p-4 ${m.role === 'user' ? 'bg-black text-white ml-[10%]' : m.role === 'system' ? 'bg-zinc-100' : 'bg-white mr-[10%]'}">
+        <div class="mb-2 text-[11px] uppercase tracking-[0.12em] ${m.role === 'user' ? 'text-zinc-300' : 'text-zinc-600'}">${esc(m.role)}</div>
+        <div class="whitespace-pre-wrap break-words">${esc(m.content)}</div>
+      </div>
+    `).join("");
+    els.messages.scrollTop = els.messages.scrollHeight;
+  }
+
+  function renderFiles() {
+    const files = fileEntries();
+    const total = Object.keys(state.workspace.files).length;
+    els.workspaceStats.textContent = `${total} file${total === 1 ? "" : "s"}`;
+
+    if (!files.length) {
+      els.fileList.innerHTML = `<div class="rounded-3xl border border-dashed border-black bg-white p-4 text-zinc-600">No matching files.</div>`;
+    } else {
+      els.fileList.innerHTML = files.map(f => `
+        <div class="file rounded-3xl border border-black p-3 transition ${f.path === state.selected ? 'bg-black text-white' : 'bg-white hover:bg-zinc-100'}" data-path="${esc(f.path)}">
+          <div class="break-all text-[13px] font-bold">${esc(f.path)}</div>
+          <div class="mt-1 text-[11px] uppercase tracking-[0.12em] ${f.path === state.selected ? 'text-zinc-300' : 'text-zinc-600'}">${f.content.length} chars</div>
+        </div>
+      `).join("");
+    }
+
+    [...els.fileList.querySelectorAll(".file")].forEach(node => {
+      node.addEventListener("click", () => selectFile(node.dataset.path));
+    });
+
+    els.selectedPath.textContent = state.selected || "none";
+    els.filePath.value = state.selected || "";
+    els.fileContent.value = state.selected && state.workspace.files[state.selected] ? state.workspace.files[state.selected].content : "";
+  }
+
+  function selectFile(path) {
+    const clean = normalizeFilePath(path);
+    if (!clean) return;
+    state.selected = clean;
+    renderFiles();
+    scheduleSave();
+  }
+
+  function upsertFile(path, content) {
+    const clean = normalizeFilePath(path);
+    if (!clean) throw new Error("Empty path.");
+    state.workspace.files[clean] = { path: clean, content: String(content ?? "") };
+    state.selected = clean;
+    renderFiles();
+    scheduleSave();
+  }
+
+  function deleteFile(path) {
+    const clean = normalizeFilePath(path);
+    if (!clean) return;
+    delete state.workspace.files[clean];
+    if (state.selected === clean) state.selected = "";
+    renderFiles();
+    scheduleSave();
+  }
+
+  function renameFile(from, to) {
+    const src = normalizeFilePath(from);
+    const dst = normalizeFilePath(to);
+    if (!src || !dst) throw new Error("Invalid rename.");
+    if (!state.workspace.files[src]) throw new Error(`Missing file: ${src}`);
+    state.workspace.files[dst] = { path: dst, content: state.workspace.files[src].content };
+    delete state.workspace.files[src];
+    if (state.selected === src) state.selected = dst;
+    renderFiles();
+    scheduleSave();
+  }
+
+  function applyAction(action) {
+    if (!action || typeof action !== "object") return "ignored";
+    const type = String(action.type || "").toLowerCase();
+
+    if (type === "create_file" || type === "write_file" || type === "replace_file") {
+      upsertFile(action.path, action.content || "");
+      return `${type}: ${action.path}`;
+    }
+
+    if (type === "edit_file") {
+      const path = normalizeFilePath(action.path);
+      if (!state.workspace.files[path]) throw new Error(`Missing file: ${path}`);
+      const current = state.workspace.files[path].content;
+      let next = current;
+
+      if (action.mode === "replace" || action.mode === "overwrite" || !action.search) {
+        next = String(action.content ?? "");
+      } else {
+        const search = String(action.search);
+        const replace = String(action.replace ?? "");
+        next = action.all ? current.split(search).join(replace) : current.replace(search, replace);
+      }
+
+      upsertFile(path, next);
+      return `edit_file: ${path}`;
+    }
+
+    if (type === "append_file") {
+      const path = normalizeFilePath(action.path);
+      const current = state.workspace.files[path] ? state.workspace.files[path].content : "";
+      upsertFile(path, current + String(action.content ?? ""));
+      return `append_file: ${path}`;
+    }
+
+    if (type === "delete_file") {
+      deleteFile(action.path);
+      return `delete_file: ${action.path}`;
+    }
+
+    if (type === "rename_file") {
+      renameFile(action.from, action.to);
+      return `rename_file: ${action.from} -> ${action.to}`;
+    }
+
+    return `ignored action: ${type || "unknown"}`;
+  }
+
+  function workspaceManifest() {
+    const files = Object.values(state.workspace.files)
+      .sort((a, b) => a.path.localeCompare(b.path))
+      .map(f => ({
+        path: f.path,
+        chars: f.content.length,
+        preview: f.content.slice(0, 1200)
+      }));
+    return JSON.stringify({ files }, null, 2);
+  }
+
+  function systemPrompt() {
+    return [
+      "You are a high-end autonomous coding and research agent.",
+      "Return STRICT JSON only. No markdown. No code fences. No prose outside JSON.",
+      "Goal: solve the user's task with concise output and excellent file changes.",
+      "The client applies file actions locally in the browser workspace.",
+      "Use exact file paths. Keep changes minimal and production-ready.",
+      "When the task needs current information, include search_queries.",
+      "Action schema:",
+      "{type:'create_file', path:'...', content:'...'}",
+      "{type:'edit_file', path:'...', mode:'replace', content:'...'}",
+      "{type:'edit_file', path:'...', search:'...', replace:'...', all:true|false}",
+      "{type:'append_file', path:'...', content:'...'}",
+      "{type:'delete_file', path:'...'}",
+      "{type:'rename_file', from:'...', to:'...'}",
+      "JSON schema:",
+      "{ reply:string, analysis:string, actions:array, search_queries:array, needs_more:boolean }",
+      "If no action is needed, use an empty actions array.",
+      "If no search is needed, use an empty search_queries array."
+    ].join("\n");
+  }
+
+  function buildConversation(extra = "") {
+    return [
+      { role: "system", content: systemPrompt() },
+      { role: "system", content: "Workspace manifest:\n" + workspaceManifest() + (extra ? "\n\n" + extra : "") },
+      ...state.messages.slice(-20)
+    ];
+  }
+
+  function extractJson(text) {
+    const raw = String(text || "").trim();
+    if (!raw) throw new Error("Empty model response.");
+    try {
+      return JSON.parse(raw);
+    } catch {}
+    const first = raw.indexOf("{");
+    const last = raw.lastIndexOf("}");
+    if (first >= 0 && last > first) {
+      return JSON.parse(raw.slice(first, last + 1));
+    }
+    throw new Error("Model did not return valid JSON.");
+  }
+
+  async function groqChat(messages, opts = {}) {
+    const res = await fetch(`${GROQ_BASE}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${state.settings.apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: state.settings.model,
+        messages,
+        temperature: opts.temperature ?? 0.2,
+        max_tokens: opts.max_tokens ?? 1800,
+        stream: false
+      }),
+      signal: opts.signal
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Groq API ${res.status}: ${txt || res.statusText}`);
+    }
+
+    return await res.json();
+  }
+
+  async function modelText(messages, opts = {}) {
+    const data = await groqChat(messages, opts);
+    return String(data?.choices?.[0]?.message?.content ?? "");
+  }
+
+  async function researchQuery(query) {
+    const prompt = [
+      "Use current web information if supported by the model.",
+      "Return a concise research note with factual claims and citations if available.",
+      `Query: ${query}`
+    ].join("\n");
+
+    return await modelText([
+      { role: "system", content: "You are a research assistant. Prefer up-to-date information when useful." },
+      { role: "user", content: prompt }
+    ], { temperature: 0.1, max_tokens: 1200 });
+  }
+
+  async function runAgent(userText) {
+    if (!state.settings.apiKey) throw new Error("Missing Groq API key.");
+
+    state.running = true;
+    state.abort = new AbortController();
+    els.send.disabled = true;
+    els.stop.disabled = false;
+    state.loop = 0;
+    setStatus("running");
+
+    state.messages.push({ role: "user", content: userText });
+    renderMessages();
+    scheduleSave();
+
+    let contextNote = "";
+    const maxLoops = 4;
+
+    try {
+      for (let step = 0; step < maxLoops && state.running; step++) {
+        state.loop = step + 1;
+        setStatus("running");
+
+        const text = await modelText(buildConversation(contextNote), {
+          signal: state.abort.signal,
+          temperature: 0.2,
+          max_tokens: 2200
+        });
+
+        let parsed;
+        try {
+          parsed = extractJson(text);
+        } catch {
+          parsed = {
+            reply: text,
+            analysis: "fallback",
+            actions: [],
+            search_queries: [],
+            needs_more: false
+          };
+        }
+
+        const reply = String(parsed.reply ?? "").trim();
+        if (reply) state.messages.push({ role: "assistant", content: reply });
+        renderMessages();
+
+        const actions = Array.isArray(parsed.actions) ? parsed.actions : [];
+        const searchQueries = Array.isArray(parsed.search_queries) ? parsed.search_queries : [];
+
+        if (parsed.analysis) log("analysis: " + String(parsed.analysis).replace(/\s+/g, " ").slice(0, 300));
+        if (actions.length) log(`actions: ${actions.length}`);
+        if (searchQueries.length) log(`search: ${searchQueries.join(" | ").slice(0, 240)}`);
+
+        const results = [];
+        for (const action of actions) {
+          try {
+            results.push(applyAction(action));
+          } catch (e) {
+            results.push(`error: ${e.message}`);
+          }
+        }
+
+        const research = [];
+        for (const query of searchQueries.slice(0, 5)) {
+          try {
+            const note = await researchQuery(query);
+            research.push(`Query: ${query}\n${note}`);
+          } catch (e) {
+            research.push(`Query: ${query}\nERROR: ${e.message}`);
+          }
+        }
+
+        contextNote = [
+          results.length ? "Executed actions:\n" + results.join("\n") : "",
+          research.length ? "Research results:\n" + research.join("\n\n") : ""
+        ].filter(Boolean).join("\n\n");
+
+        scheduleSave();
+        if (!parsed.needs_more && !actions.length && !searchQueries.length) break;
+      }
+    } finally {
+      state.running = false;
+      state.loop = 0;
+      setStatus("idle");
+      els.send.disabled = false;
+      els.stop.disabled = true;
+      scheduleSave();
+    }
+  }
+
+  async function refreshModels() {
+    if (!state.settings.apiKey) {
+      populateModels(PRESET_MODELS);
+      return;
+    }
+
+    try {
+      setStatus("loading models");
+      const res = await fetch(`${GROQ_BASE}/models`, {
+        headers: { "Authorization": `Bearer ${state.settings.apiKey}` }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const ids = Array.isArray(data?.data) ? data.data.map(m => m.id).filter(Boolean) : [];
+      state.modelInfo = [...new Set([...PRESET_MODELS, ...ids])];
+      populateModels(state.modelInfo);
+      log(`models loaded: ${state.modelInfo.length}`);
+      setStatus("idle");
+      scheduleSave();
+    } catch (e) {
+      log(`model load failed: ${e.message}`);
+      populateModels(PRESET_MODELS);
+      setStatus("idle");
+    }
+  }
+
+  function loadSettingsFromUI() {
+    state.settings.apiKey = els.apiKey.value.trim();
+    state.settings.model = els.model.value;
+    state.settings.mode = els.mode.value;
+    state.filter = els.fileFilter.value.trim();
+    setStatus(state.running ? "running" : "idle");
+    scheduleSave();
+  }
+
+  function createNewFile() {
+    const name = prompt("File path", "notes.md");
+    if (!name) return;
+    const clean = normalizeFilePath(name);
+    if (!clean) return;
+    upsertFile(clean, "");
+    log(`created file: ${clean}`);
+  }
+
+  function exportWorkspace() {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      state: {
+        settings: state.settings,
+        selected: state.selected,
+        filter: state.filter,
+        messages: state.messages,
+        workspace: state.workspace
+      }
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "groq-agent-workspace.json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function importWorkspaceFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result || "{}"));
+        const src = data.state && typeof data.state === "object" ? data.state : data;
+        if (src.settings && typeof src.settings === "object") state.settings = { ...state.settings, ...src.settings };
+        if (src.workspace && src.workspace.files && typeof src.workspace.files === "object") state.workspace = src.workspace;
+        if (Array.isArray(src.messages)) state.messages = src.messages;
+        if (typeof src.selected === "string") state.selected = src.selected;
+        if (typeof src.filter === "string") state.filter = src.filter;
+
+        hydrateUI();
+        scheduleSave();
+        log("workspace imported");
+      } catch (e) {
+        log(`import failed: ${e.message}`);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function clearAll() {
+    if (!confirm("Reset local state?")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    state.messages = [];
+    state.workspace = { files: {} };
+    state.selected = "";
+    state.filter = "";
+    state.modelInfo = [];
+    state.running = false;
+    state.abort = null;
+    state.loop = 0;
+    state.settings = {
+      apiKey: "",
+      model: PRESET_MODELS[0],
+      mode: "agent"
+    };
+    hydrateUI();
+    setStatus("idle");
+    log("state reset");
+  }
+
+  function downloadCurrentFile() {
+    const path = normalizeFilePath(els.filePath.value || state.selected);
+    const file = path ? state.workspace.files[path] : null;
+    if (!file) return;
+    const blob = new Blob([file.content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = path.split("/").pop() || "file.txt";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function hydrateUI() {
+    populateModels(state.modelInfo.length ? state.modelInfo : PRESET_MODELS);
+    els.apiKey.value = state.settings.apiKey || "";
+    els.model.value = state.settings.model || PRESET_MODELS[0];
+    els.mode.value = state.settings.mode || "agent";
+    els.fileFilter.value = state.filter || "";
+    renderMessages();
+    renderFiles();
+    setStatus(state.running ? "running" : "idle");
+  }
+
+  function bootstrapMessage() {
+    if (!state.messages.length) {
+      state.messages.push({
+        role: "system",
+        content: "Ready. Enter a task. The agent can research, create files, and edit files locally."
+      });
+    }
+  }
+
+  function bind() {
+    els.saveSettings.addEventListener("click", () => {
+      loadSettingsFromUI();
+      log("settings saved");
+    });
+
+    els.refreshModels.addEventListener("click", refreshModels);
+    els.newFile.addEventListener("click", createNewFile);
+    els.exportWorkspace.addEventListener("click", exportWorkspace);
+    els.importWorkspace.addEventListener("click", () => els.importInput.click());
+    els.downloadFile.addEventListener("click", downloadCurrentFile);
+    els.clearAll.addEventListener("click", clearAll);
+
+    els.importInput.addEventListener("change", () => {
+      const file = els.importInput.files && els.importInput.files[0];
+      if (file) importWorkspaceFile(file);
+      els.importInput.value = "";
+    });
+
+    els.fileFilter.addEventListener("input", () => {
+      state.filter = els.fileFilter.value.trim();
+      renderFiles();
+      scheduleSave();
+    });
+
+    els.saveFile.addEventListener("click", () => {
+      const path = normalizeFilePath(els.filePath.value);
+      const content = els.fileContent.value;
+      if (!path) return;
+      upsertFile(path, content);
+      log(`saved file: ${path}`);
+    });
+
+    els.deleteFile.addEventListener("click", () => {
+      const path = normalizeFilePath(els.filePath.value || state.selected);
+      if (!path) return;
+      if (!confirm(`Delete ${path}?`)) return;
+      deleteFile(path);
+      log(`deleted file: ${path}`);
+    });
+
+    els.filePath.addEventListener("change", () => {
+      const old = state.selected;
+      const next = normalizeFilePath(els.filePath.value);
+      if (old && next && old !== next && state.workspace.files[old]) {
+        renameFile(old, next);
+        log(`renamed: ${old} -> ${next}`);
+      }
+    });
+
+    els.fileContent.addEventListener("input", () => {
+      const path = normalizeFilePath(els.filePath.value || state.selected);
+      if (path) {
+        state.workspace.files[path] = { path, content: els.fileContent.value };
+        state.selected = path;
+        renderFiles();
+        scheduleSave();
+      }
+    });
+
+    els.apiKey.addEventListener("input", () => {
+      state.settings.apiKey = els.apiKey.value.trim();
+      scheduleSave();
+    });
+
+    els.model.addEventListener("change", () => {
+      state.settings.model = els.model.value;
+      scheduleSave();
+      setStatus(state.running ? "running" : "idle");
+    });
+
+    els.mode.addEventListener("change", () => {
+      state.settings.mode = els.mode.value;
+      scheduleSave();
+      setStatus(state.running ? "running" : "idle");
+    });
+
+    els.send.addEventListener("click", async () => {
+      const text = els.userInput.value.trim();
+      if (!text || state.running) return;
+
+      state.messages = state.messages.slice(-100);
+      loadSettingsFromUI();
+
+      try {
+        if (state.settings.mode === "chat") {
+          state.messages.push({ role: "user", content: text });
+          renderMessages();
+          const reply = await modelText(buildConversation(), { temperature: 0.2, max_tokens: 1800 });
+          state.messages.push({ role: "assistant", content: reply });
+          renderMessages();
+          scheduleSave();
+        } else if (state.settings.mode === "research") {
+          const note = await researchQuery(text);
+          state.messages.push({ role: "user", content: text });
+          state.messages.push({ role: "assistant", content: note });
+          renderMessages();
+          scheduleSave();
+        } else {
+          await runAgent(text);
+        }
+      } catch (e) {
+        log(`error: ${e.message}`);
+        state.messages.push({ role: "assistant", content: `Error: ${e.message}` });
+        renderMessages();
+        scheduleSave();
+        setStatus("idle");
+      } finally {
+        els.userInput.value = "";
+      }
+    });
+
+    els.stop.addEventListener("click", () => {
+      if (state.abort) state.abort.abort();
+      state.running = false;
+      setStatus("stopped");
+      els.send.disabled = false;
+      els.stop.disabled = true;
+    });
+
+    window.addEventListener("beforeunload", saveAll);
+  }
+
+  hydrate();
+  bootstrapMessage();
+  bind();
+  hydrateUI();
+  refreshModels();
+  log("workspace loaded");
+})();
+</script>
+</body>
+</html>
