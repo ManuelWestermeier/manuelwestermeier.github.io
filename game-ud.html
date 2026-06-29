@@ -1,0 +1,170 @@
+
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                * { font-family: sans-serif; margin: 0; padding:0; overflow: hidden }
+
+canvas {width:100dvw;height:100dvh;pointer-events:none}
+            </style>
+        </head>
+        <body>
+            <canvas></canvas>
+            <script>
+                const canvas = document.querySelector("canvas");
+const ctx = canvas.getContext("2d");
+
+const playerX = 100;
+const playerWidth = 100;
+const playerHeight = 100;
+const speed = 2;
+const drag = 0.8;
+
+let velocity = 0;
+let playerY = 100;
+let gameOver = false;
+let score = 0;
+
+const keys = {};
+const obstacles = [];
+
+window.onkeydown = e => {
+    keys[e.key] = true;
+
+    if (gameOver && e.key === "r") {
+        location.reload();
+    }
+};
+
+window.onkeyup = e => {
+    keys[e.key] = false;
+};
+
+function getMovement() {
+    if (keys["ArrowUp"]) return -5;
+    if (keys["ArrowDown"]) return 5;
+    return 0;
+}
+
+function spawnObstacle() {
+    const size = 50 + Math.random() * 100;
+
+    obstacles.push({
+        x: canvas.width,
+        y: Math.random() * (canvas.height - size),
+        width: size,
+        height: size,
+        speed: 5 + Math.random() * 5
+    });
+}
+
+function intersects(a, b) {
+    return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+    );
+}
+
+setInterval(() => {
+    if (!gameOver) spawnObstacle();
+}, 800);
+
+function update() {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+
+    ctx.fillStyle = "rgb(30,30,30)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (!gameOver) {
+        const move = getMovement();
+
+        velocity += move * speed;
+        velocity *= drag;
+
+        playerY += velocity;
+
+        if (playerY < 0) {
+            playerY = 0;
+            velocity = 0;
+        }
+
+        if (playerY + playerHeight > canvas.height) {
+            playerY = canvas.height - playerHeight;
+            velocity = 0;
+        }
+
+        score++;
+    }
+
+    const player = {
+        x: playerX,
+        y: playerY,
+        width: playerWidth,
+        height: playerHeight
+    };
+
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obstacle = obstacles[i];
+
+        if (!gameOver) {
+            obstacle.x -= obstacle.speed;
+        }
+
+        ctx.fillStyle = "rgb(255,60,60)";
+        ctx.fillRect(
+            obstacle.x,
+            obstacle.y,
+            obstacle.width,
+            obstacle.height
+        );
+
+        if (intersects(player, obstacle)) {
+            gameOver = true;
+        }
+
+        if (obstacle.x + obstacle.width < 0) {
+            obstacles.splice(i, 1);
+        }
+    }
+
+    ctx.fillStyle = "rgb(30,255,30)";
+    ctx.fillRect(playerX, playerY, playerWidth, playerHeight);
+
+    ctx.fillStyle = "white";
+    ctx.font = "40px sans-serif";
+    ctx.fillText(`Score: ${Math.floor(score / 10)}`, 20, 50);
+
+    if (gameOver) {
+        ctx.textAlign = "center";
+
+        ctx.font = "80px sans-serif";
+        ctx.fillText(
+            "GAME OVER",
+            canvas.width / 2,
+            canvas.height / 2
+        );
+
+        ctx.font = "40px sans-serif";
+        ctx.fillText(
+            "Press R to restart",
+            canvas.width / 2,
+            canvas.height / 2 + 70
+        );
+
+        ctx.textAlign = "left";
+    }
+
+    requestAnimationFrame(update);
+}
+
+update();
+            </script>
+        </body>
+        </html>
+    
