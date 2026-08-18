@@ -1,0 +1,649 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Morph - 9:16 HD Fullscreen</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #030305;
+            color: #e0e0e0;
+        }
+
+        .app-layout {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            background: #030305;
+        }
+
+        /* Control Panel / Sidebar */
+        .panel {
+            width: 360px;
+            height: 100%;
+            background: #0d0d14;
+            padding: 20px 24px;
+            border-right: 1px solid #222;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            z-index: 5;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; color: #fff; letter-spacing: -0.5px; }
+        .subtitle { color: #888; margin-top: -4px; margin-bottom: 8px; font-size: 0.8rem; }
+
+        label { 
+            font-size: 0.7rem; 
+            color: #888; 
+            font-weight: 600; 
+            display: block; 
+            margin-top: 6px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px 10px;
+            margin-top: 3px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background: #161622;
+            color: #00e6ff;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus { border-color: #00e6ff; }
+        input[type="text"], input[type="number"] { font-size: 0.9rem; text-align: center; }
+        input[type="range"] { cursor: pointer; accent-color: #00e6ff; }
+        select { cursor: pointer; }
+
+        .btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 12px;
+            background: linear-gradient(135deg, #0088ff, #00e6ff);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        .btn:hover { opacity: 0.95; }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { background: #222; color: #555; cursor: not-allowed; transform: none; }
+        .btn-secondary {
+            background: #1e1e2e;
+            color: #fff;
+            border: 1px solid #333;
+            margin-top: 6px;
+        }
+
+        /* Fullscreen 9:16 Viewer Area */
+        .viewer-container {
+            flex-grow: 1;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            position: relative;
+            padding: 20px;
+        }
+
+        .stage-box {
+            position: relative;
+            height: 100%;
+            max-height: 100%;
+            aspect-ratio: 9 / 16;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 50px rgba(0, 230, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #030305;
+        }
+
+        canvas, video {
+            width: 100%;
+            height: 100%;
+            aspect-ratio: 9 / 16;
+            object-fit: contain;
+            display: block;
+        }
+        video { display: none; }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(3, 3, 5, 0.92);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+        .progress { width: 70%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; margin: 20px 0; }
+        .bar { height: 100%; width: 0%; background: linear-gradient(90deg, #0088ff, #00e6ff); transition: width 0.1s linear; }
+        .status { color: #00e6ff; font-weight: 600; font-size: 1.1rem; margin-bottom: 10px; text-align: center; }
+        .stat { font-size: 0.85rem; color: #888; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <div class="panel">
+            <h1>Particle Morph</h1>
+            <p class="subtitle">9:16 HD Fullscreen Generator</p>
+
+            <label>Bilder (Reihenfolge = Morph-Sequenz)</label>
+            <input type="file" id="images" accept="image/*" multiple>
+
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label>Breite (px)</label>
+                    <input type="number" id="outputWidth" value="1080" readonly>
+                </div>
+                <div style="flex: 1;">
+                    <label>Höhe (px)</label>
+                    <input type="number" id="outputHeight" value="1920" readonly>
+                </div>
+            </div>
+
+            <label>Dauer (Sekunden)</label>
+            <input type="text" id="duration" value="5">
+
+            <label>Morph Stil</label>
+            <select id="morphStyle">
+                <option value="fluid" selected>Fluid Swirl (Organisch)</option>
+                <option value="wave">Wave Flow (Welle)</option>
+                <option value="burst">Explosive Burst (Burst)</option>
+                <option value="direct">Clean Linear (Direkt)</option>
+            </select>
+
+            <label>Partikel-Dichte</label>
+            <input type="range" id="density" min="4" max="12" value="6">
+
+            <label>Schwung / Bogen-Stärke</label>
+            <input type="range" id="power" min="100" max="1500" value="600">
+
+            <label>Effekt-Stärke</label>
+            <input type="range" id="effects" min="0.5" max="2" step="0.1" value="1.2">
+
+            <button class="btn" id="startBtn">▶ RENDER ANIMATION</button>
+            <button class="btn btn-secondary" onclick="toggleFullscreen()">⛶ VOLLBILD (PREVIEW)</button>
+            <button class="btn" id="downloadBtn" onclick="download()" style="display:none; background: linear-gradient(135deg, #00ff88, #00e6ff);">💾 VIDEO HERUNTERLADEN</button>
+
+            <div style="margin-top:auto; font-size:0.75rem; color:#666; line-height:1.4;">
+                Optimiert für 9:16 HD Output (1080x1920). Ideal für Instagram Reels, TikTok & YouTube Shorts.
+            </div>
+        </div>
+
+        <div class="viewer-container" id="fullscreenTarget">
+            <div class="stage-box">
+                <canvas id="canvas"></canvas>
+                <video id="video" controls loop autoplay playsinline></video>
+                <div class="overlay" id="overlay">
+                    <div class="status" id="status">Initialisiere...</div>
+                    <div class="progress"><div class="bar" id="progress"></div></div>
+                    <div class="stat">Frame: <span id="frame">0</span> / <span id="total">0</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        let W = 1080, H = 1920;
+
+        let videoUrl = null;
+        let recorder = null;
+        let chunks = [];
+
+        // ===== EASING FUNCTIONS =====
+        const ease = {
+            linear: t => t,
+            inOutCubic: t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+            inOutQuint: t => t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2
+        };
+
+        // ===== FULLSCREEN TOGGLE =====
+        function toggleFullscreen() {
+            const target = document.getElementById('fullscreenTarget');
+            if (!document.fullscreenElement) {
+                target.requestFullscreen().catch(err => {
+                    alert(`Fehler beim Aktivieren des Vollbildmodus: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // ===== LAYOUT & RENDERING HELPERS =====
+        function getImageLayout(img) {
+            const canvasRatio = W / H;
+            const imageRatio = img.width / img.height;
+
+            let w, h;
+            if (imageRatio > canvasRatio) {
+                w = W;
+                h = W / imageRatio;
+            } else {
+                h = H;
+                w = H * imageRatio;
+            }
+
+            return {
+                w,
+                h,
+                x: (W - w) / 2,
+                y: (H - h) / 2
+            };
+        }
+
+        function drawContainImage(targetCtx, img, alpha = 1) {
+            if (alpha <= 0) return;
+            const layout = getImageLayout(img);
+            targetCtx.save();
+            targetCtx.globalAlpha = alpha;
+            targetCtx.drawImage(img, layout.x, layout.y, layout.w, layout.h);
+            targetCtx.restore();
+        }
+
+        function drawBlurBackground(targetCtx, img, blur = 60, alpha = 1) {
+            if (alpha <= 0) return;
+            const layout = getImageLayout(img);
+            targetCtx.save();
+            targetCtx.globalAlpha = alpha;
+            targetCtx.filter = `blur(${blur}px) brightness(0.35) saturate(0.7)`;
+            targetCtx.drawImage(
+                img,
+                layout.x - 100,
+                layout.y - 100,
+                layout.w + 200,
+                layout.h + 200
+            );
+            targetCtx.restore();
+        }
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error(`Fehler beim Lesen von: ${file.name}`));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function loadImages() {
+            const input = document.getElementById('images');
+            const files = Array.from(input.files || []);
+            if (files.length < 2) {
+                alert('Bitte mindestens 2 Bilder auswählen.');
+                return null;
+            }
+
+            return Promise.all(files.map(async file => {
+                const src = await readFileAsDataURL(file);
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = () => reject(new Error(`Fehler beim Dekodieren von: ${file.name}`));
+                    img.src = src;
+                });
+            }));
+        }
+
+        // ===== SMOOTH PARTICLE PAIR GENERATOR =====
+        function buildParticlesForPair(imgA, imgB, density, style, tempCtx) {
+            tempCtx.clearRect(0, 0, W, H);
+            tempCtx.fillStyle = '#000';
+            tempCtx.fillRect(0, 0, W, H);
+            drawContainImage(tempCtx, imgA);
+            const pixelsA = tempCtx.getImageData(0, 0, W, H).data;
+
+            tempCtx.clearRect(0, 0, W, H);
+            tempCtx.fillStyle = '#000';
+            tempCtx.fillRect(0, 0, W, H);
+            drawContainImage(tempCtx, imgB);
+            const pixelsB = tempCtx.getImageData(0, 0, W, H).data;
+
+            const pointsA = [];
+            const pointsB = [];
+
+            for (let y = 0; y < H; y += density) {
+                for (let x = 0; x < W; x += density) {
+                    const idx = (y * W + x) * 4;
+                    const a = pixelsA[idx + 3];
+                    const r = pixelsA[idx];
+                    const g = pixelsA[idx + 1];
+                    const b = pixelsA[idx + 2];
+                    if (a > 20 && (r > 12 || g > 12 || b > 12)) {
+                        pointsA.push({ x, y, r, g, b, a });
+                    }
+                }
+            }
+
+            for (let y = 0; y < H; y += density) {
+                for (let x = 0; x < W; x += density) {
+                    const idx = (y * W + x) * 4;
+                    const a = pixelsB[idx + 3];
+                    const r = pixelsB[idx];
+                    const g = pixelsB[idx + 1];
+                    const b = pixelsB[idx + 2];
+                    if (a > 20 && (r > 12 || g > 12 || b > 12)) {
+                        pointsB.push({ x, y, r, g, b, a });
+                    }
+                }
+            }
+
+            if (pointsA.length === 0) pointsA.push({ x: W / 2, y: H / 2, r: 255, g: 255, b: 255, a: 255 });
+            if (pointsB.length === 0) pointsB.push({ x: W / 2, y: H / 2, r: 255, g: 255, b: 255, a: 255 });
+
+            const targetCount = Math.max(pointsA.length, pointsB.length);
+
+            while (pointsA.length < targetCount) {
+                const p = pointsA[Math.floor(Math.random() * pointsA.length)];
+                pointsA.push({ ...p });
+            }
+            while (pointsB.length < targetCount) {
+                const p = pointsB[Math.floor(Math.random() * pointsB.length)];
+                pointsB.push({ ...p });
+            }
+
+            const cx = W / 2, cy = H / 2;
+            const getSortKey = (p) => {
+                const dx = p.x - cx;
+                const dy = p.y - cy;
+                const angle = Math.atan2(dy, dx);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                return angle * 10000 + dist;
+            };
+
+            pointsA.sort((a, b) => getSortKey(a) - getSortKey(b));
+            pointsB.sort((a, b) => getSortKey(a) - getSortKey(b));
+
+            const particles = [];
+            for (let i = 0; i < targetCount; i++) {
+                const pA = pointsA[i];
+                const pB = pointsB[i];
+
+                let delay = 0;
+                if (style === 'wave') {
+                    delay = (pA.x / W) * 0.25;
+                } else if (style === 'burst') {
+                    const distA = Math.hypot(pA.x - cx, pA.y - cy) / Math.hypot(cx, cy);
+                    delay = distA * 0.25;
+                } else if (style === 'fluid') {
+                    delay = ((pA.x / W) * 0.15 + (pA.y / H) * 0.15);
+                }
+
+                particles.push({
+                    x1: pA.x, y1: pA.y, r1: pA.r, g1: pA.g, b1: pA.b, a1: pA.a,
+                    x2: pB.x, y2: pB.y, r2: pB.r, g2: pB.g, b2: pB.b, a2: pB.a,
+                    delay,
+                    curveDir: (i % 2 === 0 ? 1 : -1),
+                    size: 0.8 + Math.random() * 1.4,
+                    seed: Math.random()
+                });
+            }
+
+            return particles;
+        }
+
+        // ===== SMOOTH FRAME RENDERER =====
+        function renderPairFrame(targetCtx, imgA, imgB, particles, rawProgress, density, effects, power, style) {
+            targetCtx.clearRect(0, 0, W, H);
+            targetCtx.fillStyle = '#030305';
+            targetCtx.fillRect(0, 0, W, H);
+
+            let morphT = 0;
+            if (rawProgress < 0.12) {
+                morphT = 0;
+            } else if (rawProgress > 0.88) {
+                morphT = 1;
+            } else {
+                morphT = (rawProgress - 0.12) / 0.76;
+            }
+
+            const bgAAlpha = Math.max(0, 1 - morphT * 1.8);
+            const bgBAlpha = Math.max(0, (morphT - 0.45) * 1.8);
+
+            drawBlurBackground(targetCtx, imgA, 60, bgAAlpha);
+            drawBlurBackground(targetCtx, imgB, 60, bgBAlpha);
+
+            if (morphT < 0.25) {
+                drawContainImage(targetCtx, imgA, 1 - (morphT / 0.25));
+            }
+            if (morphT > 0.75) {
+                drawContainImage(targetCtx, imgB, (morphT - 0.75) / 0.25);
+            }
+
+            const zoom = 1 + Math.sin(morphT * Math.PI) * 0.02 * effects;
+            targetCtx.save();
+            targetCtx.translate(W / 2, H / 2);
+            targetCtx.scale(zoom, zoom);
+            targetCtx.translate(-W / 2, -H / 2);
+
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+
+                const durationWindow = 0.75;
+                const startWindow = p.delay;
+                let t = (morphT - startWindow) / durationWindow;
+                t = Math.max(0, Math.min(1, t));
+
+                const easeT = ease.inOutCubic(t);
+
+                const bx = p.x1 + (p.x2 - p.x1) * easeT;
+                const by = p.y1 + (p.y2 - p.y1) * easeT;
+
+                const arc = Math.sin(easeT * Math.PI);
+
+                const dx = p.x2 - p.x1;
+                const dy = p.y2 - p.y1;
+                const dist = Math.hypot(dx, dy) || 1;
+                const nx = -dy / dist;
+                const ny = dx / dist;
+
+                let offsetMag = power * 0.35 * arc * p.curveDir * effects;
+                let noiseX = Math.sin(easeT * Math.PI * 2 + p.seed * 12) * power * 0.12 * arc;
+                let noiseY = Math.cos(easeT * Math.PI * 2 + p.seed * 12) * power * 0.12 * arc;
+
+                if (style === 'direct') {
+                    offsetMag *= 0.1;
+                    noiseX *= 0.1;
+                    noiseY *= 0.1;
+                } else if (style === 'burst') {
+                    const cx = W / 2, cy = H / 2;
+                    const rx = (p.x1 - cx) / cx;
+                    const ry = (p.y1 - cy) / cy;
+                    noiseX += rx * power * 0.4 * arc;
+                    noiseY += ry * power * 0.4 * arc;
+                }
+
+                const px = bx + nx * offsetMag + noiseX;
+                const py = by + ny * offsetMag + noiseY;
+
+                const r = Math.round(p.r1 + (p.r2 - p.r1) * easeT);
+                const g = Math.round(p.g1 + (p.g2 - p.g1) * easeT);
+                const b = Math.round(p.b1 + (p.b2 - p.b1) * easeT);
+
+                const alpha = Math.max(0, Math.min(1, (p.a1 / 255) * (1 - easeT * 0.2) + (p.a2 / 255) * (easeT * 0.2)));
+                const size = density * p.size * (1 + arc * 0.5 * effects);
+
+                if (alpha > 0.02 && size > 0.1) {
+                    targetCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    targetCtx.fillRect(px - size / 2, py - size / 2, size, size);
+                }
+            }
+
+            targetCtx.restore();
+        }
+
+        // ===== MAIN EXECUTION =====
+        async function run() {
+            let images;
+            try {
+                images = await loadImages();
+            } catch (error) {
+                console.error(error);
+                document.getElementById('status').innerText = error.message || 'Fehler beim Laden.';
+                document.getElementById('overlay').style.display = 'none';
+                document.getElementById('startBtn').disabled = false;
+                alert(error.message || 'Fehler beim Laden.');
+                return;
+            }
+            if (!images) return;
+
+            // Feste 9:16 HD Auflösung
+            W = 1080;
+            H = 1920;
+            canvas.width = W;
+            canvas.height = H;
+
+            const duration = Math.max(1, parseFloat(document.getElementById('duration').value) || 5);
+            const density = parseInt(document.getElementById('density').value, 10);
+            const power = parseInt(document.getElementById('power').value, 10);
+            const effects = parseFloat(document.getElementById('effects').value);
+            const style = document.getElementById('morphStyle').value;
+
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('canvas').style.display = 'block';
+            document.getElementById('video').style.display = 'none';
+            document.getElementById('downloadBtn').style.display = 'none';
+
+            const fps = 30;
+            const totalFrames = Math.max(1, Math.round(duration * fps));
+            document.getElementById('status').innerText = 'Analysiere Bilder & erstelle Trajektorien...';
+            document.getElementById('total').innerText = totalFrames;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = W;
+            tempCanvas.height = H;
+            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+
+            const pairs = [];
+            for (let i = 0; i < images.length - 1; i++) {
+                pairs.push(buildParticlesForPair(images[i], images[i + 1], density, style, tempCtx));
+            }
+            pairs.push(buildParticlesForPair(images[images.length - 1], images[0], density, style, tempCtx));
+
+            document.getElementById('status').innerText = 'Rendere Frames...';
+            const frames = [];
+
+            for (let f = 0; f < totalFrames; f++) {
+                const globalProgress = f / totalFrames;
+                const pairPosition = globalProgress * pairs.length;
+                const pairIndex = Math.min(pairs.length - 1, Math.floor(pairPosition));
+                const pairProgress = pairPosition - pairIndex;
+
+                renderPairFrame(
+                    ctx,
+                    images[pairIndex],
+                    images[(pairIndex + 1) % images.length],
+                    pairs[pairIndex],
+                    pairProgress,
+                    density,
+                    effects,
+                    power,
+                    style
+                );
+
+                frames.push(ctx.getImageData(0, 0, W, H));
+                document.getElementById('progress').style.width = `${((f + 1) / totalFrames) * 100}%`;
+                document.getElementById('frame').innerText = f + 1;
+
+                await new Promise(requestAnimationFrame);
+            }
+
+            document.getElementById('status').innerText = 'Erstelle HD Video-Datei...';
+            document.getElementById('progress').style.width = '0%';
+
+            if (videoUrl) URL.revokeObjectURL(videoUrl);
+            chunks = [];
+
+            const stream = canvas.captureStream(fps);
+            let mimeType = 'video/webm;codecs=vp9';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'video/webm';
+            }
+
+            recorder = new MediaRecorder(stream, {
+                mimeType,
+                videoBitsPerSecond: 25000000 // 25 Mbps für High Definition Output
+            });
+
+            recorder.ondataavailable = event => {
+                if (event.data.size > 0) chunks.push(event.data);
+            };
+
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
+                videoUrl = URL.createObjectURL(blob);
+                document.getElementById('video').src = videoUrl;
+                document.getElementById('video').play().catch(() => {});
+                document.getElementById('overlay').style.display = 'none';
+                document.getElementById('canvas').style.display = 'none';
+                document.getElementById('video').style.display = 'block';
+                document.getElementById('downloadBtn').style.display = 'block';
+                document.getElementById('startBtn').disabled = false;
+            };
+
+            recorder.start();
+
+            let frameIdx = 0;
+            const frameDelay = 1000 / fps;
+            const startTime = performance.now();
+
+            function playFrame() {
+                if (frameIdx >= frames.length) {
+                    setTimeout(() => {
+                        if (recorder.state !== 'inactive') recorder.stop();
+                    }, Math.ceil(frameDelay * 2));
+                    return;
+                }
+
+                ctx.putImageData(frames[frameIdx], 0, 0);
+                document.getElementById('progress').style.width = `${((frameIdx + 1) / frames.length) * 100}%`;
+                document.getElementById('frame').innerText = frameIdx + 1;
+                frameIdx++;
+
+                const elapsed = performance.now() - startTime;
+                const target = frameIdx * frameDelay;
+                const nextDelay = Math.max(0, target - elapsed);
+                setTimeout(playFrame, nextDelay);
+            }
+
+            playFrame();
+        }
+
+        function download() {
+            if (!videoUrl) return;
+            const a = document.createElement('a');
+            a.href = videoUrl;
+            a.download = `particle-morph-9x16-hd.webm`;
+            a.click();
+        }
+
+        document.getElementById('startBtn').addEventListener('click', run);
+    </script>
+</body>
+</html>
