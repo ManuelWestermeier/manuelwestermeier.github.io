@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
+<title>Zustell-Tool</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --ink:#0B0B0C;
+    --ink-soft:#4B4B4E;
+    --muted:#9A9A9E;
+    --line:#E6E6E7;
+    --line-strong:#D2D2D4;
+    --accent:#FF5A1F;
+    --accent-ink:#FFFFFF;
+    --green:#1E8A4C;
+    --green-soft:#E7F5EC;
+    --pending:#B8B8BC;
+    --blue:#1D63E0;
+    --danger:#D3372B;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-t: env(safe-area-inset-top, 0px);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);overflow:hidden;
+    font-weight:400; color:var(--ink); letter-spacing:-0.01em;}
+  button, select, input{font-family:inherit;}
+  #map{position:absolute;inset:0;z-index:1;}
+  .leaflet-control-attribution{font-size:10px;}
+
+  /* ===== Top bar ===== */
+  #topbar{
+    position:absolute; top:0; left:0; right:0; z-index:500;
+    padding:calc(10px + var(--safe-t)) 12px 10px;
+    display:flex; align-items:center; gap:8px;
+    pointer-events:none;
+  }
+  #topbar > *{pointer-events:auto;}
+  #projTitle{
+    flex:1; display:flex; align-items:center; gap:6px;
+    background:#fff; border:1px solid var(--line-strong);
+    padding:10px 12px; font-size:14px; font-weight:600; letter-spacing:-0.01em;
+    color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  #projTitle .chev{color:var(--muted); font-size:11px;}
+  #projTitle.empty{color:var(--muted); font-weight:400;}
+  #menuBtn{
+    width:40px; height:40px; flex-shrink:0;
+    background:#fff; border:1px solid var(--line-strong); color:var(--ink);
+    font-size:17px; display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ===== Toast hint ===== */
+  #hint{
+    position:absolute; left:50%; top:calc(64px + var(--safe-t)); transform:translateX(-50%);
+    z-index:700; background:var(--ink); color:#fff; font-size:12.5px; font-weight:500;
+    padding:9px 14px; display:none; white-space:nowrap; letter-spacing:-0.005em;
+  }
+  #hint.show{display:block;}
+
+  /* ===== Bottom cluster: stats strip + context bar + mode bar ===== */
+  #bottomCluster{
+    position:absolute; left:0; right:0; bottom:0; z-index:500;
+    display:flex; flex-direction:column;
+    padding-bottom:var(--safe-b);
+    background:#fff; border-top:1px solid var(--line-strong);
+  }
+
+  #statStrip{
+    display:flex; align-items:center; gap:0;
+    border-bottom:1px solid var(--line);
+    font-size:12px;
+  }
+  .stat{
+    flex:1; padding:8px 10px; text-align:center;
+    border-right:1px solid var(--line);
+  }
+  .stat:last-child{border-right:none;}
+  .stat .num{font-weight:600; font-size:14px;}
+  .stat .lbl{color:var(--muted); font-size:10.5px; margin-left:4px;}
+  .stat.g .num{color:var(--green);}
+  .stat.p .num{color:var(--ink-soft);}
+
+  #contextBar{
+    display:none; align-items:center; gap:8px;
+    padding:10px 12px; border-bottom:1px solid var(--line);
+    font-size:12.5px; color:var(--ink-soft); background:#FAFAFA;
+  }
+  #contextBar.show{display:flex;}
+  #contextBar .ctxText{flex:1; line-height:1.4;}
+  #contextBar .ctxText b{color:var(--ink); font-weight:600;}
+  .chip{
+    border:1px solid var(--line-strong); background:#fff; color:var(--ink);
+    padding:8px 12px; font-size:12.5px; font-weight:600; white-space:nowrap;
+  }
+  .chip.solid{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+  #modebar{ display:flex; }
+  .modebtn{
+    flex:1; padding:12px 4px 10px; background:#fff; border:none;
+    border-right:1px solid var(--line); color:var(--ink-soft);
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    font-size:11px; font-weight:500;
+  }
+  .modebtn:last-child{border-right:none;}
+  .modebtn .ic{font-size:19px; line-height:1;}
+  .modebtn.active{ background:var(--accent); color:#fff; }
+  .modebtn.active .ic{ filter:none; }
+
+  /* ===== Bottom sheet ===== */
+  #overlay{
+    position:absolute; inset:0; z-index:800; background:rgba(11,11,12,0.35);
+    display:none;
+  }
+  #overlay.show{display:block;}
+  #sheet{
+    position:absolute; left:0; right:0; bottom:0; z-index:900;
+    background:#fff; border-top:1px solid var(--line-strong);
+    transform:translateY(100%); transition:transform .2s ease;
+    max-height:78vh; display:flex; flex-direction:column;
+    padding-bottom:var(--safe-b);
+  }
+  #sheet.show{transform:translateY(0);}
+  .sheet-handle{ width:36px; height:4px; background:var(--line-strong); margin:10px auto 4px; }
+  .sheet-head{
+    padding:6px 18px 12px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--line);
+  }
+  .sheet-head h2{margin:0; font-size:16px; font-weight:600; letter-spacing:-0.01em;}
+  .sheet-close{background:none; border:none; font-size:20px; color:var(--muted); padding:4px;}
+  .sheet-body{overflow-y:auto; padding:16px 18px 22px;}
+  .field-label{font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:18px 0 8px;}
+  .field-label:first-child{margin-top:0;}
+
+  select#projectSelect{
+    width:100%; padding:11px 12px; border:1px solid var(--line-strong); background:#fff; color:var(--ink); font-size:14px;
+    appearance:none; -webkit-appearance:none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+    background-size: 5px 5px, 5px 5px; background-repeat:no-repeat;
+  }
+  .btn{
+    display:block; width:100%; text-align:left; padding:12px 14px; margin-bottom:8px;
+    background:#fff; color:var(--ink); border:1px solid var(--line-strong); font-size:14px; font-weight:500;
+  }
+  .btn small{display:block; font-weight:400; color:var(--muted); font-size:11.5px; margin-top:2px;}
+  .btn.primary{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .btn.danger{color:var(--danger); border-color:var(--danger);}
+  .row2{display:flex; gap:8px;}
+  .row2 .btn{flex:1;}
+
+  #liveInfo{
+    font-size:12.5px; color:var(--ink-soft); border:1px solid var(--line); padding:12px; line-height:1.6; display:none; background:#FAFAFA;
+  }
+  #liveInfo.show{display:block;}
+  #liveInfo b{color:var(--ink); font-weight:600;}
+
+  /* ===== New project sheet ===== */
+  #npOverlay{ position:absolute; inset:0; z-index:950; background:rgba(11,11,12,0.4); display:none; align-items:flex-end; justify-content:center; }
+  #npOverlay.show{display:flex;}
+  #npSheet{
+    background:#fff; width:100%; max-width:480px; padding:18px 18px calc(18px + var(--safe-b));
+    border-top:1px solid var(--line-strong);
+  }
+  #npSheet h2{margin:4px 0 14px; font-size:16px; font-weight:600;}
+  #npSheet input[type=text]{
+    width:100%; padding:12px; border:1px solid var(--line-strong); font-size:14px; margin-bottom:14px; background:#fff; color:var(--ink);
+  }
+
+  .point-popup{font-size:13px; line-height:1.5; font-family:inherit;}
+  .point-popup button{
+    margin-top:6px; padding:7px 11px; border:none; font-size:12.5px; font-weight:600;
+  }
+  .leaflet-popup-content-wrapper{border-radius:0; box-shadow:0 2px 10px rgba(0,0,0,.15);}
+  .leaflet-popup-tip{border-radius:0;}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="topbar">
+  <button id="projTitle" class="empty">Kein Projekt geladen <span class="chev">▾</span></button>
+  <button id="menuBtn" title="Menü">⋯</button>
+</div>
+
+<div id="hint"></div>
+
+<div id="bottomCluster">
+  <div id="statStrip">
+    <div class="stat p"><span class="num" id="statOffen">0</span><span class="lbl">offen</span></div>
+    <div class="stat g"><span class="num" id="statErledigt">0</span><span class="lbl">erledigt</span></div>
+  </div>
+
+  <div id="contextBar"></div>
+
+  <div id="modebar">
+    <button class="modebtn" id="modeMark" data-mode="mark">
+      <span class="ic">✎</span>Fläschchen
+    </button>
+    <button class="modebtn" id="modeLive" data-mode="live">
+      <span class="ic">◎</span>Live-Rundgang
+    </button>
+    <button class="modebtn" id="modeRoute" data-mode="route">
+      <span class="ic">⌁</span>Route
+    </button>
+  </div>
+</div>
+
+<div id="overlay"></div>
+<div id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <h2>Projekte &amp; Details</h2>
+    <button class="sheet-close" id="sheetClose">✕</button>
+  </div>
+  <div class="sheet-body">
+
+    <div class="field-label">Aktives Projekt</div>
+    <select id="projectSelect"></select>
+    <div class="row2" style="margin-top:8px;">
+      <button class="btn primary" id="newProjectBtn">+ Neues Projekt</button>
+      <button class="btn danger" id="deleteProjectBtn" style="flex:0 0 46px; text-align:center;">🗑</button>
+    </div>
+
+    <div class="field-label">1 · Fläschchen abgeben</div>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 8px;">Modus unten aktivieren, dann auf der Karte antippen — jeder Tipp legt sofort einen erledigten Punkt an.</p>
+
+    <div class="field-label">2 · Live abgehen</div>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 8px;">Beim Gehen werden offene Ziele im 10&nbsp;m-Umkreis automatisch abgehakt.</p>
+    <div id="liveInfo"></div>
+
+    <div class="field-label">3 · Route planen</div>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 8px;">Im Routen-Modus Ziele antippen, dann Route berechnen lassen (kürzeste Reihenfolge ab Startpunkt).</p>
+    <div class="row2">
+      <button class="btn" id="calcRouteBtn">Route berechnen</button>
+      <button class="btn" id="clearRouteBtn">Zurücksetzen</button>
+    </div>
+
+  </div>
+</div>
+
+<div id="npOverlay">
+  <div id="npSheet">
+    <h2>Neues Projekt</h2>
+    <input type="text" id="newProjectName" placeholder="Projektname, z. B. Musterstraße">
+    <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Startort festlegen</div>
+    <button class="btn primary" id="useMyLocationBtn">Meinen Standort verwenden</button>
+    <button class="btn" id="pickOnMapBtn">Auf Karte antippen</button>
+    <button class="btn" id="cancelNewProjectBtn">Abbrechen</button>
+  </div>
+</div>
+
+<script>
+(function(){
+
+const CHECK_RADIUS_M = 10;
+
+// ---------- Storage helpers ----------
+async function storeGet(key){
+  try{ const r = await window.storage.get(key,false); return r ? JSON.parse(r.value) : null; }
+  catch(e){ return null; }
+}
+async function storeSet(key,val){
+  try{ await window.storage.set(key, JSON.stringify(val), false); }
+  catch(e){ console.error('storage set failed', key, e); }
+}
+async function storeDelete(key){
+  try{ await window.storage.delete(key,false); }catch(e){}
+}
+
+// ---------- Geo helpers ----------
+function distMeters(lat1,lon1,lat2,lon2){
+  const R=6371000, toRad=d=>d*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function fmtTime(ts){ const d=new Date(ts); return d.toLocaleDateString('de-DE')+' '+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); }
+
+// ---------- State ----------
+let projectsIndex = [];
+let currentProject = null;
+let map, startMarker, liveMarker, liveAccuracyCircle, routeLine;
+let pointLayers = {};
+let mode = 'idle'; // idle | mark | live | route
+let watchId = null;
+let pendingNewProjectName = null;
+
+// ---------- Map init ----------
+function initMap(){
+  map = L.map('map', { zoomControl:false, attributionControl:true }).setView([51.1657,10.4515], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom:19,
+    attribution:'&copy; OpenStreetMap-Mitwirkende'
+  }).addTo(map);
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  map.on('click', onMapClick);
+}
+
+function onMapClick(e){
+  if(pendingNewProjectName !== null){
+    finalizeNewProject(pendingNewProjectName, e.latlng.lat, e.latlng.lng);
+    return;
+  }
+  if(!currentProject) return;
+  if(mode==='mark'){
+    addPoint(e.latlng.lat, e.latlng.lng, 'erledigt', 'manuell');
+  } else if(mode==='route'){
+    addPoint(e.latlng.lat, e.latlng.lng, 'offen', 'route');
+  }
+}
+
+// ---------- Project CRUD ----------
+async function loadProjectsIndex(){ projectsIndex = (await storeGet('projects_index')) || []; }
+async function saveProjectsIndex(){ await storeSet('projects_index', projectsIndex); }
+async function loadProject(id){ return await storeGet('project:'+id); }
+async function saveProject(p){ await storeSet('project:'+p.id, p); }
+
+function newEmptyProject(name, lat, lng){
+  return { id: uid(), name, startLat:lat, startLng:lng, createdAt:Date.now(), points:[], routeIds:[] };
+}
+
+async function finalizeNewProject(name, lat, lng){
+  setHint('');
+  const proj = newEmptyProject(name, lat, lng);
+  await saveProject(proj);
+  projectsIndex.push({id:proj.id, name:proj.name, createdAt:proj.createdAt});
+  await saveProjectsIndex();
+  pendingNewProjectName = null;
+  document.getElementById('npOverlay').classList.remove('show');
+  await switchToProject(proj.id);
+}
+
+async function switchToProject(id){
+  stopLive();
+  setMode('idle');
+  currentProject = await loadProject(id);
+  if(!currentProject) return;
+  renderProjectSelect();
+  document.getElementById('projTitle').innerHTML = currentProject.name+' <span class="chev">▾</span>';
+  document.getElementById('projTitle').classList.remove('empty');
+  document.getElementById('projectSelect').value = id;
+  redrawAll();
+  map.setView([currentProject.startLat, currentProject.startLng], 17);
+}
+
+async function deleteCurrentProject(){
+  if(!currentProject) return;
+  if(!confirm('Projekt "'+currentProject.name+'" wirklich löschen? Das kann nicht rückgängig gemacht werden.')) return;
+  const id = currentProject.id;
+  await storeDelete('project:'+id);
+  projectsIndex = projectsIndex.filter(p=>p.id!==id);
+  await saveProjectsIndex();
+  currentProject = null;
+  clearMapLayers();
+  document.getElementById('projTitle').innerHTML = 'Kein Projekt geladen <span class="chev">▾</span>';
+  document.getElementById('projTitle').classList.add('empty');
+  renderProjectSelect();
+  updateStats();
+  if(projectsIndex.length){ await switchToProject(projectsIndex[0].id); }
+}
+
+function renderProjectSelect(){
+  const sel = document.getElementById('projectSelect');
+  sel.innerHTML = '';
+  if(!projectsIndex.length){
+    const o=document.createElement('option'); o.textContent='– keine Projekte –'; o.value='';
+    sel.appendChild(o); return;
+  }
+  projectsIndex.slice().sort((a,b)=>b.createdAt-a.createdAt).forEach(p=>{
+    const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; sel.appendChild(o);
+  });
+}
+
+// ---------- Points ----------
+async function addPoint(lat,lng,status,method){
+  if(!currentProject) return;
+  const pt = { id:uid(), lat, lng, status, method, createdAt:Date.now(), deliveredAt: status==='erledigt'?Date.now():null };
+  currentProject.points.push(pt);
+  if(status==='offen' && method==='route'){ currentProject.routeIds.push(pt.id); }
+  await saveProject(currentProject);
+  drawPoint(pt);
+  updateStats();
+}
+
+async function deletePoint(id){
+  if(!currentProject) return;
+  currentProject.points = currentProject.points.filter(p=>p.id!==id);
+  currentProject.routeIds = currentProject.routeIds.filter(rid=>rid!==id);
+  await saveProject(currentProject);
+  if(pointLayers[id]){ map.removeLayer(pointLayers[id]); delete pointLayers[id]; }
+  redrawRouteLine();
+  updateStats();
+}
+window.__deletePoint = deletePoint;
+
+async function markPointDelivered(id){
+  if(!currentProject) return;
+  const pt = currentProject.points.find(p=>p.id===id);
+  if(!pt || pt.status==='erledigt') return;
+  pt.status='erledigt'; pt.deliveredAt=Date.now(); pt.method = pt.method==='route' ? 'route-manuell' : pt.method;
+  await saveProject(currentProject);
+  refreshPointStyle(pt);
+  updateStats();
+}
+window.__markDelivered = markPointDelivered;
+
+function pointColor(pt){
+  if(pt.status==='erledigt') return '#1E8A4C';
+  return '#B8B8BC';
+}
+
+function drawPoint(pt){
+  const marker = L.circleMarker([pt.lat,pt.lng], {
+    radius:7, weight:2, color:'#0B0B0C', fillColor:pointColor(pt), fillOpacity:0.95
+  }).addTo(map);
+  bindPointPopup(marker, pt);
+  pointLayers[pt.id] = marker;
+}
+function refreshPointStyle(pt){
+  const layer = pointLayers[pt.id];
+  if(!layer) return;
+  layer.setStyle({fillColor:pointColor(pt)});
+  bindPointPopup(layer, pt);
+}
+function bindPointPopup(layer, pt){
+  const statusLabel = pt.status==='erledigt' ? 'erledigt ('+ (pt.method==='auto'?'automatisch':'manuell') +')' : 'offen';
+  const time = pt.deliveredAt ? fmtTime(pt.deliveredAt) : fmtTime(pt.createdAt);
+  let html = '<div class="point-popup"><b>Status:</b> '+statusLabel+'<br><b>Zeit:</b> '+time+'<br>';
+  if(pt.status==='offen'){
+    html += '<button style="background:#1E8A4C;color:#fff" onclick="window.__markDelivered(\''+pt.id+'\')">Als erledigt markieren</button> ';
+  }
+  html += '<button style="background:#D3372B;color:#fff" onclick="window.__deletePoint(\''+pt.id+'\')">Löschen</button></div>';
+  layer.bindPopup(html);
+}
+
+function clearMapLayers(){
+  Object.values(pointLayers).forEach(l=>map.removeLayer(l));
+  pointLayers = {};
+  if(startMarker){ map.removeLayer(startMarker); startMarker=null; }
+  if(routeLine){ map.removeLayer(routeLine); routeLine=null; }
+  if(liveMarker){ map.removeLayer(liveMarker); liveMarker=null; }
+  if(liveAccuracyCircle){ map.removeLayer(liveAccuracyCircle); liveAccuracyCircle=null; }
+}
+
+function redrawAll(){
+  clearMapLayers();
+  if(!currentProject) return;
+  startMarker = L.circleMarker([currentProject.startLat, currentProject.startLng], {
+    radius:8, weight:3, color:'#FF5A1F', fillColor:'#0B0B0C', fillOpacity:1
+  }).addTo(map).bindTooltip('Start', {permanent:false});
+  currentProject.points.forEach(drawPoint);
+  redrawRouteLine();
+  updateStats();
+}
+
+function updateStats(){
+  let offen=0, erledigt=0;
+  if(currentProject){ currentProject.points.forEach(p=> p.status==='erledigt' ? erledigt++ : offen++); }
+  document.getElementById('statOffen').textContent = offen;
+  document.getElementById('statErledigt').textContent = erledigt;
+}
+
+// ---------- Route planning ----------
+function redrawRouteLine(){
+  if(routeLine){ map.removeLayer(routeLine); routeLine=null; }
+  if(!currentProject || !currentProject.routeIds.length) return;
+  const latlngs = [[currentProject.startLat, currentProject.startLng]];
+  currentProject.routeIds.forEach(id=>{
+    const pt = currentProject.points.find(p=>p.id===id);
+    if(pt) latlngs.push([pt.lat, pt.lng]);
+  });
+  if(latlngs.length<2) return;
+  routeLine = L.polyline(latlngs, {color:'#FF5A1F', weight:3, dashArray:'1 8', opacity:0.9, lineCap:'round'}).addTo(map);
+}
+
+async function calcRoute(){
+  if(!currentProject) return;
+  const pending = currentProject.points.filter(p=>p.status==='offen');
+  if(!pending.length){ setHint('Keine offenen Ziele vorhanden.', 2500); return; }
+  let cur = {lat:currentProject.startLat, lng:currentProject.startLng};
+  const remaining = pending.slice();
+  const order = [];
+  while(remaining.length){
+    let bestIdx=0, bestDist=Infinity;
+    remaining.forEach((p,i)=>{
+      const d = distMeters(cur.lat,cur.lng,p.lat,p.lng);
+      if(d<bestDist){ bestDist=d; bestIdx=i; }
+    });
+    const next = remaining.splice(bestIdx,1)[0];
+    order.push(next.id); cur = next;
+  }
+  currentProject.routeIds = order;
+  await saveProject(currentProject);
+  redrawRouteLine();
+  setHint('Route berechnet · '+order.length+' Ziele', 2200);
+}
+
+async function clearRoute(){
+  if(!currentProject) return;
+  if(!confirm('Reihenfolge der Route zurücksetzen? Die Ziel-Punkte bleiben erhalten.')) return;
+  currentProject.routeIds = [];
+  await saveProject(currentProject);
+  redrawRouteLine();
+}
+
+// ---------- Live mode ----------
+function startLive(){
+  if(!navigator.geolocation){ setHint('Geolocation wird nicht unterstützt.', 3000); return; }
+  const info = document.getElementById('liveInfo');
+  info.classList.add('show');
+  info.innerHTML = 'Suche GPS-Signal…';
+  watchId = navigator.geolocation.watchPosition(onLivePosition, onLiveError, {
+    enableHighAccuracy:true, maximumAge:2000, timeout:15000
+  });
+}
+function stopLive(){
+  if(watchId!==null){ navigator.geolocation.clearWatch(watchId); watchId=null; }
+  document.getElementById('liveInfo').classList.remove('show');
+  if(mode==='live') setMode('idle');
+}
+
+async function onLivePosition(pos){
+  const {latitude:lat, longitude:lng, accuracy} = pos.coords;
+  if(!liveMarker){
+    liveMarker = L.circleMarker([lat,lng], {radius:7, weight:2, color:'#fff', fillColor:'#1D63E0', fillOpacity:1}).addTo(map);
+  } else { liveMarker.setLatLng([lat,lng]); }
+  if(!liveAccuracyCircle){
+    liveAccuracyCircle = L.circle([lat,lng], {radius:accuracy||10, color:'#1D63E0', weight:1, fillOpacity:0.07}).addTo(map);
+  } else { liveAccuracyCircle.setLatLng([lat,lng]); liveAccuracyCircle.setRadius(accuracy||10); }
+  map.panTo([lat,lng]);
+
+  if(!currentProject) return;
+  let changed = false, nearestOpenDist = Infinity;
+  currentProject.points.forEach(pt=>{
+    if(pt.status!=='offen') return;
+    const d = distMeters(lat,lng,pt.lat,pt.lng);
+    if(d<nearestOpenDist) nearestOpenDist=d;
+    if(d<=CHECK_RADIUS_M){
+      pt.status='erledigt'; pt.method='auto'; pt.deliveredAt=Date.now();
+      changed = true; refreshPointStyle(pt);
+    }
+  });
+  if(changed){ await saveProject(currentProject); updateStats(); }
+
+  const openCount = currentProject.points.filter(p=>p.status==='offen').length;
+  document.getElementById('liveInfo').innerHTML =
+    '<b>GPS-Genauigkeit:</b> '+Math.round(accuracy)+' m<br><b>Nächstes offenes Ziel:</b> '+(nearestOpenDist===Infinity?'keins':Math.round(nearestOpenDist)+' m')+'<br><b>Noch offen:</b> '+openCount;
+
+  if(mode==='live'){
+    const t = document.getElementById('ctxLiveText');
+    if(t) t.innerHTML = '<b>Live-Rundgang</b><br>GPS ±'+Math.round(accuracy)+'m · nächstes Ziel '+(nearestOpenDist===Infinity?'–':Math.round(nearestOpenDist)+'m')+' · '+openCount+' offen';
+  }
+}
+function onLiveError(err){
+  document.getElementById('liveInfo').innerHTML = 'GPS-Fehler: '+err.message+'<br>Bitte Standortfreigabe erlauben.';
+  if(mode==='live'){
+    const t = document.getElementById('ctxLiveText');
+    if(t) t.innerHTML = '<b>Live-Rundgang</b><br>GPS-Fehler: '+err.message;
+  }
+}
+
+// ---------- Mode / contextual bottom bar ----------
+function setMode(m){
+  mode = m;
+  document.querySelectorAll('.modebtn').forEach(b=>b.classList.remove('active'));
+  const ctx = document.getElementById('contextBar');
+
+  if(m==='mark'){
+    document.getElementById('modeMark').classList.add('active');
+    ctx.classList.add('show');
+    ctx.innerHTML = '<div class="ctxText"><b>Fläschchen-Modus</b><br>Karte antippen = sofort erledigt</div><button class="chip solid" id="ctxDone">Fertig</button>';
+    bindCtxDone();
+  } else if(m==='route'){
+    document.getElementById('modeRoute').classList.add('active');
+    ctx.classList.add('show');
+    ctx.innerHTML = '<div class="ctxText"><b>Routen-Modus</b><br>Karte antippen = neues Ziel</div><button class="chip" id="ctxCalc">Berechnen</button><button class="chip solid" id="ctxDone">Fertig</button>';
+    document.getElementById('ctxCalc').addEventListener('click', calcRoute);
+    bindCtxDone();
+  } else if(m==='live'){
+    document.getElementById('modeLive').classList.add('active');
+    ctx.classList.add('show');
+    ctx.innerHTML = '<div class="ctxText" id="ctxLiveText"><b>Live-Rundgang</b><br>Suche GPS…</div><button class="chip solid" id="ctxStop">Stoppen</button>';
+    document.getElementById('ctxStop').addEventListener('click', ()=>toggleMode('live'));
+  } else {
+    ctx.classList.remove('show'); ctx.innerHTML='';
+  }
+
+  if(!currentProject){ setHint('Bitte zuerst ein Projekt anlegen oder auswählen.', 3000); }
+}
+function bindCtxDone(){
+  const b = document.getElementById('ctxDone');
+  if(b) b.addEventListener('click', ()=> setMode('idle'));
+}
+
+function setHint(text, autoHideMs){
+  const el = document.getElementById('hint');
+  if(!text){ el.classList.remove('show'); return; }
+  el.textContent = text;
+  el.classList.add('show');
+  if(autoHideMs){ setTimeout(()=>{ if(el.textContent===text) el.classList.remove('show'); }, autoHideMs); }
+}
+
+function toggleMode(m){
+  if(!currentProject){ setHint('Bitte zuerst ein Projekt anlegen oder auswählen.', 3000); return; }
+  if(m==='live'){
+    if(mode==='live'){ stopLive(); setMode('idle'); }
+    else { setMode('live'); startLive(); }
+    return;
+  }
+  if(mode===m){ setMode('idle'); }
+  else { if(mode==='live') stopLive(); setMode(m); }
+}
+
+// ---------- Sheet ----------
+function openSheet(){
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('sheet').classList.add('show');
+}
+function closeSheet(){
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('sheet').classList.remove('show');
+}
+
+// ---------- Wire up UI ----------
+document.getElementById('menuBtn').addEventListener('click', openSheet);
+document.getElementById('projTitle').addEventListener('click', openSheet);
+document.getElementById('sheetClose').addEventListener('click', closeSheet);
+document.getElementById('overlay').addEventListener('click', closeSheet);
+
+document.getElementById('modeMark').addEventListener('click', ()=>toggleMode('mark'));
+document.getElementById('modeRoute').addEventListener('click', ()=>toggleMode('route'));
+document.getElementById('modeLive').addEventListener('click', ()=>toggleMode('live'));
+document.getElementById('calcRouteBtn').addEventListener('click', calcRoute);
+document.getElementById('clearRouteBtn').addEventListener('click', clearRoute);
+document.getElementById('deleteProjectBtn').addEventListener('click', deleteCurrentProject);
+
+document.getElementById('projectSelect').addEventListener('change', (e)=>{
+  if(e.target.value) switchToProject(e.target.value);
+});
+
+document.getElementById('newProjectBtn').addEventListener('click', ()=>{
+  document.getElementById('newProjectName').value='';
+  document.getElementById('npOverlay').classList.add('show');
+});
+document.getElementById('cancelNewProjectBtn').addEventListener('click', ()=>{
+  document.getElementById('npOverlay').classList.remove('show');
+  pendingNewProjectName = null;
+  setHint('');
+});
+document.getElementById('useMyLocationBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('newProjectName').value.trim() || 'Neues Projekt';
+  if(!navigator.geolocation){ alert('Geolocation wird nicht unterstützt. Bitte "Auf Karte antippen" verwenden.'); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos=>finalizeNewProject(name, pos.coords.latitude, pos.coords.longitude),
+    err=>alert('Standort konnte nicht ermittelt werden: '+err.message),
+    {enableHighAccuracy:true, timeout:10000}
+  );
+});
+document.getElementById('pickOnMapBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('newProjectName').value.trim() || 'Neues Projekt';
+  pendingNewProjectName = name;
+  document.getElementById('npOverlay').classList.remove('show');
+  closeSheet();
+  setHint('Startort auf der Karte antippen…');
+});
+
+// ---------- Boot ----------
+(async function boot(){
+  initMap();
+  await loadProjectsIndex();
+  renderProjectSelect();
+  if(projectsIndex.length){
+    await switchToProject(projectsIndex.slice().sort((a,b)=>b.createdAt-a.createdAt)[0].id);
+  } else {
+    openSheet();
+    setHint('Lege dein erstes Projekt an', 4000);
+  }
+})();
+
+})();
+</script>
+</body>
+</html>
