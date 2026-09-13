@@ -263,17 +263,35 @@
 
 const CHECK_RADIUS_M = 10;
 
-// ---------- Storage helpers ----------
+// ---------- Storage helpers (localStorage, mit In-Memory-Fallback) ----------
+const memStore = {};
+let storageAvailable = true;
+(function testStorage(){
+  try{ localStorage.setItem('__t__','1'); localStorage.removeItem('__t__'); storageAvailable = true; }
+  catch(e){ storageAvailable = false; }
+})();
+
 async function storeGet(key){
-  try{ const r = await window.storage.get(key,false); return r ? JSON.parse(r.value) : null; }
-  catch(e){ return null; }
+  try{
+    if(storageAvailable){ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+    return Object.prototype.hasOwnProperty.call(memStore,key) ? JSON.parse(memStore[key]) : null;
+  }catch(e){ console.error('storage get failed', key, e); return null; }
 }
 async function storeSet(key,val){
-  try{ await window.storage.set(key, JSON.stringify(val), false); }
-  catch(e){ console.error('storage set failed', key, e); }
+  try{
+    const s = JSON.stringify(val);
+    if(storageAvailable){ localStorage.setItem(key, s); } else { memStore[key] = s; }
+    return true;
+  }catch(e){
+    console.error('storage set failed', key, e);
+    setHint('Speichern fehlgeschlagen: '+e.message, 4000);
+    return false;
+  }
 }
 async function storeDelete(key){
-  try{ await window.storage.delete(key,false); }catch(e){}
+  try{
+    if(storageAvailable){ localStorage.removeItem(key); } else { delete memStore[key]; }
+  }catch(e){ console.error('storage delete failed', key, e); }
 }
 
 // ---------- Geo helpers ----------
@@ -679,11 +697,14 @@ document.getElementById('pickOnMapBtn').addEventListener('click', ()=>{
   initMap();
   await loadProjectsIndex();
   renderProjectSelect();
+  if(!storageAvailable){
+    setHint('Kein dauerhafter Speicher verfügbar – Daten gehen beim Schließen verloren', 5000);
+  }
   if(projectsIndex.length){
     await switchToProject(projectsIndex.slice().sort((a,b)=>b.createdAt-a.createdAt)[0].id);
   } else {
     openSheet();
-    setHint('Lege dein erstes Projekt an', 4000);
+    if(storageAvailable) setHint('Lege dein erstes Projekt an', 4000);
   }
 })();
 
